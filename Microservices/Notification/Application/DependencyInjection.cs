@@ -2,7 +2,7 @@ using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Consumers;
-using CryptoJackpot.Notification.Application.Handlers;
+using CryptoJackpot.Notification.Application.Handlers.Commands;
 using CryptoJackpot.Notification.Application.Interfaces;
 using CryptoJackpot.Notification.Application.Providers;
 using CryptoJackpot.Notification.Application.Services;

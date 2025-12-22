@@ -9,7 +9,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace CryptoJackpot.Notification.Application.Handlers;
+namespace CryptoJackpot.Notification.Application.Handlers.Commands;
 
 public class SendReferralNotificationHandler : IRequestHandler<SendReferralNotificationCommand, ResultResponse<bool>>
 {

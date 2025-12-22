@@ -19,25 +19,21 @@ public class NotificationController : ControllerBase
     [HttpPost("email-confirmation")]
     public async Task<IActionResult> SendEmailConfirmation([FromBody] SendEmailConfirmationRequest request)
     {
-        var result = await _notificationService.SendEmailConfirmationAsync(
-            request.UserId, request.Email, request.Name, request.LastName, request.Token);
+        var result = await _notificationService.SendEmailConfirmationAsync(request);
         return result.ToActionResult();
     }
 
     [HttpPost("password-reset")]
     public async Task<IActionResult> SendPasswordReset([FromBody] SendPasswordResetRequest request)
     {
-        var result = await _notificationService.SendPasswordResetEmailAsync(
-            request.Email, request.Name, request.LastName, request.SecurityCode);
+        var result = await _notificationService.SendPasswordResetEmailAsync(request);
         return result.ToActionResult();
     }
 
     [HttpPost("referral-notification")]
     public async Task<IActionResult> SendReferralNotification([FromBody] SendReferralNotificationRequest request)
     {
-        var result = await _notificationService.SendReferralNotificationAsync(
-            request.ReferrerEmail, request.ReferrerName, request.ReferrerLastName,
-            request.ReferredName, request.ReferredLastName, request.ReferralCode);
+        var result = await _notificationService.SendReferralNotificationAsync(request);
         return result.ToActionResult();
     }
 }

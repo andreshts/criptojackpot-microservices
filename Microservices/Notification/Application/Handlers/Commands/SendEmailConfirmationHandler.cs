@@ -1,49 +1,56 @@
 using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Notification.Application.Commands;
+using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Constants;
 using CryptoJackpot.Notification.Application.Interfaces;
 using CryptoJackpot.Notification.Domain.Interfaces;
 using CryptoJackpot.Notification.Domain.Models;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
-namespace CryptoJackpot.Notification.Application.Handlers;
+namespace CryptoJackpot.Notification.Application.Handlers.Commands;
 
-public class SendPasswordResetHandler : IRequestHandler<SendPasswordResetCommand, ResultResponse<bool>>
+public class SendEmailConfirmationHandler : IRequestHandler<SendEmailConfirmationCommand, ResultResponse<bool>>
 {
     private readonly IEmailTemplateProvider _templateProvider;
     private readonly INotificationLogRepository _logRepository;
     private readonly IEmailProvider _emailProvider;
-    private readonly ILogger<SendPasswordResetHandler> _logger;
+    private readonly NotificationConfiguration _config;
+    private readonly ILogger<SendEmailConfirmationHandler> _logger;
 
-    public SendPasswordResetHandler(
+    public SendEmailConfirmationHandler(
         IEmailTemplateProvider templateProvider,
         INotificationLogRepository logRepository,
         IEmailProvider emailProvider,
-        ILogger<SendPasswordResetHandler> logger)
+        IOptions<NotificationConfiguration> config,
+        ILogger<SendEmailConfirmationHandler> logger)
     {
         _templateProvider = templateProvider;
         _logRepository = logRepository;
         _emailProvider = emailProvider;
+        _config = config.Value;
         _logger = logger;
     }
 
-    public async Task<ResultResponse<bool>> Handle(SendPasswordResetCommand request, CancellationToken cancellationToken)
+    public async Task<ResultResponse<bool>> Handle(SendEmailConfirmationCommand request, CancellationToken cancellationToken)
     {
-        var template = await _templateProvider.GetTemplateAsync(TemplateNames.PasswordReset);
+        var template = await _templateProvider.GetTemplateAsync(TemplateNames.ConfirmEmail);
         if (template == null)
         {
-            _logger.LogError("Template not found: {TemplateName}", TemplateNames.PasswordReset);
-            return ResultResponse<bool>.Failure(ErrorType.NotFound, $"Template not found: {TemplateNames.PasswordReset}");
+            _logger.LogError("Template not found: {TemplateName}", TemplateNames.ConfirmEmail);
+            return ResultResponse<bool>.Failure(ErrorType.NotFound, $"Template not found: {TemplateNames.ConfirmEmail}");
         }
 
+        var url = $"{_config.Brevo!.BaseUrl}{UrlPaths.ConfirmEmail}/{request.Token}";
         var fullName = $"{request.Name} {request.LastName}";
+
         var body = template
             .Replace("{0}", fullName)
-            .Replace("{1}", request.SecurityCode)
-            .Replace("{2}", DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"));
+            .Replace("{1}", DateTime.Now.ToString("MM/dd/yyyy"))
+            .Replace("{2}", url);
 
-        var subject = "Password Reset - CryptoJackpot";
+        var subject = $"Welcome to CryptoJackpot, {fullName}!";
         var success = await _emailProvider.SendEmailAsync(request.Email, subject, body);
 
         await _logRepository.AddAsync(new NotificationLog
@@ -51,7 +58,7 @@ public class SendPasswordResetHandler : IRequestHandler<SendPasswordResetCommand
             Type = "Email",
             Recipient = request.Email,
             Subject = subject,
-            TemplateName = TemplateNames.PasswordReset,
+            TemplateName = TemplateNames.ConfirmEmail,
             Success = success,
             ErrorMessage = success ? null : "Failed to send email",
             SentAt = DateTime.UtcNow
@@ -59,11 +66,11 @@ public class SendPasswordResetHandler : IRequestHandler<SendPasswordResetCommand
 
         if (!success)
         {
-            _logger.LogWarning("Failed to send password reset email to {Email}", request.Email);
+            _logger.LogWarning("Failed to send confirmation email for user {UserId}", request.UserId);
             return ResultResponse<bool>.Failure(ErrorType.InternalServerError, "Failed to send email");
         }
 
-        _logger.LogInformation("Password reset email sent successfully to {Email}", request.Email);
+        _logger.LogInformation("Email confirmation sent successfully for user {UserId}", request.UserId);
         return ResultResponse<bool>.Ok(true);
     }
 }
