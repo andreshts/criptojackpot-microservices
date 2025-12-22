@@ -8,37 +8,15 @@ namespace CryptoJackpot.Infra.IoC;
 public static class DependencyContainer
 {
     /// <summary>
-    /// Registers shared infrastructure services (EventBus, MassTransit).
-    /// For microservices that DON'T need Kafka (simple setup).
+    /// Registers shared infrastructure with Kafka.
+    /// Allows configuration of both producers and consumers via callbacks.
     /// </summary>
-    public static void RegisterServices(
-        IServiceCollection services, 
-        IConfiguration configuration)
-    {
-        // Domain Bus
-        services.AddTransient<IEventBus, Bus.MassTransitBus>();
-
-        // MassTransit with In-Memory bus only
-        services.AddMassTransit(x =>
-        {
-            x.UsingInMemory((context, cfg) =>
-            {
-                cfg.ConfigureEndpoints(context);
-            });
-        });
-    }
-
-    /// <summary>
-    /// Registers shared infrastructure services (EventBus, MassTransit, Kafka).
-    /// For microservices that need Kafka consumers/producers.
-    /// </summary>
-    /// <param name="services">Service collection</param>
-    /// <param name="configuration">App configuration</param>
-    /// <param name="configureKafka">Configure Kafka Rider (consumers, topics, producers)</param>
     public static void RegisterServicesWithKafka(
-        IServiceCollection services, 
+        IServiceCollection services,
         IConfiguration configuration,
-        Action<IRiderRegistrationConfigurator> configureKafka)
+        Action<IRiderRegistrationConfigurator>? configureRider = null,
+        Action<IBusRegistrationConfigurator>? configureBus = null,
+        Action<IRiderRegistrationContext, IKafkaFactoryConfigurator>? configureKafkaEndpoints = null)
     {
         // Domain Bus
         services.AddTransient<IEventBus, Bus.MassTransitBus>();
@@ -48,22 +26,27 @@ public static class DependencyContainer
         // MassTransit with Kafka
         services.AddMassTransit(x =>
         {
-            // In-memory bus for internal messaging
+            // Allow microservices to add consumers to the bus
+            configureBus?.Invoke(x);
+
+            // In-memory for internal messaging
             x.UsingInMemory((context, cfg) =>
             {
                 cfg.ConfigureEndpoints(context);
             });
 
-            // Kafka Rider
+            // Kafka Rider for external events
             x.AddRider(rider =>
             {
-                // Let each microservice configure its consumers/producers/topics
-                configureKafka(rider);
+                // Allow microservices to configure producers/consumers
+                configureRider?.Invoke(rider);
 
-                // Configure Kafka host
-                rider.UsingKafka((context, k) =>
+                rider.UsingKafka((context, kafka) =>
                 {
-                    k.Host(kafkaHost);
+                    kafka.Host(kafkaHost);
+                    
+                    // Allow microservices to configure topic endpoints
+                    configureKafkaEndpoints?.Invoke(context, kafka);
                 });
             });
         });

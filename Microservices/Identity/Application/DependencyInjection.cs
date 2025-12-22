@@ -1,5 +1,4 @@
 using System.Text;
-using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application.Configuration;
 using CryptoJackpot.Identity.Application.Handlers.Commands;
@@ -8,6 +7,7 @@ using CryptoJackpot.Identity.Application.Services;
 using CryptoJackpot.Identity.Data.Context;
 using CryptoJackpot.Identity.Data.Repositories;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using CryptoJackpot.Infra.IoC;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -155,33 +155,14 @@ public static class DependencyInjection
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
     {
-        // Domain Bus
-        services.AddTransient<IEventBus, Infra.Bus.MassTransitBus>();
-
-        var kafkaHost = configuration["Kafka:Host"] ?? "localhost:9092";
-
-        // MassTransit with Kafka Producer
-        services.AddMassTransit(x =>
+        // Use shared infrastructure from Infra.IoC with Kafka producers
+        DependencyContainer.RegisterServicesWithKafka(services, configuration, rider =>
         {
-            x.UsingInMemory((context, cfg) =>
-            {
-                cfg.ConfigureEndpoints(context);
-            });
-
-            // Kafka Rider for publishing events
-            x.AddRider(rider =>
-            {
-                // Register producers for events that Identity publishes
-                rider.AddProducer<UserRegisteredEvent>("user-registered");
-                rider.AddProducer<PasswordResetRequestedEvent>("password-reset-requested");
-                rider.AddProducer<ReferralCreatedEvent>("referral-created");
-                rider.AddProducer<UserLoggedInEvent>("user-logged-in");
-
-                rider.UsingKafka((context, kafka) =>
-                {
-                    kafka.Host(kafkaHost);
-                });
-            });
+            // Register producers for events that Identity publishes
+            rider.AddProducer<UserRegisteredEvent>("user-registered");
+            rider.AddProducer<PasswordResetRequestedEvent>("password-reset-requested");
+            rider.AddProducer<ReferralCreatedEvent>("referral-created");
+            rider.AddProducer<UserLoggedInEvent>("user-logged-in");
         });
     }
 }

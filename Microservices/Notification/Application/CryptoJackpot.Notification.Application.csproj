@@ -5,7 +5,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MassTransit" Version="8.1.3" />
     <PackageReference Include="MassTransit.Kafka" Version="8.1.3" />
     <PackageReference Include="MediatR" Version="12.2.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
@@ -19,6 +18,6 @@
     <ProjectReference Include="..\Data\CryptoJackpot.Notification.Data.csproj" />
     <ProjectReference Include="..\Domain\CryptoJackpot.Notification.Domain.csproj" />
     <ProjectReference Include="..\..\..\Domain\CryptoJackpot.Domain.Core.csproj" />
-    <ProjectReference Include="..\..\..\Infra.Bus\CryptoJackpot.Infra.Bus.csproj" />
+    <ProjectReference Include="..\..\..\Infra.IoC\CryptoJackpot.Infra.IoC.csproj" />
   </ItemGroup>
 </Project>

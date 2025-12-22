@@ -1,5 +1,5 @@
-using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
+using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Consumers;
 using CryptoJackpot.Notification.Application.Handlers.Commands;
@@ -92,52 +92,41 @@ public static class DependencyInjection
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
     {
-        // Domain Bus
-        services.AddTransient<IEventBus, Infra.Bus.MassTransitBus>();
-
-        var kafkaHost = configuration["Kafka:Host"] ?? "localhost:9092";
-
-        // MassTransit with Kafka
-        services.AddMassTransit(x =>
-        {
-            // Register consumers
-            x.AddConsumer<UserRegisteredConsumer>();
-            x.AddConsumer<PasswordResetRequestedConsumer>();
-            x.AddConsumer<ReferralCreatedConsumer>();
-
-            // In-memory for internal
-            x.UsingInMemory((context, cfg) =>
+        // Use shared infrastructure from Infra.IoC with Kafka consumers
+        DependencyContainer.RegisterServicesWithKafka(
+            services,
+            configuration,
+            configureRider: rider =>
             {
-                cfg.ConfigureEndpoints(context);
-            });
-
-            // Kafka Rider for external events
-            x.AddRider(rider =>
-            {
+                // Register consumers in rider
                 rider.AddConsumer<UserRegisteredConsumer>();
                 rider.AddConsumer<PasswordResetRequestedConsumer>();
                 rider.AddConsumer<ReferralCreatedConsumer>();
-
-                rider.UsingKafka((context, kafka) =>
+            },
+            configureBus: bus =>
+            {
+                // Register consumers in bus
+                bus.AddConsumer<UserRegisteredConsumer>();
+                bus.AddConsumer<PasswordResetRequestedConsumer>();
+                bus.AddConsumer<ReferralCreatedConsumer>();
+            },
+            configureKafkaEndpoints: (context, kafka) =>
+            {
+                // Configure topic endpoints
+                kafka.TopicEndpoint<UserRegisteredEvent>("user-registered", "notification-group", e =>
                 {
-                    kafka.Host(kafkaHost);
+                    e.ConfigureConsumer<UserRegisteredConsumer>(context);
+                });
 
-                    kafka.TopicEndpoint<UserRegisteredEvent>("user-registered", "notification-group", e =>
-                    {
-                        e.ConfigureConsumer<UserRegisteredConsumer>(context);
-                    });
+                kafka.TopicEndpoint<PasswordResetRequestedEvent>("password-reset-requested", "notification-group", e =>
+                {
+                    e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
+                });
 
-                    kafka.TopicEndpoint<PasswordResetRequestedEvent>("password-reset-requested", "notification-group", e =>
-                    {
-                        e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
-                    });
-
-                    kafka.TopicEndpoint<ReferralCreatedEvent>("referral-created", "notification-group", e =>
-                    {
-                        e.ConfigureConsumer<ReferralCreatedConsumer>(context);
-                    });
+                kafka.TopicEndpoint<ReferralCreatedEvent>("referral-created", "notification-group", e =>
+                {
+                    e.ConfigureConsumer<ReferralCreatedConsumer>(context);
                 });
             });
-        });
     }
 }
