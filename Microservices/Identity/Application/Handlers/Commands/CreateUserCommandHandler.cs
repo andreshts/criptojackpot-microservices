@@ -1,6 +1,4 @@
 using CryptoJackpot.Domain.Core.Responses;
-using CryptoJackpot.Domain.Core.Bus;
-using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Extensions;
@@ -8,7 +6,6 @@ using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using CryptoJackpot.Identity.Domain.Models;
 using MediatR;
-using Microsoft.Extensions.Logging;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
@@ -16,21 +13,21 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IEventBus _eventBus;
-    private readonly ILogger<CreateUserCommandHandler> _logger;
+    private readonly IReferralService _referralService;
+    private readonly IIdentityEventPublisher _eventPublisher;
 
     private const long DefaultRoleId = 2;
 
     public CreateUserCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        IEventBus eventBus,
-        ILogger<CreateUserCommandHandler> logger)
+        IReferralService referralService,
+        IIdentityEventPublisher eventPublisher)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
-        _eventBus = eventBus;
-        _logger = logger;
+        _referralService = referralService;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<ResultResponse<UserDto?>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -38,21 +35,17 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         if (await _userRepository.ExistsByEmailAsync(request.Email))
             return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Email already registered");
 
-        User? referrerUser = null;
-        if (!string.IsNullOrEmpty(request.ReferralCode))
-        {
-            referrerUser = await _userRepository.GetBySecurityCodeAsync(request.ReferralCode);
-            if (referrerUser is null)
-                return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Invalid referral code");
-        }
+        var referrer = await _referralService.ValidateReferralCodeAsync(request.ReferralCode);
+        if (!string.IsNullOrEmpty(request.ReferralCode) && referrer is null)
+            return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Invalid referral code");
 
         var user = CreateUser(request);
         var createdUser = await _userRepository.CreateAsync(user);
 
-        if (referrerUser != null)
-            await HandleReferral(referrerUser, createdUser, request.ReferralCode!);
+        if (referrer != null)
+            await _referralService.CreateReferralAsync(referrer, createdUser, request.ReferralCode!);
 
-        await PublishUserRegisteredEvent(createdUser);
+        await _eventPublisher.PublishUserRegisteredAsync(createdUser);
 
         return ResultResponse<UserDto?>.Created(createdUser.ToDto());
     }
@@ -71,57 +64,4 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         Status = false,
         RoleId = DefaultRoleId
     };
-
-    private async Task HandleReferral(User referrer, User referred, string referralCode)
-    {
-        referred.ReferredBy = new UserReferral
-        {
-            ReferrerId = referrer.Id,
-            ReferredId = referred.Id,
-            UsedSecurityCode = referralCode
-        };
-        await _userRepository.UpdateAsync(referred);
-        await PublishReferralCreatedEvent(referrer, referred, referralCode);
-    }
-
-    private async Task PublishUserRegisteredEvent(User user)
-    {
-        try
-        {
-            await _eventBus.Publish(new UserRegisteredEvent
-            {
-                UserId = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-                LastName = user.LastName,
-                ConfirmationToken = user.SecurityCode!
-            });
-            _logger.LogInformation("UserRegisteredEvent published for user {UserId}", user.Id);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish UserRegisteredEvent for user {UserId}", user.Id);
-        }
-    }
-
-    private async Task PublishReferralCreatedEvent(User referrer, User referred, string referralCode)
-    {
-        try
-        {
-            await _eventBus.Publish(new ReferralCreatedEvent
-            {
-                ReferrerEmail = referrer.Email,
-                ReferrerName = referrer.Name,
-                ReferrerLastName = referrer.LastName,
-                ReferredName = referred.Name,
-                ReferredLastName = referred.LastName,
-                ReferralCode = referralCode
-            });
-            _logger.LogInformation("ReferralCreatedEvent published for referrer {ReferrerId}", referrer.Id);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish ReferralCreatedEvent for referrer {ReferrerId}", referrer.Id);
-        }
-    }
 }

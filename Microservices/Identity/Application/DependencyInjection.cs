@@ -149,6 +149,8 @@ public static class DependencyInjection
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
+        services.AddScoped<IIdentityEventPublisher, IdentityEventPublisher>();
+        services.AddScoped<IReferralService, ReferralService>();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
