@@ -14,7 +14,7 @@ public static class UserMappingExtensions
         Phone = user.Phone,
         ImagePath = user.ImagePath,
         Status = user.Status,
-        Role = user.Role?.ToDto()
+        Role = user.Role.ToDto()
     };
 
     public static RoleDto ToDto(this Role role) => new()

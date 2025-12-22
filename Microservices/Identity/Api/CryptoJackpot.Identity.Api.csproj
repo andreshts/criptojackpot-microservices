@@ -5,11 +5,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Application\CryptoJackpot.Identity.Application.csproj" />
-    <ProjectReference Include="..\Data\CryptoJackpot.Identity.Data.csproj" />
-    <ProjectReference Include="..\..\..\Infra.IoC\CryptoJackpot.Infra.IoC.csproj" />
   </ItemGroup>
 </Project>
