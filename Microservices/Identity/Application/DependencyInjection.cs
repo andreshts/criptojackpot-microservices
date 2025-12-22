@@ -1,5 +1,6 @@
 using System.Text;
 using CryptoJackpot.Domain.Core.Bus;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application.Configuration;
 using CryptoJackpot.Identity.Application.Handlers.Commands;
 using CryptoJackpot.Identity.Application.Interfaces;
@@ -30,7 +31,7 @@ public static class DependencyInjection
         AddControllers(services);
         AddRepositories(services);
         AddApplicationServices(services);
-        AddInfrastructure(services);
+        AddInfrastructure(services, configuration);
 
         return services;
     }
@@ -150,17 +151,34 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
     }
 
-    private static void AddInfrastructure(IServiceCollection services)
+    private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
     {
         // Domain Bus
         services.AddTransient<IEventBus, Infra.Bus.MassTransitBus>();
 
-        // MassTransit In-Memory
+        var kafkaHost = configuration["Kafka:Host"] ?? "localhost:9092";
+
+        // MassTransit with Kafka Producer
         services.AddMassTransit(x =>
         {
             x.UsingInMemory((context, cfg) =>
             {
                 cfg.ConfigureEndpoints(context);
+            });
+
+            // Kafka Rider for publishing events
+            x.AddRider(rider =>
+            {
+                // Register producers for events that Identity publishes
+                rider.AddProducer<UserRegisteredEvent>("user-registered");
+                rider.AddProducer<PasswordResetRequestedEvent>("password-reset-requested");
+                rider.AddProducer<ReferralCreatedEvent>("referral-created");
+                rider.AddProducer<UserLoggedInEvent>("user-logged-in");
+
+                rider.UsingKafka((context, kafka) =>
+                {
+                    kafka.Host(kafkaHost);
+                });
             });
         });
     }
