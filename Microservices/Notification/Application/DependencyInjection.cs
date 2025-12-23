@@ -89,8 +89,9 @@ public static class DependencyInjection
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
     {
-        // Use shared infrastructure from Infra.IoC with Kafka consumers
-        DependencyContainer.RegisterServicesWithKafka(
+        // Use shared infrastructure with Kafka and Transactional Inbox for idempotency
+        // This prevents duplicate email sends if Kafka redelivers a message
+        DependencyContainer.RegisterServicesWithKafka<NotificationDbContext>(
             services,
             configuration,
             configureRider: rider =>

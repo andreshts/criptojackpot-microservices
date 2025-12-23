@@ -1,4 +1,5 @@
 using CryptoJackpot.Notification.Domain.Models;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace CryptoJackpot.Notification.Data.Context;
@@ -15,6 +16,11 @@ public class NotificationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Configure MassTransit Inbox/Outbox tables for idempotency
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
 
         modelBuilder.Entity<EmailTemplate>(entity =>
         {
