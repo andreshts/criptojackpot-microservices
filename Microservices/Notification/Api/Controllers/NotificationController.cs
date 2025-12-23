@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Notification.Application.Commands;
 using CryptoJackpot.Notification.Application.DTOs;
@@ -7,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace CryptoJackpot.Notification.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class NotificationController : ControllerBase
 {
     private readonly IMediator _mediator;

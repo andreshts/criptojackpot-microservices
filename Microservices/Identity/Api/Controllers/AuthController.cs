@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.Requests;
@@ -8,7 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace CryptoJackpot.Identity.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[ApiVersion("1")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;

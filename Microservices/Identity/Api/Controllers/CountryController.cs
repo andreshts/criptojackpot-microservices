@@ -3,11 +3,12 @@ using CryptoJackpot.Identity.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using Asp.Versioning;
 namespace CryptoJackpot.Identity.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/[controller]")]
+[ApiVersion("1")]
+[Route("api/v{version:apiVersion}/[controller]")]
 public class CountryController : ControllerBase
 {
     private readonly IMediator _mediator;
