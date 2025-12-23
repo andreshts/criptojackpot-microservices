@@ -5,11 +5,12 @@ using CoreEvent = CryptoJackpot.Domain.Core.Events.Event;
 
 namespace CryptoJackpot.Infra.Bus;
 
-public class MassTransitBus(IPublishEndpoint publishEndpoint, 
-    ISendEndpointProvider sendEndpointProvider) : IEventBus
+/// <summary>
+/// MassTransit implementation of IEventBus.
+/// Consumers are registered via DI container using MassTransit's AddConsumer.
+/// </summary>
+public class MassTransitBus(IPublishEndpoint publishEndpoint) : IEventBus
 {
-    private readonly ISendEndpointProvider _sendEndpointProvider = sendEndpointProvider;
-
     public Task SendCommand<T>(T command) where T : Command
     {
         return publishEndpoint.Publish(command);
@@ -18,12 +19,5 @@ public class MassTransitBus(IPublishEndpoint publishEndpoint,
     public Task Publish<T>(T @event) where T : CoreEvent
     {
         return publishEndpoint.Publish(@event);
-    }
-
-    public void Subscribe<T, TH>()
-        where T : CoreEvent
-        where TH : IEventHandler<T>
-    {
-        throw new NotImplementedException("Con MassTransit, registra los consumidores (Consumers) en la capa IoC usando AddMassTransit.");
     }
 }
