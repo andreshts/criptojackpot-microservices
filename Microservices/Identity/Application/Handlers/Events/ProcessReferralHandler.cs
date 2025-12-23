@@ -10,6 +10,7 @@ namespace CryptoJackpot.Identity.Application.Handlers.Events;
 /// <summary>
 /// Handles referral creation when a user is created with a referral code.
 /// Decoupled from CreateUserCommandHandler via domain events.
+/// Note: This handler executes within the transaction context of the parent command handler.
 /// </summary>
 public class ProcessReferralHandler : INotificationHandler<UserCreatedDomainEvent>
 {
