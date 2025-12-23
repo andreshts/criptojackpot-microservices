@@ -1,23 +1,45 @@
 ﻿using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.Commands;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
 using CoreEvent = CryptoJackpot.Domain.Core.Events.Event;
 
 namespace CryptoJackpot.Infra.Bus;
 
 /// <summary>
 /// MassTransit implementation of IEventBus.
-/// Consumers are registered via DI container using MassTransit's AddConsumer.
+/// Uses ITopicProducer for Kafka when available, falls back to IPublishEndpoint for in-memory.
 /// </summary>
-public class MassTransitBus(IPublishEndpoint publishEndpoint) : IEventBus
+public class MassTransitBus : IEventBus
 {
-    public Task SendCommand<T>(T command) where T : Command
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IPublishEndpoint _publishEndpoint;
+
+    public MassTransitBus(IServiceProvider serviceProvider, IPublishEndpoint publishEndpoint)
     {
-        return publishEndpoint.Publish(command);
+        _serviceProvider = serviceProvider;
+        _publishEndpoint = publishEndpoint;
     }
 
-    public Task Publish<T>(T @event) where T : CoreEvent
+    public Task SendCommand<T>(T command) where T : Command
     {
-        return publishEndpoint.Publish(@event);
+        return _publishEndpoint.Publish(command);
+    }
+
+    public async Task Publish<T>(T @event) where T : CoreEvent
+    {
+        // Try to get a Kafka producer for this event type
+        var kafkaProducer = _serviceProvider.GetService<ITopicProducer<T>>();
+
+        if (kafkaProducer != null)
+        {
+            // If a Kafka producer is registered, use it
+            await kafkaProducer.Produce(@event);
+        }
+        else
+        {
+            // Fallback to in-memory bus
+            await _publishEndpoint.Publish(@event);
+        }
     }
 }

@@ -95,17 +95,10 @@ public static class DependencyInjection
             configuration,
             configureRider: rider =>
             {
-                // Register consumers in rider
+                // Register consumers in Kafka Rider
                 rider.AddConsumer<UserRegisteredConsumer>();
                 rider.AddConsumer<PasswordResetRequestedConsumer>();
                 rider.AddConsumer<ReferralCreatedConsumer>();
-            },
-            configureBus: bus =>
-            {
-                // Register consumers in bus
-                bus.AddConsumer<UserRegisteredConsumer>();
-                bus.AddConsumer<PasswordResetRequestedConsumer>();
-                bus.AddConsumer<ReferralCreatedConsumer>();
             },
             configureKafkaEndpoints: (context, kafka) =>
             {
