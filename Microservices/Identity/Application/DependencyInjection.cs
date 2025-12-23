@@ -156,7 +156,6 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IIdentityEventPublisher, IdentityEventPublisher>();
-        services.AddScoped<IReferralService, ReferralService>();
         services.AddScoped<IStorageService, DigitalOceanStorageService>();
     }
 
