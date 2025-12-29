@@ -1,0 +1,108 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cryptojackpot-ingress
+  namespace: cryptojackpot
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  tls:
+    - hosts:
+        - api.cryptojackpot.com
+      secretName: cryptojackpot-tls
+  rules:
+    - host: api.cryptojackpot.com
+      http:
+        paths:
+          # Identity API
+          - path: /api/v1/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: identity-api
+                port:
+                  number: 80
+          - path: /api/v1/users
+            pathType: Prefix
+            backend:
+              service:
+                name: identity-api
+                port:
+                  number: 80
+          - path: /api/v1/roles
+            pathType: Prefix
+            backend:
+              service:
+                name: identity-api
+                port:
+                  number: 80
+          
+          # Lottery API
+          - path: /api/v1/lotteries
+            pathType: Prefix
+            backend:
+              service:
+                name: lottery-api
+                port:
+                  number: 80
+          - path: /api/v1/prizes
+            pathType: Prefix
+            backend:
+              service:
+                name: lottery-api
+                port:
+                  number: 80
+          
+          # Order API
+          - path: /api/v1/tickets
+            pathType: Prefix
+            backend:
+              service:
+                name: order-api
+                port:
+                  number: 80
+          - path: /api/v1/orders
+            pathType: Prefix
+            backend:
+              service:
+                name: order-api
+                port:
+                  number: 80
+          
+          # Wallet API
+          - path: /api/v1/wallets
+            pathType: Prefix
+            backend:
+              service:
+                name: wallet-api
+                port:
+                  number: 80
+          - path: /api/v1/transactions
+            pathType: Prefix
+            backend:
+              service:
+                name: wallet-api
+                port:
+                  number: 80
+          
+          # Winner API
+          - path: /api/v1/winners
+            pathType: Prefix
+            backend:
+              service:
+                name: winner-api
+                port:
+                  number: 80
+          
+          # Notification API (interno, no expuesto públicamente por defecto)
+          # - path: /api/v1/notifications
+          #   pathType: Prefix
+          #   backend:
+          #     service:
+          #       name: notification-api
+          #       port:
+          #         number: 80
+

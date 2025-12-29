@@ -1,0 +1,63 @@
+#!/bin/bash
+# Script para desplegar CryptoJackpot en DigitalOcean Kubernetes
+
+set -e
+
+echo "🚀 Iniciando despliegue de CryptoJackpot..."
+
+# Variables
+REGISTRY="registry.digitalocean.com/cryptojackpot"
+VERSION=${1:-"latest"}
+
+echo "📦 Construyendo imágenes Docker..."
+
+# Build de cada microservicio
+docker build -t $REGISTRY/identity-api:$VERSION -f Microservices/Identity/Api/Dockerfile .
+docker build -t $REGISTRY/lottery-api:$VERSION -f Microservices/Lottery/Api/Dockerfile .
+docker build -t $REGISTRY/order-api:$VERSION -f Microservices/Order/Api/Dockerfile .
+docker build -t $REGISTRY/wallet-api:$VERSION -f Microservices/Wallet/Api/Dockerfile .
+docker build -t $REGISTRY/winner-api:$VERSION -f Microservices/Winner/Api/Dockerfile .
+docker build -t $REGISTRY/notification-api:$VERSION -f Microservices/Notification/Api/Dockerfile .
+
+echo "📤 Subiendo imágenes a DigitalOcean Container Registry..."
+
+docker push $REGISTRY/identity-api:$VERSION
+docker push $REGISTRY/lottery-api:$VERSION
+docker push $REGISTRY/order-api:$VERSION
+docker push $REGISTRY/wallet-api:$VERSION
+docker push $REGISTRY/winner-api:$VERSION
+docker push $REGISTRY/notification-api:$VERSION
+
+echo "☸️ Aplicando configuraciones de Kubernetes..."
+
+# Aplicar en orden
+kubectl apply -f k8s/base/namespace.yaml
+kubectl apply -f k8s/base/configmap.yaml
+kubectl apply -f k8s/base/secrets.yaml
+
+# Kafka/Redpanda
+kubectl apply -f k8s/kafka/redpanda.yaml
+
+# Esperar a que Redpanda esté listo
+echo "⏳ Esperando a que Redpanda esté listo..."
+kubectl wait --for=condition=ready pod -l app=redpanda -n cryptojackpot --timeout=120s
+
+# Microservicios
+kubectl apply -f k8s/microservices/identity/
+kubectl apply -f k8s/microservices/lottery/
+kubectl apply -f k8s/microservices/order/
+kubectl apply -f k8s/microservices/wallet/
+kubectl apply -f k8s/microservices/winner/
+kubectl apply -f k8s/microservices/notification/
+
+# Ingress
+kubectl apply -f k8s/ingress/
+
+echo "✅ Despliegue completado!"
+echo ""
+echo "📊 Estado de los pods:"
+kubectl get pods -n cryptojackpot
+echo ""
+echo "🌐 Servicios:"
+kubectl get svc -n cryptojackpot
+

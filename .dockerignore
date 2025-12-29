@@ -1,0 +1,16 @@
+# Ignorar archivos de build y dependencias
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+
+# Archivos de configuración local
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/*.user
+
+# Secretos y certificados
+*.pfx
+*.pem
+*.key
+

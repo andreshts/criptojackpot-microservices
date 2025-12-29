@@ -1,0 +1,90 @@
+# Redpanda - Kafka compatible, menor uso de recursos
+# Ideal para desarrollo y producción pequeña/mediana
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redpanda
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redpanda
+  namespace: cryptojackpot
+spec:
+  serviceName: redpanda
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      containers:
+        - name: redpanda
+          image: docker.redpanda.com/redpandadata/redpanda:v23.3.5
+          args:
+            - redpanda
+            - start
+            - --smp
+            - "1"
+            - --memory
+            - 512M
+            - --reserve-memory
+            - 0M
+            - --overprovisioned
+            - --node-id
+            - "0"
+            - --kafka-addr
+            - PLAINTEXT://0.0.0.0:9092
+            - --advertise-kafka-addr
+            - PLAINTEXT://redpanda.cryptojackpot.svc.cluster.local:9092
+          ports:
+            - containerPort: 9092
+              name: kafka
+            - containerPort: 8081
+              name: schema-registry
+            - containerPort: 8082
+              name: http-proxy
+            - containerPort: 9644
+              name: admin
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/redpanda/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  namespace: cryptojackpot
+spec:
+  selector:
+    app: redpanda
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+    - name: schema-registry
+      port: 8081
+      targetPort: 8081
+    - name: admin
+      port: 9644
+      targetPort: 9644
+  type: ClusterIP
+

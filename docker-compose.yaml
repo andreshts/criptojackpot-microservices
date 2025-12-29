@@ -1,0 +1,217 @@
+# Docker Compose - CryptoJackpotDistributed
+# Infraestructura + Microservicios
+
+services:
+  # ============================================
+  # INFRAESTRUCTURA
+  # ============================================
+  
+  # PostgreSQL con las 6 bases de datos
+  postgres:
+    image: postgres:16-alpine
+    container_name: cryptojackpot-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./k8s/databases/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redpanda (Kafka compatible)
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.5
+    container_name: cryptojackpot-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp
+      - '1'
+      - --memory
+      - 512M
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - '0'
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+      - --pandaproxy-addr
+      - PLAINTEXT://0.0.0.0:8082
+      - --advertise-pandaproxy-addr
+      - PLAINTEXT://redpanda:8082
+    ports:
+      - "9092:9092"
+      - "8082:8082"
+      - "9644:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redpanda Console (UI para ver topics y mensajes)
+  redpanda-console:
+    image: docker.redpanda.com/redpandadata/console:v2.4.3
+    container_name: cryptojackpot-redpanda-console
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+    ports:
+      - "8080:8080"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  # ============================================
+  # MICROSERVICIOS
+  # ============================================
+
+  identity-api:
+    build:
+      context: .
+      dockerfile: Microservices/Identity/Api/Dockerfile
+    container_name: cryptojackpot-identity-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_identity_db;Username=postgres;Password=postgres"
+      JwtSettings__SecretKey: "super_secret_key_crypto_jackpot_distributed_2025_local!"
+      JwtSettings__Issuer: "CryptoJackpotIdentity"
+      JwtSettings__Audience: "CryptoJackpotApp"
+      JwtSettings__ExpirationInMinutes: "60"
+      Kafka__BootstrapServers: "redpanda:9092"
+      DigitalOcean__Endpoint: "http://localhost:9000"
+      DigitalOcean__BucketName: "local-bucket"
+      DigitalOcean__AccessKey: "minioadmin"
+      DigitalOcean__SecretKey: "minioadmin"
+    ports:
+      - "5001:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  lottery-api:
+    build:
+      context: .
+      dockerfile: Microservices/Lottery/Api/Dockerfile
+    container_name: cryptojackpot-lottery-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_lottery_db;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "redpanda:9092"
+    ports:
+      - "5002:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  order-api:
+    build:
+      context: .
+      dockerfile: Microservices/Order/Api/Dockerfile
+    container_name: cryptojackpot-order-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_order_db;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "redpanda:9092"
+    ports:
+      - "5003:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  wallet-api:
+    build:
+      context: .
+      dockerfile: Microservices/Wallet/Api/Dockerfile
+    container_name: cryptojackpot-wallet-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_wallet_db;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "redpanda:9092"
+    ports:
+      - "5004:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  winner-api:
+    build:
+      context: .
+      dockerfile: Microservices/Winner/Api/Dockerfile
+    container_name: cryptojackpot-winner-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_winner_db;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "redpanda:9092"
+    ports:
+      - "5005:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  notification-api:
+    build:
+      context: .
+      dockerfile: Microservices/Notification/Api/Dockerfile
+    container_name: cryptojackpot-notification-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_notification_db;Username=postgres;Password=postgres"
+      Kafka__BootstrapServers: "redpanda:9092"
+    ports:
+      - "5006:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_healthy
+
+  # ============================================
+  # OPCIONAL: MinIO (S3 local para archivos)
+  # ============================================
+  
+  minio:
+    image: minio/minio:latest
+    container_name: cryptojackpot-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+volumes:
+  postgres_data:
+  redpanda_data:
+  minio_data:
+
