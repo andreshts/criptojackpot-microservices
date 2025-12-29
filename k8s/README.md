@@ -20,9 +20,12 @@ PostgreSQL Server (DigitalOcean Managed)
 k8s/
 ├── base/                    # Configuraciones base
 │   ├── namespace.yaml
+│   ├── configmap.yaml
 │   └── secrets.yaml
 ├── databases/               # Scripts de inicialización
 │   └── init-databases.sql
+├── network/                 # Seguridad de red
+│   └── network-policies.yaml
 ├── microservices/           # Deployments por servicio
 │   ├── identity/
 │   ├── lottery/
@@ -32,9 +35,21 @@ k8s/
 │   └── notification/
 ├── ingress/                 # Configuración de Ingress
 │   └── ingress.yaml
-└── kafka/                   # Kafka/Redpanda
+└── kafka/                   # Kafka/Redpanda con SASL
     └── redpanda.yaml
 ```
+
+## Seguridad Implementada
+
+### NetworkPolicies
+- **default-deny-ingress**: Deniega todo tráfico por defecto
+- **allow-ingress-to-apis**: Solo el Ingress Controller puede acceder a las APIs
+- **allow-apis-to-redpanda**: Solo las APIs pueden comunicarse con Redpanda
+- **allow-api-to-api**: Comunicación interna entre microservicios
+
+### Autenticación Kafka/Redpanda
+- **SASL/SCRAM-SHA-256**: Autenticación habilitada
+- Credenciales almacenadas en Kubernetes Secrets
 
 ## Despliegue Rápido
 
@@ -45,6 +60,8 @@ k8s/
 
 ```bash
 kubectl apply -f k8s/base/
+kubectl apply -f k8s/network/
+kubectl apply -f k8s/kafka/
 kubectl apply -f k8s/microservices/
 kubectl apply -f k8s/ingress/
 ```

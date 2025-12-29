@@ -5,6 +5,7 @@ metadata:
   namespace: cryptojackpot
   labels:
     app: notification-api
+    tier: api
 spec:
   replicas: 1
   selector:
@@ -14,6 +15,7 @@ spec:
     metadata:
       labels:
         app: notification-api
+        tier: api
     spec:
       containers:
         - name: notification-api
@@ -34,6 +36,26 @@ spec:
                 secretKeyRef:
                   name: kafka-secrets
                   key: KAFKA_BOOTSTRAP_SERVERS
+            - name: Kafka__SaslUsername
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SASL_USERNAME
+            - name: Kafka__SaslPassword
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SASL_PASSWORD
+            - name: Kafka__SaslMechanism
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SASL_MECHANISM
+            - name: Kafka__SecurityProtocol
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SECURITY_PROTOCOL
           resources:
             requests:
               memory: "128Mi"

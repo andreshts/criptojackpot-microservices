@@ -1,5 +1,31 @@
 # Redpanda - Kafka compatible, menor uso de recursos
-# Ideal para desarrollo y producción pequeña/mediana
+# Con autenticación SASL/SCRAM habilitada para seguridad
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redpanda-credentials
+  namespace: cryptojackpot
+type: Opaque
+stringData:
+  # Usuario para los microservicios
+  REDPANDA_SASL_USERNAME: "cryptojackpot-app"
+  REDPANDA_SASL_PASSWORD: "CryptoJackpot2025SecureKafka!"
+  # Usuario admin para gestión
+  REDPANDA_ADMIN_USERNAME: "admin"
+  REDPANDA_ADMIN_PASSWORD: "RedpandaAdmin2025Secure!"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redpanda-config
+  namespace: cryptojackpot
+data:
+  bootstrap.yaml: |
+    superusers:
+      - admin
+    kafka_enable_authorization: true
+    auto_create_topics_enabled: true
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -31,10 +57,27 @@ spec:
             - --overprovisioned
             - --node-id
             - "0"
+            # Kafka listener con SASL
             - --kafka-addr
-            - PLAINTEXT://0.0.0.0:9092
+            - internal://0.0.0.0:9092
             - --advertise-kafka-addr
-            - PLAINTEXT://redpanda.cryptojackpot.svc.cluster.local:9092
+            - internal://redpanda.cryptojackpot.svc.cluster.local:9092
+            # Habilitar SASL/SCRAM
+            - --set
+            - redpanda.enable_sasl=true
+            - --set
+            - redpanda.superusers=["admin"]
+          env:
+            - name: REDPANDA_SUPERUSER
+              valueFrom:
+                secretKeyRef:
+                  name: redpanda-credentials
+                  key: REDPANDA_ADMIN_USERNAME
+            - name: REDPANDA_SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redpanda-credentials
+                  key: REDPANDA_ADMIN_PASSWORD
           ports:
             - containerPort: 9092
               name: kafka

@@ -1,0 +1,171 @@
+# NetworkPolicies para CryptoJackpot
+# Implementa el principio de mínimo privilegio en la comunicación entre pods
+---
+# Política por defecto: Denegar todo el tráfico ingress
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: cryptojackpot
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# Permitir tráfico del Ingress Controller hacia las APIs
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-apis
+  namespace: cryptojackpot
+spec:
+  podSelector:
+    matchLabels:
+      tier: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 80
+---
+# Permitir que las APIs se comuniquen con Redpanda
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apis-to-redpanda
+  namespace: cryptojackpot
+spec:
+  podSelector:
+    matchLabels:
+      app: redpanda
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: api
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 8081
+---
+# Permitir comunicación interna entre APIs (para service-to-service calls si es necesario)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-to-api
+  namespace: cryptojackpot
+spec:
+  podSelector:
+    matchLabels:
+      tier: api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: api
+      ports:
+        - protocol: TCP
+          port: 80
+---
+# Permitir que Redpanda Console acceda a Redpanda
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-console-to-redpanda
+  namespace: cryptojackpot
+spec:
+  podSelector:
+    matchLabels:
+      app: redpanda
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: redpanda-console
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 9644
+---
+# Permitir egress de las APIs hacia PostgreSQL externo (DigitalOcean Managed)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apis-to-external-postgres
+  namespace: cryptojackpot
+spec:
+  podSelector:
+    matchLabels:
+      tier: api
+  policyTypes:
+    - Egress
+  egress:
+    # PostgreSQL (DigitalOcean Managed - puerto 25060)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 25060
+    # DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Redpanda interno
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redpanda
+      ports:
+        - protocol: TCP
+          port: 9092
+---
+# Permitir egress de Redpanda Console
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redpanda-console-egress
+  namespace: cryptojackpot
+spec:
+  podSelector:
+    matchLabels:
+      app: redpanda-console
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redpanda
+      ports:
+        - protocol: TCP
+          port: 9092
+        - protocol: TCP
+          port: 8081
+        - protocol: TCP
+          port: 9644
+

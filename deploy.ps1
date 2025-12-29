@@ -37,6 +37,9 @@ kubectl apply -f k8s/base/namespace.yaml
 kubectl apply -f k8s/base/configmap.yaml
 kubectl apply -f k8s/base/secrets.yaml
 
+# NetworkPolicies (seguridad de red)
+kubectl apply -f k8s/network/
+
 # Kafka/Redpanda
 kubectl apply -f k8s/kafka/redpanda.yaml
 
