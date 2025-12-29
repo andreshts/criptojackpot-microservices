@@ -1,8 +1,6 @@
 namespace CryptoJackpot.Identity.Application.Requests;
 
-public class UpdateUserImageRequest
+public class GenerateSecurityCodeRequest
 {
     public long UserId { get; set; }
-    public string StorageKey { get; set; } = null!;
 }
-

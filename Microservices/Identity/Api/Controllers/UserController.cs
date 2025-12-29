@@ -49,9 +49,9 @@ public class UserController : ControllerBase
         return result.ToActionResult();
     }
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpGet("get-all-users")]
-    public async Task<IActionResult> GetAll([FromQuery] long? excludeUserId = null)
+    public async Task<IActionResult> GetAll([FromQuery] long excludeUserId)
     {
         var query = new GetAllUsersQuery { ExcludeUserId = excludeUserId };
         var result = await _mediator.Send(query);
@@ -75,7 +75,8 @@ public class UserController : ControllerBase
         return result.ToActionResult();
     }
 
-    [HttpPut("update-password")]
+    [Authorize]
+    [HttpPatch("update-password")]
     public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordRequest request)
     {
         var command = new UpdatePasswordCommand
@@ -115,10 +116,10 @@ public class UserController : ControllerBase
     }
 
     [Authorize]
-    [HttpPost("{userId:long}/generate-new-security-code")]
-    public async Task<IActionResult> GenerateSecurityCode(long userId)
+    [HttpPatch("generate-new-security-code")]
+    public async Task<IActionResult> GenerateSecurityCode([FromBody] GenerateSecurityCodeRequest request)
     {
-        var command = new GenerateNewSecurityCodeCommand { UserId = userId };
+        var command = new GenerateNewSecurityCodeCommand { UserId = request.UserId };
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
@@ -138,12 +139,13 @@ public class UserController : ControllerBase
         return result.ToActionResult();
     }
 
-    [HttpPut("{userId:long}/image")]
-    public async Task<IActionResult> UpdateImage(long userId, [FromBody] UpdateUserImageRequest request)
+    [Authorize]
+    [HttpPatch("update-image-profile")]
+    public async Task<IActionResult> UpdateImage([FromBody] UpdateUserImageRequest request)
     {
         var command = new UpdateUserImageCommand
         {
-            UserId = userId,
+            UserId = request.UserId,
             StorageKey = request.StorageKey
         };
 
