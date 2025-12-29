@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: notification-api
-          image: registry.digitalocean.com/cryptojackpot/notification-api:latest
+          image: registry.digitalocean.com/cryptojackpot/notification-api:v1.0.0
           ports:
             - containerPort: 80
           envFrom:

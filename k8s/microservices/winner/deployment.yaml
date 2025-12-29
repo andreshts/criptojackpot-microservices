@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: winner-api
-          image: registry.digitalocean.com/cryptojackpot/winner-api:latest
+          image: registry.digitalocean.com/cryptojackpot/winner-api:v1.0.0
           ports:
             - containerPort: 80
           envFrom:

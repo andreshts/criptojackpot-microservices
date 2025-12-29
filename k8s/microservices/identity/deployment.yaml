@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: identity-api
-          image: registry.digitalocean.com/cryptojackpot/identity-api:latest
+          image: registry.digitalocean.com/cryptojackpot/identity-api:v1.0.0
           ports:
             - containerPort: 80
           envFrom:

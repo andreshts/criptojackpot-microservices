@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: wallet-api
-          image: registry.digitalocean.com/cryptojackpot/wallet-api:latest
+          image: registry.digitalocean.com/cryptojackpot/wallet-api:v1.0.0
           ports:
             - containerPort: 80
           envFrom:

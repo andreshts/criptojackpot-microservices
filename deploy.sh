@@ -7,9 +7,9 @@ echo "🚀 Iniciando despliegue de CryptoJackpot..."
 
 # Variables
 REGISTRY="registry.digitalocean.com/cryptojackpot"
-VERSION=${1:-"latest"}
+VERSION=${1:-"v1.0.0"}
 
-echo "📦 Construyendo imágenes Docker..."
+echo "📦 Construyendo imágenes Docker con tag: $VERSION..."
 
 # Build de cada microservicio
 docker build -t $REGISTRY/identity-api:$VERSION -f Microservices/Identity/Api/Dockerfile .

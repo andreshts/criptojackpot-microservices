@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: lottery-api
-          image: registry.digitalocean.com/cryptojackpot/lottery-api:latest
+          image: registry.digitalocean.com/cryptojackpot/lottery-api:v1.0.0
           ports:
             - containerPort: 80
           envFrom:

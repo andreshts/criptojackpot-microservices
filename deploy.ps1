@@ -1,7 +1,7 @@
 # Script para desplegar CryptoJackpot en DigitalOcean Kubernetes (Windows)
 
 param(
-    [string]$Version = "latest"
+    [string]$Version = "v1.0.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,7 +11,7 @@ Write-Host "🚀 Iniciando despliegue de CryptoJackpot..." -ForegroundColor Cyan
 # Variables
 $Registry = "registry.digitalocean.com/cryptojackpot"
 
-Write-Host "📦 Construyendo imágenes Docker..." -ForegroundColor Yellow
+Write-Host "📦 Construyendo imágenes Docker con tag: $Version..." -ForegroundColor Yellow
 
 # Build de cada microservicio
 docker build -t "$Registry/identity-api:$Version" -f Microservices/Identity/Api/Dockerfile .
