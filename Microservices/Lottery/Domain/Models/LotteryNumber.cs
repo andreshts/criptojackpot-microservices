@@ -10,6 +10,6 @@ public class LotteryNumber : BaseEntity
     public bool IsAvailable { get; set; }
     public Guid? TicketId { get; set; }
 
-    public virtual Lottery Lottery { get; set; } = null!;
+    public virtual LotteryDraw Lottery { get; set; } = null!;
     public virtual Guid? Ticket { get; set; }
 }

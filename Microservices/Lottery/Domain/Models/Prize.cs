@@ -23,6 +23,6 @@ public class Prize : BaseEntity
     public Guid? WinnerTicketId { get; set; }
     public DateTime? ClaimedAt { get; set; }
 
-    public virtual Lottery Lottery { get; set; } = null!;
+    public virtual LotteryDraw Lottery { get; set; } = null!;
     public virtual Guid? WinnerTicket { get; set; }
 }

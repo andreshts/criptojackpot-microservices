@@ -3,7 +3,7 @@ using CryptoJackpot.Lottery.Domain.Enums;
 
 namespace CryptoJackpot.Lottery.Domain.Models;
 
-public class Lottery : BaseEntity
+public class LotteryDraw : BaseEntity
 {
     public Guid LotteryGuid { get; set; }
     public string LotteryNo { get; set; } = null!;
