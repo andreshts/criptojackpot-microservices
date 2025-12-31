@@ -156,6 +156,16 @@ variable "spaces_acl" {
   default     = "private"
 }
 
+variable "spaces_force_destroy" {
+  description = <<-EOT
+    ⚠️ PELIGROSO: Permitir destrucción del bucket aunque tenga objetos.
+    NUNCA habilitar en producción - podría borrar todas las imágenes de usuarios.
+    Solo usar en ambientes de desarrollo para limpieza rápida.
+  EOT
+  type        = bool
+  default     = false
+}
+
 # -----------------------------------------------------------------------------
 # Security Configuration
 # -----------------------------------------------------------------------------

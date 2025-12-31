@@ -30,6 +30,10 @@ registry_subscription_tier = "professional"
 spaces_bucket_name = "cryptojackpot-prod-assets"
 spaces_acl         = "private"
 
+# ⚠️ CRÍTICO: NUNCA cambiar a true en producción
+# Esto protege las imágenes de usuarios contra borrado accidental
+spaces_force_destroy = false
+
 # SSL - Producción con Let's Encrypt
 enable_ssl        = true
 letsencrypt_email = "admin@cryptojackpot.com"

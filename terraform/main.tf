@@ -115,6 +115,10 @@ module "spaces" {
 
   # CORS para frontend
   cors_allowed_origins = ["https://${var.domain}", "https://www.${var.domain}"]
+
+  # ⚠️ CUIDADO: Solo habilitar en desarrollo
+  # En producción SIEMPRE debe ser false para proteger datos de usuarios
+  force_destroy = var.spaces_force_destroy
 }
 
 # -----------------------------------------------------------------------------
