@@ -1,9 +1,9 @@
-using CryptoJackpot.Domain.Core.Responses;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Notification.Application.Commands;
 
-public class SendReferralNotificationCommand : IRequest<ResultResponse<bool>>
+public class SendReferralNotificationCommand : IRequest<Result<bool>>
 {
     public string ReferrerEmail { get; set; } = null!;
     public string ReferrerName { get; set; } = null!;

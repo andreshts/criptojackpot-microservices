@@ -1,17 +1,18 @@
-using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Notification.Application.Commands;
 using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Constants;
 using CryptoJackpot.Notification.Application.Interfaces;
 using CryptoJackpot.Notification.Domain.Interfaces;
 using CryptoJackpot.Notification.Domain.Models;
+using FluentResults;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace CryptoJackpot.Notification.Application.Handlers.Commands;
 
-public class SendEmailConfirmationHandler : IRequestHandler<SendEmailConfirmationCommand, ResultResponse<bool>>
+public class SendEmailConfirmationHandler : IRequestHandler<SendEmailConfirmationCommand, Result<bool>>
 {
     private readonly IEmailTemplateProvider _templateProvider;
     private readonly INotificationLogRepository _logRepository;
@@ -33,13 +34,13 @@ public class SendEmailConfirmationHandler : IRequestHandler<SendEmailConfirmatio
         _logger = logger;
     }
 
-    public async Task<ResultResponse<bool>> Handle(SendEmailConfirmationCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(SendEmailConfirmationCommand request, CancellationToken cancellationToken)
     {
         var template = await _templateProvider.GetTemplateAsync(TemplateNames.ConfirmEmail);
         if (template == null)
         {
             _logger.LogError("Template not found: {TemplateName}", TemplateNames.ConfirmEmail);
-            return ResultResponse<bool>.Failure(ErrorType.NotFound, $"Template not found: {TemplateNames.ConfirmEmail}");
+            return Result.Fail<bool>(new NotFoundError($"Template not found: {TemplateNames.ConfirmEmail}"));
         }
 
         var url = $"{_config.Brevo!.BaseUrl}{UrlPaths.ConfirmEmail}/{request.Token}";
@@ -67,10 +68,10 @@ public class SendEmailConfirmationHandler : IRequestHandler<SendEmailConfirmatio
         if (!success)
         {
             _logger.LogWarning("Failed to send confirmation email for user {UserId}", request.UserId);
-            return ResultResponse<bool>.Failure(ErrorType.InternalServerError, "Failed to send email");
+            return Result.Fail<bool>(new InternalServerError("Failed to send email"));
         }
 
         _logger.LogInformation("Email confirmation sent successfully for user {UserId}", request.UserId);
-        return ResultResponse<bool>.Ok(true);
+        return Result.Ok(true);
     }
 }
