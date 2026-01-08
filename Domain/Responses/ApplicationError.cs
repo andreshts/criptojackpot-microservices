@@ -4,7 +4,7 @@ namespace CryptoJackpot.Domain.Core.Responses;
 
 public class ApplicationError : Error
 {
-    public int StatusCode { get; set; }
+    public int StatusCode { get; init; }
 
     protected ApplicationError(string message, int statusCode) : base(message)
     {
