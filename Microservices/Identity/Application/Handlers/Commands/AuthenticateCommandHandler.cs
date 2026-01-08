@@ -1,14 +1,15 @@
-using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, ResultResponse<UserDto?>>
+public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IJwtTokenService _jwtTokenService;
@@ -27,21 +28,21 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, R
         _eventPublisher = eventPublisher;
     }
 
-    public async Task<ResultResponse<UserDto?>> Handle(AuthenticateCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UserDto>> Handle(AuthenticateCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
         if (user == null || !_passwordHasher.Verify(request.Password, user.Password))
-            return ResultResponse<UserDto?>.Failure(ErrorType.Unauthorized, "Invalid Credentials");
+            return Result.Fail<UserDto>(new UnauthorizedError("Invalid Credentials"));
 
         if (!user.Status)
-            return ResultResponse<UserDto?>.Failure(ErrorType.Forbidden, "User Not Verified");
+            return Result.Fail<UserDto>(new ForbiddenError("User Not Verified"));
 
         var userDto = user.ToDto();
         userDto.Token = _jwtTokenService.GenerateToken(user.Id.ToString());
 
         await _eventPublisher.PublishUserLoggedInAsync(user);
 
-        return ResultResponse<UserDto?>.Ok(userDto);
+        return Result.Ok(userDto);
     }
 }

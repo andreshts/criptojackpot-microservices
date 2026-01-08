@@ -1,11 +1,12 @@
-using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, ResultResponse<string>>
+public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, Result<string>>
 {
     private readonly IUserRepository _userRepository;
 
@@ -14,23 +15,23 @@ public class ConfirmEmailCommandHandler : IRequestHandler<ConfirmEmailCommand, R
         _userRepository = userRepository;
     }
 
-    public async Task<ResultResponse<string>> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
+    public async Task<Result<string>> Handle(ConfirmEmailCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Token))
-            return ResultResponse<string>.Failure(ErrorType.BadRequest, "Invalid confirmation token");
+            return Result.Fail<string>(new BadRequestError("Invalid confirmation token"));
 
         var user = await _userRepository.GetBySecurityCodeAsync(request.Token);
 
         if (user == null)
-            return ResultResponse<string>.Failure(ErrorType.NotFound, "Invalid confirmation token");
+            return Result.Fail<string>(new NotFoundError("Invalid confirmation token"));
 
         if (user.Status)
-            return ResultResponse<string>.Failure(ErrorType.BadRequest, "Email already confirmed");
+            return Result.Fail<string>(new BadRequestError("Email already confirmed"));
 
         user.Status = true;
         user.SecurityCode = null;
         await _userRepository.UpdateAsync(user);
 
-        return ResultResponse<string>.Ok("Email confirmed successfully");
+        return Result.Ok("Email confirmed successfully");
     }
 }

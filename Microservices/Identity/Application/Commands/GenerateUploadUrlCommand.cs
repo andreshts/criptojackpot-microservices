@@ -1,10 +1,10 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Commands;
 
-public class GenerateUploadUrlCommand : IRequest<ResultResponse<UploadUrlDto>>
+public class GenerateUploadUrlCommand : IRequest<Result<UploadUrlDto>>
 {
     public long UserId { get; set; }
     public string FileName { get; set; } = null!;

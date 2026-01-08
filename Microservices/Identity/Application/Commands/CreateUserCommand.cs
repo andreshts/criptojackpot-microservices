@@ -1,10 +1,10 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Commands;
 
-public class CreateUserCommand : IRequest<ResultResponse<UserDto?>>
+public class CreateUserCommand : IRequest<Result<UserDto>>
 {
     public string Email { get; set; } = null!;
     public string Password { get; set; } = null!;

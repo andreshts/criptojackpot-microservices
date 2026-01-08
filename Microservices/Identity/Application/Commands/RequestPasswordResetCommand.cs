@@ -1,9 +1,9 @@
-using CryptoJackpot.Domain.Core.Responses;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Commands;
 
-public class RequestPasswordResetCommand : IRequest<ResultResponse<string>>
+public class RequestPasswordResetCommand : IRequest<Result<string>>
 {
     public string Email { get; set; } = null!;
 }

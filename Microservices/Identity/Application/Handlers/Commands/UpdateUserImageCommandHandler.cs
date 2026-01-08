@@ -1,13 +1,14 @@
-using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class UpdateUserImageCommandHandler : IRequestHandler<UpdateUserImageCommand, ResultResponse<UserDto>>
+public class UpdateUserImageCommandHandler : IRequestHandler<UpdateUserImageCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
@@ -23,14 +24,14 @@ public class UpdateUserImageCommandHandler : IRequestHandler<UpdateUserImageComm
         _storageService = storageService;
     }
 
-    public async Task<ResultResponse<UserDto>> Handle(
+    public async Task<Result<UserDto>> Handle(
         UpdateUserImageCommand request, 
         CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(request.UserId);
         
         if (user is null)
-            return ResultResponse<UserDto>.Failure(ErrorType.NotFound, "User not found");
+            return Result.Fail<UserDto>(new NotFoundError("User not found"));
 
         // Update the image path with the storage key
         user.ImagePath = request.StorageKey;
@@ -43,7 +44,7 @@ public class UpdateUserImageCommandHandler : IRequestHandler<UpdateUserImageComm
         // Return the presigned URL for immediate use
         userDto.ImagePath = _storageService.GetPresignedUrl(request.StorageKey);
 
-        return ResultResponse<UserDto>.Ok(userDto);
+        return Result.Ok(userDto);
     }
 }
 

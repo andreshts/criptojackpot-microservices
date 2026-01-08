@@ -1,49 +1,46 @@
 using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Successes;
+using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CryptoJackpot.Domain.Core.Extensions;
 
 /// <summary>
-/// Shared extension methods for converting ResultResponse to IActionResult.
+/// Shared extension methods for converting FluentResults Result to IActionResult.
 /// Used across all microservices for consistent API responses.
 /// </summary>
 public static class ResultResponseExtensions
 {
-    public static IActionResult ToActionResult<T>(this ResultResponse<T> result)
+    public static IActionResult ToActionResult<T>(this Result<T> result)
     {
-        if (!result.Success)
+        if (result.IsFailed)
         {
-            var statusCode = result.ErrorType switch
+            var error = result.Errors.FirstOrDefault();
+            
+            var statusCode = error switch
             {
-                ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
-                ErrorType.Forbidden => StatusCodes.Status403Forbidden,
-                ErrorType.NotFound => StatusCodes.Status404NotFound,
-                ErrorType.BadRequest => StatusCodes.Status400BadRequest,
+                ApplicationError appError => appError.StatusCode,
                 _ => StatusCodes.Status500InternalServerError
             };
 
-            return new ObjectResult(new { success = false, message = result.Message })
+            return new ObjectResult(new { success = false, message = error?.Message ?? "An error occurred" })
             {
                 StatusCode = statusCode
             };
         }
 
-        var successStatusCode = result.SuccessType switch
+        // Check for typed successes
+        var success = result.Successes.FirstOrDefault();
+        
+        return success switch
         {
-            SuccessType.Created => StatusCodes.Status201Created,
-            SuccessType.NoContent => StatusCodes.Status204NoContent,
-            _ => StatusCodes.Status200OK
-        };
-
-        if (result.SuccessType == SuccessType.NoContent)
-        {
-            return new NoContentResult();
-        }
-
-        return new ObjectResult(new { success = true, data = result.Data })
-        {
-            StatusCode = successStatusCode
+            NoContentSuccess => new NoContentResult(),
+            CreatedSuccess => new ObjectResult(new { success = true, data = result.Value })
+            {
+                StatusCode = StatusCodes.Status201Created
+            },
+            _ => new OkObjectResult(new { success = true, data = result.Value })
         };
     }
 }

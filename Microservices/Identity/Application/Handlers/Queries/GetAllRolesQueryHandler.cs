@@ -1,12 +1,12 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Queries;
 
-public class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, ResultResponse<IEnumerable<RoleDto>>>
+public class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, Result<IEnumerable<RoleDto>>>
 {
     private readonly IRoleRepository _roleRepository;
 
@@ -15,7 +15,7 @@ public class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, ResultR
         _roleRepository = roleRepository;
     }
 
-    public async Task<ResultResponse<IEnumerable<RoleDto>>> Handle(
+    public async Task<Result<IEnumerable<RoleDto>>> Handle(
         GetAllRolesQuery request, 
         CancellationToken cancellationToken)
     {
@@ -28,7 +28,7 @@ public class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, ResultR
             Description = r.Description
         });
 
-        return ResultResponse<IEnumerable<RoleDto>>.Ok(roleDtos);
+        return Result.Ok(roleDtos);
     }
 }
 

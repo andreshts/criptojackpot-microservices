@@ -1,14 +1,15 @@
-using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPasswordWithCodeCommand, ResultResponse<UserDto?>>
+public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPasswordWithCodeCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -19,29 +20,29 @@ public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPassword
         _passwordHasher = passwordHasher;
     }
 
-    public async Task<ResultResponse<UserDto?>> Handle(ResetPasswordWithCodeCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UserDto>> Handle(ResetPasswordWithCodeCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user is null)
-            return ResultResponse<UserDto?>.Failure(ErrorType.NotFound, "User not found");
+            return Result.Fail<UserDto>(new NotFoundError("User not found"));
 
         if (string.IsNullOrEmpty(user.SecurityCode) ||
             user.SecurityCode != request.SecurityCode ||
             user.PasswordResetCodeExpiration == null ||
             user.PasswordResetCodeExpiration < DateTime.UtcNow)
         {
-            return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Invalid or expired security code");
+            return Result.Fail<UserDto>(new BadRequestError("Invalid or expired security code"));
         }
 
         if (request.NewPassword != request.ConfirmPassword)
-            return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Passwords do not match");
+            return Result.Fail<UserDto>(new BadRequestError("Passwords do not match"));
 
         user.Password = _passwordHasher.Hash(request.NewPassword);
         user.SecurityCode = null;
         user.PasswordResetCodeExpiration = null;
 
         var updatedUser = await _userRepository.UpdateAsync(user);
-        return ResultResponse<UserDto?>.Ok(updatedUser.ToDto());
+        return Result.Ok(updatedUser.ToDto());
     }
 }
 

@@ -1,4 +1,5 @@
 using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Events;
@@ -6,12 +7,13 @@ using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using CryptoJackpot.Identity.Domain.Models;
+using FluentResults;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ResultResponse<UserDto?>>
+public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -38,10 +40,10 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         _logger = logger;
     }
 
-    public async Task<ResultResponse<UserDto?>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
+    public async Task<Result<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
         if (await _userRepository.ExistsByEmailAsync(request.Email))
-            return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Email already registered");
+            return Result.Fail<UserDto>(new BadRequestError("Email already registered"));
 
         // Validate referral code if provided
         User? referrer = null;
@@ -49,7 +51,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         {
             referrer = await _userRepository.GetBySecurityCodeAsync(request.ReferralCode);
             if (referrer is null)
-                return ResultResponse<UserDto?>.Failure(ErrorType.BadRequest, "Invalid referral code");
+                return Result.Fail<UserDto>(new BadRequestError("Invalid referral code"));
         }
 
         try
@@ -68,13 +70,13 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
             _logger.LogInformation("User {UserId} created successfully", createdUser.Id);
-            return ResultResponse<UserDto?>.Created(createdUser.ToDto());
+            return ResultExtensions.Created(createdUser.ToDto());
         }
         catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             _logger.LogError(ex, "Failed to create user for email {Email}", request.Email);
-            return ResultResponse<UserDto?>.Failure(ErrorType.InternalServerError, "Failed to create user");
+            return Result.Fail<UserDto>(new InternalServerError("Failed to create user"));
         }
     }
 

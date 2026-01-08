@@ -1,13 +1,14 @@
-using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class RequestPasswordResetCommandHandler : IRequestHandler<RequestPasswordResetCommand, ResultResponse<string>>
+public class RequestPasswordResetCommandHandler : IRequestHandler<RequestPasswordResetCommand, Result<string>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IIdentityEventPublisher _eventPublisher;
@@ -26,11 +27,11 @@ public class RequestPasswordResetCommandHandler : IRequestHandler<RequestPasswor
         _logger = logger;
     }
 
-    public async Task<ResultResponse<string>> Handle(RequestPasswordResetCommand request, CancellationToken cancellationToken)
+    public async Task<Result<string>> Handle(RequestPasswordResetCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user is null)
-            return ResultResponse<string>.Failure(ErrorType.NotFound, "User not found");
+            return Result.Fail<string>(new NotFoundError("User not found"));
 
         var securityCode = new Random().Next(100000, 999999).ToString();
 
@@ -50,13 +51,13 @@ public class RequestPasswordResetCommandHandler : IRequestHandler<RequestPasswor
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
             _logger.LogInformation("Password reset requested for {Email}", request.Email);
-            return ResultResponse<string>.Ok("Password reset email sent");
+            return Result.Ok("Password reset email sent");
         }
         catch (Exception ex)
         {
             await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             _logger.LogError(ex, "Failed to process password reset for {Email}", request.Email);
-            return ResultResponse<string>.Failure(ErrorType.InternalServerError, "Failed to process password reset");
+            return Result.Fail<string>(new InternalServerError("Failed to process password reset"));
         }
     }
 }

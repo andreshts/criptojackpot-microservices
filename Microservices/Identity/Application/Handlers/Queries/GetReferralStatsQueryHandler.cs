@@ -1,12 +1,12 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Queries;
 
-public class GetReferralStatsQueryHandler : IRequestHandler<GetReferralStatsQuery, ResultResponse<UserReferralStatsDto>>
+public class GetReferralStatsQueryHandler : IRequestHandler<GetReferralStatsQuery, Result<UserReferralStatsDto>>
 {
     private readonly IUserReferralRepository _userReferralRepository;
 
@@ -15,7 +15,7 @@ public class GetReferralStatsQueryHandler : IRequestHandler<GetReferralStatsQuer
         _userReferralRepository = userReferralRepository;
     }
 
-    public async Task<ResultResponse<UserReferralStatsDto>> Handle(GetReferralStatsQuery request, CancellationToken cancellationToken)
+    public async Task<Result<UserReferralStatsDto>> Handle(GetReferralStatsQuery request, CancellationToken cancellationToken)
     {
         var referrals = await _userReferralRepository.GetReferralStatsAsync(request.UserId);
 
@@ -34,6 +34,6 @@ public class GetReferralStatsQueryHandler : IRequestHandler<GetReferralStatsQuer
             Referrals = referralDtos
         };
 
-        return ResultResponse<UserReferralStatsDto>.Ok(referralStatsDto);
+        return Result.Ok(referralStatsDto);
     }
 }

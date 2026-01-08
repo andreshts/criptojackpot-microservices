@@ -1,13 +1,13 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Queries;
 
-public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, ResultResponse<IEnumerable<UserDto>>>
+public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, Result<IEnumerable<UserDto>>>
 {
     private readonly IUserRepository _userRepository;
     private readonly IStorageService _storageService;
@@ -20,7 +20,7 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, ResultR
         _storageService = storageService;
     }
 
-    public async Task<ResultResponse<IEnumerable<UserDto>>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
+    public async Task<Result<IEnumerable<UserDto>>> Handle(GetAllUsersQuery request, CancellationToken cancellationToken)
     {
         var users = await _userRepository.GetAllAsync(request.ExcludeUserId);
         var userDtos = users.Select(u =>
@@ -31,6 +31,6 @@ public class GetAllUsersQueryHandler : IRequestHandler<GetAllUsersQuery, ResultR
             return dto;
         });
 
-        return ResultResponse<IEnumerable<UserDto>>.Ok(userDtos);
+        return Result.Ok(userDtos);
     }
 }

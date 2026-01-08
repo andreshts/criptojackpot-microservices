@@ -1,10 +1,10 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Commands;
 
-public class UpdateUserCommand : IRequest<ResultResponse<UserDto?>>
+public class UpdateUserCommand : IRequest<Result<UserDto>>
 {
     public long UserId { get; set; }
     public string Name { get; set; } = null!;

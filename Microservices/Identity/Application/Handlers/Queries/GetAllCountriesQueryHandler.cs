@@ -1,12 +1,12 @@
-using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
+using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Queries;
 
-public class GetAllCountriesQueryHandler : IRequestHandler<GetAllCountriesQuery, ResultResponse<IEnumerable<CountryDto>>>
+public class GetAllCountriesQueryHandler : IRequestHandler<GetAllCountriesQuery, Result<IEnumerable<CountryDto>>>
 {
     private readonly ICountryRepository _countryRepository;
 
@@ -15,7 +15,7 @@ public class GetAllCountriesQueryHandler : IRequestHandler<GetAllCountriesQuery,
         _countryRepository = countryRepository;
     }
 
-    public async Task<ResultResponse<IEnumerable<CountryDto>>> Handle(
+    public async Task<Result<IEnumerable<CountryDto>>> Handle(
         GetAllCountriesQuery request, 
         CancellationToken cancellationToken)
     {
@@ -33,7 +33,7 @@ public class GetAllCountriesQueryHandler : IRequestHandler<GetAllCountriesQuery,
             Region = c.Region
         });
 
-        return ResultResponse<IEnumerable<CountryDto>>.Ok(countryDtos);
+        return Result.Ok(countryDtos);
     }
 }
 
