@@ -25,7 +25,7 @@ public class PrizeController : ControllerBase
         _mapper = mapper;
     }
 
-    [Authorize]
+    // [Authorize]
     [HttpPost]
     public async Task<IActionResult> CreatePrize([FromBody] CreatePrizeRequest request)
     {

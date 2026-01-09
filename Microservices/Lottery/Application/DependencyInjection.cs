@@ -13,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 
 namespace CryptoJackpot.Lottery.Application;
 
@@ -100,8 +101,12 @@ public static class DependencyInjection
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidOperationException("Database connection string 'DefaultConnection' is not configured");
 
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+
         services.AddDbContext<LotteryDbContext>(options =>
-            options.UseNpgsql(connectionString)
+            options.UseNpgsql(dataSource)
                 .UseSnakeCaseNamingConvention());
     }
 

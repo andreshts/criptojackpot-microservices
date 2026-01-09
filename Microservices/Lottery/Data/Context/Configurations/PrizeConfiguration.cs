@@ -17,7 +17,6 @@ public class PrizeConfiguration : IEntityTypeConfiguration<Prize>
         builder.Property(e => e.EstimatedValue).IsRequired().HasColumnType(ColumnTypes.Decimal);
         builder.Property(e => e.Type).IsRequired();
         builder.Property(e => e.MainImageUrl).IsRequired().HasColumnType(ColumnTypes.Text).HasMaxLength(500);
-        builder.Property(e => e.AdditionalImages).HasColumnType(ColumnTypes.Jsonb);
         builder.Property(e => e.Specifications).HasColumnType(ColumnTypes.Jsonb);
         builder.Property(e => e.CashAlternative).HasColumnType(ColumnTypes.Decimal);
         builder.Property(e => e.IsDeliverable).IsRequired();
@@ -26,6 +25,12 @@ public class PrizeConfiguration : IEntityTypeConfiguration<Prize>
         builder.Property(e => e.ClaimedAt);
         builder.Property(e => e.CreatedAt).IsRequired();
         builder.Property(e => e.UpdatedAt).IsRequired();
+
+        // Relación uno-a-muchos con PrizeImage
+        builder.HasMany(e => e.AdditionalImages)
+            .WithOne(e => e.Prize)
+            .HasForeignKey(e => e.PrizeId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasQueryFilter(e => !e.DeletedAt.HasValue);
     }
