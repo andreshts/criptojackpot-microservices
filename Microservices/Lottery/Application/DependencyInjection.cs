@@ -1,4 +1,5 @@
 using System.Text;
+using CryptoJackpot.Lottery.Application.Configuration;
 using CryptoJackpot.Lottery.Data.Context;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Lottery.Data.Repositories;
@@ -160,12 +161,16 @@ public static class DependencyInjection
     private static void AddRepositories(IServiceCollection services)
     {
         services.AddScoped<ILotteryDrawRepository, LotteryDrawRepository>();
+        services.AddScoped<IPrizeRepository, PrizeRepository>();
     }
 
     private static void AddApplicationServices(IServiceCollection services)
     {
         // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+        
+        // AutoMapper
+        services.AddAutoMapper(typeof(LotteryMappingProfile).Assembly);
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
