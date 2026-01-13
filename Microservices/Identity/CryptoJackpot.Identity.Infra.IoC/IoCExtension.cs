@@ -3,7 +3,6 @@ using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application;
 using CryptoJackpot.Identity.Application.Configuration;
-using CryptoJackpot.Identity.Application.Handlers.Commands;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Application.Services;
 using CryptoJackpot.Identity.Data;
@@ -187,6 +186,9 @@ public static class IoCExtension
         
         // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+        
+        //AutoMapper
+        services.AddAutoMapper(cfg => cfg.AddProfile<IdentityMappingProfile>());
 
         // Infrastructure Services
         services.AddScoped<IJwtTokenService, JwtTokenService>();
