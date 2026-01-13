@@ -1,7 +1,7 @@
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
-using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using FluentResults;
@@ -13,11 +13,16 @@ public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPassword
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IMapper _mapper;
 
-    public ResetPasswordWithCodeCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public ResetPasswordWithCodeCommandHandler(
+        IUserRepository userRepository,
+        IPasswordHasher passwordHasher,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _mapper = mapper;
     }
 
     public async Task<Result<UserDto>> Handle(ResetPasswordWithCodeCommand request, CancellationToken cancellationToken)
@@ -42,7 +47,7 @@ public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPassword
         user.PasswordResetCodeExpiration = null;
 
         var updatedUser = await _userRepository.UpdateAsync(user);
-        return Result.Ok(updatedUser.ToDto());
+        return Result.Ok(_mapper.Map<UserDto>(updatedUser));
     }
 }
 

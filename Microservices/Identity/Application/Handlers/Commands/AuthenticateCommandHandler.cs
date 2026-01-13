@@ -1,7 +1,7 @@
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
-using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using FluentResults;
@@ -15,17 +15,20 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, R
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IIdentityEventPublisher _eventPublisher;
+    private readonly IMapper _mapper;
 
     public AuthenticateCommandHandler(
         IUserRepository userRepository,
         IJwtTokenService jwtTokenService,
         IPasswordHasher passwordHasher,
-        IIdentityEventPublisher eventPublisher)
+        IIdentityEventPublisher eventPublisher,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _jwtTokenService = jwtTokenService;
         _passwordHasher = passwordHasher;
         _eventPublisher = eventPublisher;
+        _mapper = mapper;
     }
 
     public async Task<Result<UserDto>> Handle(AuthenticateCommand request, CancellationToken cancellationToken)
@@ -38,7 +41,7 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, R
         if (!user.Status)
             return Result.Fail<UserDto>(new ForbiddenError("User Not Verified"));
 
-        var userDto = user.ToDto();
+        var userDto = _mapper.Map<UserDto>(user);
         userDto.Token = _jwtTokenService.GenerateToken(user.Id.ToString());
 
         await _eventPublisher.PublishUserLoggedInAsync(user);

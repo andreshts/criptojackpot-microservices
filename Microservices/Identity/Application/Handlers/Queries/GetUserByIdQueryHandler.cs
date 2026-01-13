@@ -1,6 +1,6 @@
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.DTOs;
-using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using FluentResults;
@@ -12,13 +12,16 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
 {
     private readonly IUserRepository _userRepository;
     private readonly IStorageService _storageService;
+    private readonly IMapper _mapper;
 
     public GetUserByIdQueryHandler(
         IUserRepository userRepository,
-        IStorageService storageService)
+        IStorageService storageService,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _storageService = storageService;
+        _mapper = mapper;
     }
 
     public async Task<Result<UserDto>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
@@ -28,7 +31,7 @@ public class GetUserByIdQueryHandler : IRequestHandler<GetUserByIdQuery, Result<
         if (user is null)
             return Result.Fail<UserDto>(new NotFoundError("User not found"));
 
-        var userDto = user.ToDto();
+        var userDto = _mapper.Map<UserDto>(user);
         
         // Generate presigned URL for image if exists
         if (!string.IsNullOrEmpty(userDto.ImagePath))

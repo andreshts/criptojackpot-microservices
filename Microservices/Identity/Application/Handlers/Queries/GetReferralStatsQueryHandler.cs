@@ -1,3 +1,4 @@
+using AutoMapper;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
@@ -9,23 +10,20 @@ namespace CryptoJackpot.Identity.Application.Handlers.Queries;
 public class GetReferralStatsQueryHandler : IRequestHandler<GetReferralStatsQuery, Result<UserReferralStatsDto>>
 {
     private readonly IUserReferralRepository _userReferralRepository;
+    private readonly IMapper _mapper;
 
-    public GetReferralStatsQueryHandler(IUserReferralRepository userReferralRepository)
+    public GetReferralStatsQueryHandler(
+        IUserReferralRepository userReferralRepository,
+        IMapper mapper)
     {
         _userReferralRepository = userReferralRepository;
+        _mapper = mapper;
     }
 
     public async Task<Result<UserReferralStatsDto>> Handle(GetReferralStatsQuery request, CancellationToken cancellationToken)
     {
         var referrals = await _userReferralRepository.GetReferralStatsAsync(request.UserId);
-
-        var referralDtos = referrals.Select(r => new UserReferralDto
-        {
-            RegisterDate = r.RegisterDate,
-            UsedSecurityCode = r.UsedSecurityCode,
-            FullName = r.FullName,
-            Email = r.Email
-        });
+        var referralDtos = _mapper.Map<IEnumerable<UserReferralDto>>(referrals);
 
         var referralStatsDto = new UserReferralStatsDto
         {

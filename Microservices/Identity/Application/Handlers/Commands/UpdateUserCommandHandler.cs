@@ -1,7 +1,7 @@
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
-using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using FluentResults;
@@ -13,11 +13,16 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IMapper _mapper;
 
-    public UpdateUserCommandHandler(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public UpdateUserCommandHandler(
+        IUserRepository userRepository,
+        IPasswordHasher passwordHasher,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _mapper = mapper;
     }
 
     public async Task<Result<UserDto>> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -34,6 +39,6 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
             user.Password = _passwordHasher.Hash(request.Password);
 
         var updatedUser = await _userRepository.UpdateAsync(user);
-        return Result.Ok(updatedUser.ToDto());
+        return Result.Ok(_mapper.Map<UserDto>(updatedUser));
     }
 }

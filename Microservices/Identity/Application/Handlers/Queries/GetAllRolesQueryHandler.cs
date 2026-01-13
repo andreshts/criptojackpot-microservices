@@ -1,3 +1,4 @@
+using AutoMapper;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Domain.Interfaces;
@@ -9,10 +10,14 @@ namespace CryptoJackpot.Identity.Application.Handlers.Queries;
 public class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, Result<IEnumerable<RoleDto>>>
 {
     private readonly IRoleRepository _roleRepository;
+    private readonly IMapper _mapper;
 
-    public GetAllRolesQueryHandler(IRoleRepository roleRepository)
+    public GetAllRolesQueryHandler(
+        IRoleRepository roleRepository,
+        IMapper mapper)
     {
         _roleRepository = roleRepository;
+        _mapper = mapper;
     }
 
     public async Task<Result<IEnumerable<RoleDto>>> Handle(
@@ -20,13 +25,7 @@ public class GetAllRolesQueryHandler : IRequestHandler<GetAllRolesQuery, Result<
         CancellationToken cancellationToken)
     {
         var roles = await _roleRepository.GetAllRoles();
-
-        var roleDtos = roles.Select(r => new RoleDto
-        {
-            Id = r.Id,
-            Name = r.Name,
-            Description = r.Description
-        });
+        var roleDtos = _mapper.Map<IEnumerable<RoleDto>>(roles);
 
         return Result.Ok(roleDtos);
     }

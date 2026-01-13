@@ -1,9 +1,9 @@
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
 using CryptoJackpot.Identity.Application.Events;
-using CryptoJackpot.Identity.Application.Extensions;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using CryptoJackpot.Identity.Domain.Models;
@@ -21,6 +21,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
     private readonly ILogger<CreateUserCommandHandler> _logger;
+    private readonly IMapper _mapper;
 
     private const long DefaultRoleId = 2;
 
@@ -30,7 +31,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         IIdentityEventPublisher eventPublisher,
         IUnitOfWork unitOfWork,
         IMediator mediator,
-        ILogger<CreateUserCommandHandler> logger)
+        ILogger<CreateUserCommandHandler> logger,
+        IMapper mapper)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -38,6 +40,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         _unitOfWork = unitOfWork;
         _mediator = mediator;
         _logger = logger;
+        _mapper = mapper;
     }
 
     public async Task<Result<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -70,7 +73,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
             _logger.LogInformation("User {UserId} created successfully", createdUser.Id);
-            return ResultExtensions.Created(createdUser.ToDto());
+            return ResultExtensions.Created(_mapper.Map<UserDto>(createdUser));
         }
         catch (Exception ex)
         {
