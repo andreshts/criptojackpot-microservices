@@ -1,4 +1,4 @@
-using CryptoJackpot.Identity.Application;
+using CryptoJackpot.Identity.Infra.IoC;
 
 var builder = WebApplication.CreateBuilder(args);
 

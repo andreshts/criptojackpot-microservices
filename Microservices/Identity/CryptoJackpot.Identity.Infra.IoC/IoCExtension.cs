@@ -1,6 +1,7 @@
-using System.Text;
+﻿using System.Text;
 using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
+using CryptoJackpot.Identity.Application;
 using CryptoJackpot.Identity.Application.Configuration;
 using CryptoJackpot.Identity.Application.Handlers.Commands;
 using CryptoJackpot.Identity.Application.Interfaces;
@@ -21,12 +22,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+namespace CryptoJackpot.Identity.Infra.IoC;
 
-namespace CryptoJackpot.Identity.Application;
-
-public static class DependencyInjection
+public static class IoCExtension
 {
-    public static IServiceCollection AddIdentityServices(
+    public static void AddIdentityServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -38,14 +38,12 @@ public static class DependencyInjection
         AddRepositories(services);
         AddApplicationServices(services);
         AddInfrastructure(services, configuration);
-
-        return services;
     }
 
     /// <summary>
     /// Applies pending database migrations only in development environment.
     /// </summary>
-    public static async Task ApplyMigrationsAsync(this IHost host)
+    public async static Task ApplyMigrationsAsync(this IHost host)
     {
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
@@ -185,8 +183,10 @@ public static class DependencyInjection
 
     private static void AddApplicationServices(IServiceCollection services)
     {
+        var assembly = typeof(IAssemblyReference).Assembly;
+        
         // MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AuthenticateCommandHandler).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
 
         // Infrastructure Services
         services.AddScoped<IJwtTokenService, JwtTokenService>();
