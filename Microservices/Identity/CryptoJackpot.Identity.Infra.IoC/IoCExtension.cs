@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application;
@@ -12,7 +13,9 @@ using CryptoJackpot.Identity.Data.Repositories;
 using CryptoJackpot.Identity.Data.Services;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using CryptoJackpot.Infra.IoC;
+using FluentValidation;
 using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -187,7 +190,13 @@ public static class IoCExtension
         // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
         
-        //AutoMapper
+        // Validators
+        services.AddValidatorsFromAssembly(assembly);
+        
+        // Validation Behavior
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        
+        // AutoMapper
         services.AddAutoMapper(cfg => cfg.AddProfile<IdentityMappingProfile>());
 
         // Infrastructure Services

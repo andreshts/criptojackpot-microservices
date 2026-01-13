@@ -1,9 +1,9 @@
-﻿using MediatR;
-using FluentValidation;
+﻿using CryptoJackpot.Domain.Core.Responses.Errors;
 using FluentResults;
-using CryptoJackpot.Domain.Core.Responses.Errors;
+using FluentValidation;
+using MediatR;
 
-namespace CryptoJackpot.Lottery.Application.Behaviors;
+namespace CryptoJackpot.Domain.Core.Behaviors;
 
 public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IRequest<TResponse>
@@ -42,3 +42,4 @@ public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TReques
         return await next();
     }
 }
+

@@ -1,9 +1,9 @@
 ﻿using System.Text;
 using Asp.Versioning;
+using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Lottery.Application.Configuration;
 using CryptoJackpot.Lottery.Data.Context;
-using CryptoJackpot.Lottery.Application.Behaviors;
 using CryptoJackpot.Lottery.Data.Repositories;
 using CryptoJackpot.Lottery.Domain.Interfaces;
 using FluentValidation;
