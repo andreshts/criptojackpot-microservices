@@ -1,4 +1,5 @@
 ﻿using CryptoJackpot.Lottery.Data.Context;
+using CryptoJackpot.Lottery.Domain.Enums;
 using CryptoJackpot.Lottery.Domain.Exceptions;
 using CryptoJackpot.Lottery.Domain.Interfaces;
 using CryptoJackpot.Lottery.Domain.Models;
@@ -260,4 +261,89 @@ public class LotteryNumberRepository : ILotteryNumberRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    /// <summary>
+    /// Reserves lottery numbers for an order (during checkout)
+    /// </summary>
+    public async Task<bool> ReserveNumbersAsync(List<Guid> numberIds, Guid orderId)
+    {
+        var numbers = await _context.LotteryNumbers
+            .Where(x => numberIds.Contains(x.Id) && x.IsAvailable && x.Status == NumberStatus.Available)
+            .ToListAsync();
+
+        if (numbers.Count != numberIds.Count)
+            return false; // Some numbers are not available
+
+        var now = DateTime.UtcNow;
+        foreach (var number in numbers)
+        {
+            number.IsAvailable = false;
+            number.Status = NumberStatus.Reserved;
+            number.OrderId = orderId;
+            number.ReservationExpiresAt = now.AddMinutes(5);
+            number.UpdatedAt = now;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// Confirms lottery numbers as sold (after payment)
+    /// </summary>
+    public async Task<bool> ConfirmNumbersSoldAsync(List<Guid> numberIds, Guid ticketId)
+    {
+        var numbers = await _context.LotteryNumbers
+            .Where(x => numberIds.Contains(x.Id) && x.Status == NumberStatus.Reserved)
+            .ToListAsync();
+
+        if (numbers.Count != numberIds.Count)
+            return false;
+
+        var now = DateTime.UtcNow;
+        foreach (var number in numbers)
+        {
+            number.Status = NumberStatus.Sold;
+            number.TicketId = ticketId;
+            number.ReservationExpiresAt = null;
+            number.UpdatedAt = now;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// Releases reserved numbers back to available (order expired/cancelled)
+    /// </summary>
+    public async Task<bool> ReleaseNumbersByOrderAsync(Guid orderId)
+    {
+        var numbers = await _context.LotteryNumbers
+            .Where(x => x.OrderId == orderId && x.Status == NumberStatus.Reserved)
+            .ToListAsync();
+
+        if (!numbers.Any())
+            return false;
+
+        var now = DateTime.UtcNow;
+        foreach (var number in numbers)
+        {
+            number.IsAvailable = true;
+            number.Status = NumberStatus.Available;
+            number.OrderId = null;
+            number.ReservationExpiresAt = null;
+            number.UpdatedAt = now;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    /// <summary>
+    /// Gets lottery numbers by their IDs
+    /// </summary>
+    public async Task<List<LotteryNumber>> GetByIdsAsync(List<Guid> numberIds)
+        => await _context.LotteryNumbers
+            .Where(x => numberIds.Contains(x.Id))
+            .ToListAsync();
 }

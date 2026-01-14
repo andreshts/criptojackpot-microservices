@@ -63,6 +63,27 @@ public class OrderController : ControllerBase
         return result.ToActionResult();
     }
 
+    /// <summary>
+    /// Cancels a pending order and releases reserved lottery numbers.
+    /// </summary>
+    [HttpPost("{orderId:guid}/cancel")]
+    public async Task<IActionResult> CancelOrder([FromRoute] Guid orderId)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        var command = new CancelOrderCommand
+        {
+            OrderId = orderId,
+            UserId = userId.Value,
+            Reason = "User cancelled"
+        };
+
+        var result = await _mediator.Send(command);
+        return result.ToActionResult();
+    }
+
     private long? GetUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

@@ -12,4 +12,10 @@ public interface ILotteryNumberRepository
     Task<List<int>> GetRandomAvailableNumbersAsync(Guid lotteryId, int count, int maxNumber, int minNumber = 1);
     Task AddRangeAsync(IEnumerable<LotteryNumber> lotteryNumbers);
     Task<bool> ReleaseNumbersByTicketAsync(Guid ticketId);
+    
+    // Order integration methods
+    Task<bool> ReserveNumbersAsync(List<Guid> numberIds, Guid orderId);
+    Task<bool> ConfirmNumbersSoldAsync(List<Guid> numberIds, Guid ticketId);
+    Task<bool> ReleaseNumbersByOrderAsync(Guid orderId);
+    Task<List<LotteryNumber>> GetByIdsAsync(List<Guid> numberIds);
 }

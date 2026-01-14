@@ -3,6 +3,7 @@ using Asp.Versioning;
 using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Lottery.Application;
 using CryptoJackpot.Lottery.Application.Configuration;
@@ -229,18 +230,64 @@ public static class IoCExtension
                 // Register producer for publishing events
                 rider.AddProducer<LotteryCreatedEvent>(KafkaTopics.LotteryCreated);
                 
-                // Register consumer for processing events
+                // Register consumers for internal events
                 rider.AddConsumer<LotteryCreatedConsumer>();
+                
+                // Register consumers for Order events
+                rider.AddConsumer<OrderCreatedConsumer>();
+                rider.AddConsumer<OrderCompletedConsumer>();
+                rider.AddConsumer<OrderExpiredConsumer>();
+                rider.AddConsumer<OrderCancelledConsumer>();
             },
             configureKafkaEndpoints: (context, kafka) =>
             {
-                // Configure consumer endpoint
+                // Lottery internal events
                 kafka.TopicEndpoint<LotteryCreatedEvent>(
                     KafkaTopics.LotteryCreated,
                     KafkaTopics.LotteryGroup,
                     e =>
                     {
                         e.ConfigureConsumer<LotteryCreatedConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
+
+                // Order events - reserve numbers when order is created
+                kafka.TopicEndpoint<OrderCreatedEvent>(
+                    KafkaTopics.OrderCreated,
+                    KafkaTopics.LotteryGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<OrderCreatedConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
+
+                // Order events - confirm sold when order is completed
+                kafka.TopicEndpoint<OrderCompletedEvent>(
+                    KafkaTopics.OrderCompleted,
+                    KafkaTopics.LotteryGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<OrderCompletedConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
+
+                // Order events - release numbers when order expires
+                kafka.TopicEndpoint<OrderExpiredEvent>(
+                    KafkaTopics.OrderExpired,
+                    KafkaTopics.LotteryGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<OrderExpiredConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
+
+                // Order events - release numbers when order is cancelled
+                kafka.TopicEndpoint<OrderCancelledEvent>(
+                    KafkaTopics.OrderCancelled,
+                    KafkaTopics.LotteryGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<OrderCancelledConsumer>(context);
                         e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
                     });
             });

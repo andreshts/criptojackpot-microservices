@@ -22,6 +22,11 @@ public class Order : BaseEntity
     public DateTime ExpiresAt { get; set; }
     
     /// <summary>
+    /// Computed property to check if order is expired
+    /// </summary>
+    public bool IsExpired => Status == OrderStatus.Pending && DateTime.UtcNow > ExpiresAt;
+    
+    /// <summary>
     /// Selected numbers for purchase
     /// </summary>
     public int[] SelectedNumbers { get; set; } = [];

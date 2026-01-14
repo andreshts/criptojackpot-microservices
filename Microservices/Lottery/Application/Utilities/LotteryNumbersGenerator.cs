@@ -1,3 +1,4 @@
+using CryptoJackpot.Lottery.Domain.Enums;
 using CryptoJackpot.Lottery.Domain.Models;
 
 namespace CryptoJackpot.Lottery.Application.Utilities;
@@ -36,7 +37,10 @@ public static class LotteryNumbersGenerator
                     Number = number,
                     Series = series,
                     IsAvailable = true,
+                    Status = NumberStatus.Available,
                     TicketId = null,
+                    OrderId = null,
+                    ReservationExpiresAt = null,
                     CreatedAt = now,
                     UpdatedAt = now
                 };

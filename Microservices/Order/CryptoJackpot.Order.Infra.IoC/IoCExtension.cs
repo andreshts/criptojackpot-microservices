@@ -1,13 +1,17 @@
 ﻿using System.Text;
 using Asp.Versioning;
 using CryptoJackpot.Domain.Core.Behaviors;
+using CryptoJackpot.Domain.Core.Constants;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Order.Application;
 using CryptoJackpot.Order.Application.Configuration;
+using CryptoJackpot.Order.Application.Consumers;
 using CryptoJackpot.Order.Data.Context;
 using CryptoJackpot.Order.Data.Repositories;
 using CryptoJackpot.Order.Domain.Interfaces;
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -210,13 +214,34 @@ public static class IoCExtension
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
     {
-        // Use shared infrastructure with Kafka and Transactional Outbox
+        // Use shared infrastructure with Kafka, Transactional Outbox, and Message Scheduler
         DependencyContainer.RegisterServicesWithKafka<OrderDbContext>(
             services,
             configuration,
             configureRider: rider =>
             {
-                // Register producers/consumers for events here
-            });
+                // Register producers for Order events
+                rider.AddProducer<OrderCreatedEvent>(KafkaTopics.OrderCreated);
+                rider.AddProducer<OrderCompletedEvent>(KafkaTopics.OrderCompleted);
+                rider.AddProducer<OrderExpiredEvent>(KafkaTopics.OrderExpired);
+                rider.AddProducer<OrderCancelledEvent>(KafkaTopics.OrderCancelled);
+                rider.AddProducer<OrderTimeoutEvent>(KafkaTopics.OrderTimeout);
+
+                // Register consumer for timeout events
+                rider.AddConsumer<OrderTimeoutConsumer>();
+            },
+            configureKafkaEndpoints: (context, kafka) =>
+            {
+                // Order timeout - process scheduled timeout events
+                kafka.TopicEndpoint<OrderTimeoutEvent>(
+                    KafkaTopics.OrderTimeout,
+                    KafkaTopics.OrderGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<OrderTimeoutConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
+            },
+            useMessageScheduler: true);
     }
 }

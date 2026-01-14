@@ -1,4 +1,6 @@
 using AutoMapper;
+using CryptoJackpot.Domain.Core.Bus;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Order.Application.Commands;
 using CryptoJackpot.Order.Application.DTOs;
@@ -15,17 +17,20 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
 {
     private readonly IOrderRepository _orderRepository;
     private readonly ITicketRepository _ticketRepository;
+    private readonly IEventBus _eventBus;
     private readonly IMapper _mapper;
     private readonly ILogger<CompleteOrderCommandHandler> _logger;
 
     public CompleteOrderCommandHandler(
         IOrderRepository orderRepository,
         ITicketRepository ticketRepository,
+        IEventBus eventBus,
         IMapper mapper,
         ILogger<CompleteOrderCommandHandler> logger)
     {
         _orderRepository = orderRepository;
         _ticketRepository = ticketRepository;
+        _eventBus = eventBus;
         _mapper = mapper;
         _logger = logger;
     }
@@ -46,10 +51,18 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
             return Result.Fail<TicketDto>(new BadRequestError($"Order cannot be completed. Current status: {order.Status}"));
 
         // Verify the order hasn't expired
-        if (order.ExpiresAt < DateTime.UtcNow)
+        if (order.IsExpired)
         {
             order.Status = OrderStatus.Expired;
             await _orderRepository.UpdateAsync(order);
+
+            // Publish expired event to release numbers
+            await _eventBus.Publish(new OrderExpiredEvent
+            {
+                OrderId = order.OrderGuid,
+                LotteryId = order.LotteryId,
+                LotteryNumberIds = order.LotteryNumberIds
+            });
             
             _logger.LogWarning("Order {OrderId} has expired", request.OrderId);
             return Result.Fail<TicketDto>(new BadRequestError("Order has expired. Please create a new order."));
@@ -84,8 +97,19 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
             order.TicketId = createdTicket.TicketGuid;
             await _orderRepository.UpdateAsync(order);
 
+            // Publish event to mark numbers as sold permanently
+            await _eventBus.Publish(new OrderCompletedEvent
+            {
+                OrderId = order.OrderGuid,
+                TicketId = createdTicket.TicketGuid,
+                LotteryId = order.LotteryId,
+                UserId = order.UserId,
+                LotteryNumberIds = order.LotteryNumberIds,
+                TransactionId = request.TransactionId
+            });
+
             _logger.LogInformation(
-                "Order {OrderId} completed. Ticket {TicketId} created for user {UserId}. Transaction: {TransactionId}",
+                "Order {OrderId} completed. Ticket {TicketId} created for user {UserId}. Transaction: {TransactionId}. Event published.",
                 order.OrderGuid, createdTicket.TicketGuid, request.UserId, request.TransactionId);
 
             return Result.Ok(_mapper.Map<TicketDto>(createdTicket));

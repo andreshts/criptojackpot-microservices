@@ -17,12 +17,14 @@ public static class DependencyContainer
     /// <param name="configureRider">Configure rider (add producers/consumers)</param>
     /// <param name="configureBus">Configure bus (add consumers)</param>
     /// <param name="configureKafkaEndpoints">Configure Kafka topic endpoints (for consumers)</param>
+    /// <param name="useMessageScheduler">Enable in-memory message scheduler for delayed messages</param>
     public static void RegisterServicesWithKafka<TDbContext>(
         IServiceCollection services,
         IConfiguration configuration,
         Action<IRiderRegistrationConfigurator>? configureRider = null,
         Action<IBusRegistrationConfigurator>? configureBus = null,
-        Action<IRiderRegistrationContext, IKafkaFactoryConfigurator>? configureKafkaEndpoints = null)
+        Action<IRiderRegistrationContext, IKafkaFactoryConfigurator>? configureKafkaEndpoints = null,
+        bool useMessageScheduler = false)
         where TDbContext : DbContext
     {
         // Domain Bus
@@ -49,9 +51,15 @@ public static class DependencyContainer
                 o.UseBusOutbox();
             });
 
-            // In-memory for internal messaging
+            // In-memory for internal messaging with optional scheduler
             x.UsingInMemory((context, cfg) =>
             {
+                if (useMessageScheduler)
+                {
+                    // Enable in-memory message scheduler for delayed/scheduled messages
+                    cfg.UseDelayedMessageScheduler();
+                }
+                
                 cfg.ConfigureEndpoints(context);
             });
 
@@ -80,7 +88,8 @@ public static class DependencyContainer
         IConfiguration configuration,
         Action<IRiderRegistrationConfigurator>? configureRider = null,
         Action<IBusRegistrationConfigurator>? configureBus = null,
-        Action<IRiderRegistrationContext, IKafkaFactoryConfigurator>? configureKafkaEndpoints = null)
+        Action<IRiderRegistrationContext, IKafkaFactoryConfigurator>? configureKafkaEndpoints = null,
+        bool useMessageScheduler = false)
     {
         // Domain Bus
         services.AddTransient<IEventBus, Bus.MassTransitBus>();
@@ -93,9 +102,15 @@ public static class DependencyContainer
             // Allow microservices to add consumers to the bus
             configureBus?.Invoke(x);
 
-            // In-memory for internal messaging
+            // In-memory for internal messaging with optional scheduler
             x.UsingInMemory((context, cfg) =>
             {
+                if (useMessageScheduler)
+                {
+                    // Enable in-memory message scheduler for delayed/scheduled messages
+                    cfg.UseDelayedMessageScheduler();
+                }
+                
                 cfg.ConfigureEndpoints(context);
             });
 

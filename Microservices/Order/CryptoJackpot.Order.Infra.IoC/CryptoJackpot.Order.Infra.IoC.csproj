@@ -23,6 +23,7 @@
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\..\..\Infra.IoC\CryptoJackpot.Infra.IoC.csproj" />
+      <ProjectReference Include="..\..\..\Domain\CryptoJackpot.Domain.Core.csproj" />
       <ProjectReference Include="..\Application\CryptoJackpot.Order.Application.csproj" />
       <ProjectReference Include="..\Data\CryptoJackpot.Order.Data.csproj" />
     </ItemGroup>
