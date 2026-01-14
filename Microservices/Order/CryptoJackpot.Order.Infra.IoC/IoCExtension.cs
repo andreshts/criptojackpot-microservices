@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Asp.Versioning;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Order.Application;
 using CryptoJackpot.Order.Data.Context;
@@ -143,6 +144,18 @@ public static class IoCExtension
     {
         services.AddControllers();
 
+        services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        }).AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
         var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 
         services.AddCors(options =>
@@ -174,7 +187,7 @@ public static class IoCExtension
     private static void AddApplicationServices(IServiceCollection services)
     {
         var assembly = typeof(IAssemblyReference).Assembly;
-        
+
         // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
     }
