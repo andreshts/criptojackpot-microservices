@@ -1,8 +1,14 @@
 ﻿using System.Text;
 using Asp.Versioning;
+using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Order.Application;
+using CryptoJackpot.Order.Application.Configuration;
 using CryptoJackpot.Order.Data.Context;
+using CryptoJackpot.Order.Data.Repositories;
+using CryptoJackpot.Order.Domain.Interfaces;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -181,7 +187,8 @@ public static class IoCExtension
 
     private static void AddRepositories(IServiceCollection services)
     {
-        // Add repositories here
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<ITicketRepository, TicketRepository>();
     }
 
     private static void AddApplicationServices(IServiceCollection services)
@@ -190,6 +197,15 @@ public static class IoCExtension
 
         // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+
+        // Validators
+        services.AddValidatorsFromAssembly(assembly);
+
+        // Behavior
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+        // AutoMapper
+        services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)

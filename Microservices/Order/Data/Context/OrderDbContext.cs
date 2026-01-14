@@ -1,3 +1,4 @@
+using CryptoJackpot.Order.Domain.Models;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +10,15 @@ public class OrderDbContext : DbContext
     {
     }
 
+    public DbSet<Domain.Models.Order> Orders => Set<Domain.Models.Order>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Apply configurations from assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OrderDbContext).Assembly);
 
         // MassTransit Outbox configuration with snake_case naming
         modelBuilder.AddInboxStateEntity(x => x.ToTable("inbox_state"));
