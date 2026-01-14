@@ -21,5 +21,7 @@ public interface ILotteryNumberRepository
     
     // SignalR/Real-time methods
     Task<LotteryNumber?> FindAvailableNumberAsync(Guid lotteryId, int number, int? series = null);
+    Task<List<LotteryNumber>> FindAvailableNumbersAsync(Guid lotteryId, int series, IEnumerable<int> numbers);
     Task<LotteryNumber> UpdateAsync(LotteryNumber lotteryNumber);
+    Task UpdateRangeAsync(IEnumerable<LotteryNumber> lotteryNumbers);
 }

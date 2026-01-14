@@ -36,7 +36,6 @@ public static class LotteryNumbersGenerator
                     LotteryId = lotteryId,
                     Number = number,
                     Series = series,
-                    IsAvailable = true,
                     Status = NumberStatus.Available,
                     TicketId = null,
                     OrderId = null,

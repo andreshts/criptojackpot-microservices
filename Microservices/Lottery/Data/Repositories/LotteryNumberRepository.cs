@@ -268,7 +268,7 @@ public class LotteryNumberRepository : ILotteryNumberRepository
     public async Task<bool> ReserveNumbersAsync(List<Guid> numberIds, Guid orderId)
     {
         var numbers = await _context.LotteryNumbers
-            .Where(x => numberIds.Contains(x.Id) && x.IsAvailable && x.Status == NumberStatus.Available)
+            .Where(x => numberIds.Contains(x.Id) && x.Status == NumberStatus.Available)
             .ToListAsync();
 
         if (numbers.Count != numberIds.Count)
@@ -277,7 +277,6 @@ public class LotteryNumberRepository : ILotteryNumberRepository
         var now = DateTime.UtcNow;
         foreach (var number in numbers)
         {
-            number.IsAvailable = false;
             number.Status = NumberStatus.Reserved;
             number.OrderId = orderId;
             number.ReservationExpiresAt = now.AddMinutes(5);
@@ -328,7 +327,6 @@ public class LotteryNumberRepository : ILotteryNumberRepository
         var now = DateTime.UtcNow;
         foreach (var number in numbers)
         {
-            number.IsAvailable = true;
             number.Status = NumberStatus.Available;
             number.OrderId = null;
             number.ReservationExpiresAt = null;
@@ -368,6 +366,24 @@ public class LotteryNumberRepository : ILotteryNumberRepository
     }
 
     /// <summary>
+    /// Finds available numbers matching the specified numbers and series
+    /// </summary>
+    public async Task<List<LotteryNumber>> FindAvailableNumbersAsync(
+        Guid lotteryId, 
+        int series, 
+        IEnumerable<int> numbers)
+    {
+        var numbersList = numbers.ToList();
+        
+        return await _context.LotteryNumbers
+            .Where(x => x.LotteryId == lotteryId && 
+                        x.Series == series &&
+                        numbersList.Contains(x.Number) &&
+                        x.Status == NumberStatus.Available)
+            .ToListAsync();
+    }
+
+    /// <summary>
     /// Updates a single lottery number
     /// </summary>
     public async Task<LotteryNumber> UpdateAsync(LotteryNumber lotteryNumber)
@@ -376,5 +392,21 @@ public class LotteryNumberRepository : ILotteryNumberRepository
         _context.LotteryNumbers.Update(lotteryNumber);
         await _context.SaveChangesAsync();
         return lotteryNumber;
+    }
+
+    /// <summary>
+    /// Updates multiple lottery numbers
+    /// </summary>
+    public async Task UpdateRangeAsync(IEnumerable<LotteryNumber> lotteryNumbers)
+    {
+        var now = DateTime.UtcNow;
+        var enumerable = lotteryNumbers.ToList();
+        foreach (var number in enumerable)
+        {
+            number.UpdatedAt = now;
+        }
+        
+        _context.LotteryNumbers.UpdateRange(enumerable);
+        await _context.SaveChangesAsync();
     }
 }

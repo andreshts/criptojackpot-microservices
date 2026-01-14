@@ -9,8 +9,12 @@ public class LotteryNumber : BaseEntity
     public Guid LotteryId { get; set; }
     public int Number { get; set; }
     public int Series { get; set; }
-    public bool IsAvailable { get; set; }
     public NumberStatus Status { get; set; }
+    
+    /// <summary>
+    /// Computed property: true if Status is Available
+    /// </summary>
+    public bool IsAvailable => Status == NumberStatus.Available;
     
     /// <summary>
     /// Order ID that reserved this number (during checkout)

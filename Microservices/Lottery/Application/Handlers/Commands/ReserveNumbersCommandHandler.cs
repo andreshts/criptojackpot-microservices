@@ -3,15 +3,19 @@ using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Lottery.Application.Commands;
 using CryptoJackpot.Lottery.Application.DTOs;
-using CryptoJackpot.Lottery.Domain.Exceptions;
+using CryptoJackpot.Lottery.Domain.Enums;
 using CryptoJackpot.Lottery.Domain.Interfaces;
-using CryptoJackpot.Lottery.Domain.Models;
 using FluentResults;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace CryptoJackpot.Lottery.Application.Handlers.Commands;
 
+/// <summary>
+/// Handler for reserving pre-generated lottery numbers.
+/// Numbers are already in the database with Status=Available.
+/// This handler updates them to Status=Reserved.
+/// </summary>
 public class ReserveNumbersCommandHandler : IRequestHandler<ReserveNumbersCommand, Result<List<LotteryNumberDto>>>
 {
     private readonly ILotteryNumberRepository _lotteryNumberRepository;
@@ -39,61 +43,51 @@ public class ReserveNumbersCommandHandler : IRequestHandler<ReserveNumbersComman
             if (lottery is null)
                 return Result.Fail<List<LotteryNumberDto>>(new NotFoundError("Lottery not found"));
 
-            // Validar que los números estén en el rango permitido
+            // Validate numbers are in range
             var invalidNumbers = request.Numbers.Where(n => n < lottery.MinNumber || n > lottery.MaxNumber).ToList();
             if (invalidNumbers.Any())
                 return Result.Fail<List<LotteryNumberDto>>(new BadRequestError(
                     $"Numbers out of range: {string.Join(", ", invalidNumbers)}"));
 
-            // Validar que la serie sea válida
+            // Validate series is valid
             if (request.Series < 1 || request.Series > lottery.TotalSeries)
                 return Result.Fail<List<LotteryNumberDto>>(new BadRequestError(
                     $"Invalid series. Must be between 1 and {lottery.TotalSeries}"));
 
-            // OPTIMIZACIÓN: Verificar disponibilidad de TODOS los números en UNA SOLA consulta
-            // Esto elimina el problema N+1 (antes: N consultas, ahora: 1 consulta)
-            var alreadyReserved = await _lotteryNumberRepository.GetAlreadyReservedNumbersAsync(
+            // Find available numbers matching the request
+            var availableNumbers = await _lotteryNumberRepository.FindAvailableNumbersAsync(
                 request.LotteryId, 
                 request.Series, 
                 request.Numbers);
 
-            if (alreadyReserved.Any())
+            // Check if all requested numbers are available
+            var requestedSet = request.Numbers.ToHashSet();
+            var availableSet = availableNumbers.Select(n => n.Number).ToHashSet();
+            var unavailableNumbers = requestedSet.Except(availableSet).ToList();
+
+            if (unavailableNumbers.Any())
             {
                 return Result.Fail<List<LotteryNumberDto>>(new ConflictError(
-                    $"Numbers already sold: {string.Join(", ", alreadyReserved)} in series {request.Series}"));
+                    $"Numbers not available: {string.Join(", ", unavailableNumbers)} in series {request.Series}"));
             }
 
-            // Crear los registros de números reservados
-            var lotteryNumbers = request.Numbers.Select(n => new LotteryNumber
+            // Update the numbers to Reserved status
+            var now = DateTime.UtcNow;
+            foreach (var number in availableNumbers)
             {
-                Id = Guid.NewGuid(),
-                LotteryId = request.LotteryId,
-                Number = n,
-                Series = request.Series,
-                IsAvailable = false,
-                TicketId = request.TicketId
-            }).ToList();
-
-            try
-            {
-                await _lotteryNumberRepository.AddRangeAsync(lotteryNumbers);
-            }
-            catch (DuplicateNumberReservationException ex)
-            {
-                // Manejo de concurrencia: Si dos usuarios intentan reservar el mismo número
-                // simultáneamente, el repositorio lanza esta excepción de dominio.
-                _logger.LogWarning(ex, 
-                    "Concurrent reservation conflict for ticket {TicketId} in lottery {LotteryId}", 
-                    request.TicketId, request.LotteryId);
-                
-                return Result.Fail<List<LotteryNumberDto>>(new ConflictError(
-                    "One or more numbers were reserved by another user. Please try again with different numbers."));
+                number.Status = NumberStatus.Reserved;
+                number.TicketId = request.TicketId;
+                number.ReservationExpiresAt = now.AddMinutes(5);
+                number.UpdatedAt = now;
             }
 
-            _logger.LogInformation("Reserved {Count} numbers for ticket {TicketId} in lottery {LotteryId}",
-                request.Numbers.Count, request.TicketId, request.LotteryId);
+            await _lotteryNumberRepository.UpdateRangeAsync(availableNumbers);
 
-            var result = _mapper.Map<List<LotteryNumberDto>>(lotteryNumbers);
+            _logger.LogInformation(
+                "Reserved {Count} numbers for ticket {TicketId} in lottery {LotteryId}, series {Series}",
+                availableNumbers.Count, request.TicketId, request.LotteryId, request.Series);
+
+            var result = _mapper.Map<List<LotteryNumberDto>>(availableNumbers);
             return ResultExtensions.Created(result);
         }
         catch (Exception ex)
