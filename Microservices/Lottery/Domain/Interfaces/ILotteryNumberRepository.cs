@@ -18,4 +18,8 @@ public interface ILotteryNumberRepository
     Task<bool> ConfirmNumbersSoldAsync(List<Guid> numberIds, Guid ticketId);
     Task<bool> ReleaseNumbersByOrderAsync(Guid orderId);
     Task<List<LotteryNumber>> GetByIdsAsync(List<Guid> numberIds);
+    
+    // SignalR/Real-time methods
+    Task<LotteryNumber?> FindAvailableNumberAsync(Guid lotteryId, int number, int? series = null);
+    Task<LotteryNumber> UpdateAsync(LotteryNumber lotteryNumber);
 }

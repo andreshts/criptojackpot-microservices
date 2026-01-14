@@ -346,4 +346,35 @@ public class LotteryNumberRepository : ILotteryNumberRepository
         => await _context.LotteryNumbers
             .Where(x => numberIds.Contains(x.Id))
             .ToListAsync();
+
+    /// <summary>
+    /// Finds an available number (first available series if series not specified)
+    /// </summary>
+    public async Task<LotteryNumber?> FindAvailableNumberAsync(Guid lotteryId, int number, int? series = null)
+    {
+        var query = _context.LotteryNumbers
+            .Where(x => x.LotteryId == lotteryId && 
+                        x.Number == number && 
+                        x.Status == NumberStatus.Available);
+
+        if (series.HasValue)
+        {
+            query = query.Where(x => x.Series == series.Value);
+        }
+
+        return await query
+            .OrderBy(x => x.Series)
+            .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// Updates a single lottery number
+    /// </summary>
+    public async Task<LotteryNumber> UpdateAsync(LotteryNumber lotteryNumber)
+    {
+        lotteryNumber.UpdatedAt = DateTime.UtcNow;
+        _context.LotteryNumbers.Update(lotteryNumber);
+        await _context.SaveChangesAsync();
+        return lotteryNumber;
+    }
 }

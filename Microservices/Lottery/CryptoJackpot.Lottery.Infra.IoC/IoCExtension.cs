@@ -8,6 +8,8 @@ using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Lottery.Application;
 using CryptoJackpot.Lottery.Application.Configuration;
 using CryptoJackpot.Lottery.Application.Consumers;
+using CryptoJackpot.Lottery.Application.Interfaces;
+using CryptoJackpot.Lottery.Application.Services;
 using CryptoJackpot.Lottery.Data.Context;
 using CryptoJackpot.Lottery.Data.Repositories;
 using CryptoJackpot.Lottery.Domain.Interfaces;
@@ -217,6 +219,18 @@ public static class IoCExtension
 
         // AutoMapper
         services.AddAutoMapper(typeof(LotteryMappingProfile).Assembly);
+
+        // Application Services
+        services.AddScoped<ILotteryNumberService, LotteryNumberService>();
+    }
+
+    /// <summary>
+    /// Adds SignalR services for real-time lottery updates.
+    /// Call this method in the API project's Program.cs.
+    /// </summary>
+    public static void AddLotterySignalR(this IServiceCollection services)
+    {
+        services.AddSignalR();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
