@@ -12,9 +12,9 @@ public class JwtTokenService : IJwtTokenService
 {
     private readonly JwtConfig _jwtSettings;
 
-    public JwtTokenService(IOptions<ApplicationConfiguration> appSettings)
+    public JwtTokenService(IOptions<JwtConfig> jwtSettings)
     {
-        _jwtSettings = appSettings.Value.JwtSettings 
+        _jwtSettings = jwtSettings.Value 
             ?? throw new InvalidOperationException("JwtSettings are not configured.");
     }
 

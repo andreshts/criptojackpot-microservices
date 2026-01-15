@@ -35,7 +35,7 @@ public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, R
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
-        if (user == null || !_passwordHasher.Verify(request.Password, user.Password))
+        if (user == null || !_passwordHasher.Verify(user.Password, request.Password))
             return Result.Fail<UserDto>(new UnauthorizedError("Invalid Credentials"));
 
         if (!user.Status)
