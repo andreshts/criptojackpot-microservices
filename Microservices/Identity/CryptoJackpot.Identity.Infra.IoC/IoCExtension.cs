@@ -59,19 +59,39 @@ public static class IoCExtension
 
             if (env.IsDevelopment())
             {
-                var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
-                if (pendingMigrations.Count > 0)
+                // Check if database exists and can connect
+                if (await context.Database.CanConnectAsync())
                 {
-                    logger.LogInformation("Applying {Count} pending migrations for IdentityDbContext...", pendingMigrations.Count);
+                    var pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToList();
+                    if (pendingMigrations.Count > 0)
+                    {
+                        logger.LogInformation("Applying {Count} pending migrations for IdentityDbContext...", pendingMigrations.Count);
+                        try
+                        {
+                            await context.Database.MigrateAsync();
+                            logger.LogInformation("Migrations applied successfully.");
+                        }
+                        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P07") // relation already exists
+                        {
+                            logger.LogWarning("Some tables already exist, skipping migration. Consider updating __EFMigrationsHistory table manually.");
+                        }
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("Database does not exist, creating...");
                     await context.Database.MigrateAsync();
-                    logger.LogInformation("Migrations applied successfully.");
                 }
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while applying database migrations.");
-            throw new InvalidOperationException("Failed to apply migrations for IdentityDbContext in development.", ex);
+            // Don't throw in development - allow app to start even if migrations fail
+            if (!host.Services.GetRequiredService<IHostEnvironment>().IsDevelopment())
+            {
+                throw new InvalidOperationException("Failed to apply migrations for IdentityDbContext.", ex);
+            }
         }
     }
 

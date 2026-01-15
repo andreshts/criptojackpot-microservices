@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
+using CryptoJackpot.Identity.Application.Requests;
 using CryptoJackpot.Identity.Domain.Models;
 
 namespace CryptoJackpot.Identity.Application.Configuration;
@@ -11,6 +12,9 @@ public class IdentityMappingProfile : Profile
     {
         // User mappings
         CreateMap<User, UserDto>();
+        
+        // CreateUserRequest -> CreateUserCommand mapping
+        CreateMap<CreateUserRequest, CreateUserCommand>();
         
         // CreateUserCommand -> User mapping
         CreateMap<CreateUserCommand, User>()

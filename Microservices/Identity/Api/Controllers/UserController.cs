@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.Queries;
@@ -15,27 +16,19 @@ namespace CryptoJackpot.Identity.Api.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public UserController(IMediator mediator)
+    public UserController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
 
     [AllowAnonymous]
     [HttpPost()]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
     {
-        var command = new CreateUserCommand
-        {
-            Email = request.Email,
-            Password = request.Password,
-            Name = request.Name,
-            LastName = request.LastName,
-            Phone = request.Phone,
-            CountryId = request.CountryId,
-            ReferralCode = request.ReferralCode
-        };
-
+        var command = _mapper.Map<CreateUserCommand>(request);
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
