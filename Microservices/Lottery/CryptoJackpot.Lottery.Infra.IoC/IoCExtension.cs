@@ -100,6 +100,23 @@ public static class IoCExtension
                     ValidAudience = jwtSettings["Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
+                
+                // SignalR sends the access token in the query string
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/lottery-hub"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        
+                        return Task.CompletedTask;
+                    }
+                };
             });
     }
 
