@@ -206,9 +206,12 @@ public static class IoCExtension
                 }
                 else
                 {
-                    builder.AllowAnyOrigin()
+                    // For development without specific origins - need SetIsOriginAllowed for SignalR with credentials
+                    // Note: AllowAnyOrigin() cannot be used with AllowCredentials()
+                    builder.SetIsOriginAllowed(_ => true)
                         .AllowAnyMethod()
-                        .AllowAnyHeader();
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 }
             });
         });

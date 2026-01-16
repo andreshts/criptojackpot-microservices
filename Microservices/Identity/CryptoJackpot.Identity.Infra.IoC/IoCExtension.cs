@@ -211,10 +211,12 @@ public static class IoCExtension
                 }
                 else
                 {
-                    // Fallback para desarrollo si no hay orígenes configurados
-                    builder.AllowAnyOrigin()
+                    // For development without specific origins - need SetIsOriginAllowed for credentials
+                    // Note: AllowAnyOrigin() cannot be used with AllowCredentials()
+                    builder.SetIsOriginAllowed(_ => true)
                         .AllowAnyMethod()
-                        .AllowAnyHeader();
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 }
             });
         });
