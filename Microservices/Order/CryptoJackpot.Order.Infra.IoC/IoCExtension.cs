@@ -2,6 +2,7 @@
 using Asp.Versioning;
 using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Domain.Core.Constants;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Order.Application;
@@ -232,6 +233,9 @@ public static class IoCExtension
 
                 // Register consumer for timeout events
                 rider.AddConsumer<OrderTimeoutConsumer>();
+                
+                // Register consumer for NumbersReserved events from Lottery
+                rider.AddConsumer<NumbersReservedConsumer>();
             },
             configureKafkaEndpoints: (context, kafka) =>
             {
@@ -242,6 +246,16 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<OrderTimeoutConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
+                    
+                // NumbersReserved - create/update orders when numbers are reserved via SignalR
+                kafka.TopicEndpoint<NumbersReservedEvent>(
+                    KafkaTopics.NumbersReserved,
+                    KafkaTopics.OrderGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<NumbersReservedConsumer>(context);
                         e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
                     });
             },

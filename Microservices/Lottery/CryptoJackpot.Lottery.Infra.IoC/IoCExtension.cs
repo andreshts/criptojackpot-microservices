@@ -263,6 +263,7 @@ public static class IoCExtension
             {
                 // Register producer for publishing events
                 rider.AddProducer<LotteryCreatedEvent>(KafkaTopics.LotteryCreated);
+                rider.AddProducer<NumbersReservedEvent>(KafkaTopics.NumbersReserved);
                 
                 // Register consumers for internal events
                 rider.AddConsumer<LotteryCreatedConsumer>();

@@ -106,6 +106,7 @@ public class LotteryHub : Hub<ILotteryHubClient>
     /// <param name="lotteryId">The lottery ID</param>
     /// <param name="number">The number to reserve (e.g., 10)</param>
     /// <param name="quantity">How many series to reserve (default: 1)</param>
+    [Obsolete("Use ReserveNumberWithOrder instead. This method will be removed in future versions.")]
     public async Task ReserveNumber(Guid lotteryId, int number, int quantity = 1)
     {
         try
@@ -170,6 +171,76 @@ public class LotteryHub : Hub<ILotteryHubClient>
         catch (Exception ex)
         {
             _logger.LogError(ex, "Exception in ReserveNumber - LotteryId: {LotteryId}, Number: {Number}, Quantity: {Quantity}",
+                lotteryId, number, quantity);
+            await Clients.Caller.ReceiveError($"Error reserving number: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Reserve N series of a number and automatically create/update an order.
+    /// This is the recommended method - it combines number reservation with order creation.
+    /// </summary>
+    /// <param name="lotteryId">The lottery ID</param>
+    /// <param name="number">The number to reserve (e.g., 10)</param>
+    /// <param name="quantity">How many series to reserve (default: 1)</param>
+    /// <param name="existingOrderId">Optional: existing pending order to add numbers to (cart functionality)</param>
+    public async Task ReserveNumberWithOrder(Guid lotteryId, int number, int quantity = 1, Guid? existingOrderId = null)
+    {
+        try
+        {
+            _logger.LogInformation(
+                "ReserveNumberWithOrder called - LotteryId: {LotteryId}, Number: {Number}, Quantity: {Quantity}, ExistingOrderId: {ExistingOrderId}",
+                lotteryId, number, quantity, existingOrderId);
+
+            var userId = GetUserId();
+            
+            if (userId == null)
+            {
+                _logger.LogWarning("ReserveNumberWithOrder failed: Unauthorized - no userId in token");
+                await Clients.Caller.ReceiveError("Unauthorized");
+                return;
+            }
+
+            var result = await _lotteryNumberService.ReserveNumberWithOrderAsync(
+                lotteryId, number, quantity, userId.Value, existingOrderId);
+            
+            if (result.IsSuccess)
+            {
+                var reservationWithOrder = result.Value;
+                var groupName = GetLotteryGroupName(lotteryId);
+                
+                // Notify all clients in the lottery group about each reserved series
+                foreach (var reservation in reservationWithOrder.Reservations)
+                {
+                    await Clients.Group(groupName).NumberReserved(
+                        lotteryId, 
+                        reservation.NumberId, 
+                        reservation.Number, 
+                        reservation.Series);
+                }
+                
+                // Send reservation with order info to the caller
+                await Clients.Caller.ReservationWithOrderConfirmed(reservationWithOrder);
+                
+                _logger.LogInformation(
+                    "User {UserId} reserved {Count} numbers in lottery {LotteryId}. OrderId: {OrderId}, Amount: {Amount}",
+                    userId, 
+                    reservationWithOrder.Reservations.Count, 
+                    lotteryId,
+                    reservationWithOrder.OrderId,
+                    reservationWithOrder.TotalAmount);
+            }
+            else
+            {
+                var errorMessage = result.Errors.First().Message;
+                _logger.LogWarning("ReserveNumberWithOrder failed: {Error}", errorMessage);
+                await Clients.Caller.ReceiveError(errorMessage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, 
+                "Exception in ReserveNumberWithOrder - LotteryId: {LotteryId}, Number: {Number}, Quantity: {Quantity}",
                 lotteryId, number, quantity);
             await Clients.Caller.ReceiveError($"Error reserving number: {ex.Message}");
         }

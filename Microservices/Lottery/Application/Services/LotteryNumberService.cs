@@ -1,3 +1,5 @@
+using CryptoJackpot.Domain.Core.Bus;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Lottery.Application.DTOs;
 using CryptoJackpot.Lottery.Application.Interfaces;
 using CryptoJackpot.Lottery.Domain.Enums;
@@ -15,16 +17,19 @@ public class LotteryNumberService : ILotteryNumberService
 {
     private readonly ILotteryNumberRepository _lotteryNumberRepository;
     private readonly ILotteryDrawRepository _lotteryDrawRepository;
+    private readonly IEventBus _eventBus;
     private readonly ILogger<LotteryNumberService> _logger;
     private const int ReservationMinutes = 5;
 
     public LotteryNumberService(
         ILotteryNumberRepository lotteryNumberRepository,
         ILotteryDrawRepository lotteryDrawRepository,
+        IEventBus eventBus,
         ILogger<LotteryNumberService> logger)
     {
         _lotteryNumberRepository = lotteryNumberRepository;
         _lotteryDrawRepository = lotteryDrawRepository;
+        _eventBus = eventBus;
         _logger = logger;
     }
 
@@ -197,6 +202,72 @@ public class LotteryNumberService : ILotteryNumberService
             expiresAt);
 
         return Result.Ok(reservations);
+    }
+
+    public async Task<Result<ReservationWithOrderDto>> ReserveNumberWithOrderAsync(
+        Guid lotteryId,
+        int number,
+        int quantity,
+        long userId,
+        Guid? existingOrderId = null)
+    {
+        // First, get the lottery to get the ticket price
+        var lottery = await _lotteryDrawRepository.GetLotteryByIdAsync(lotteryId);
+        if (lottery == null)
+        {
+            return Result.Fail<ReservationWithOrderDto>("Lottery not found");
+        }
+
+        // Reserve the numbers using existing logic
+        var reservationResult = await ReserveNumberByQuantityAsync(lotteryId, number, quantity, userId);
+        if (reservationResult.IsFailed)
+        {
+            return Result.Fail<ReservationWithOrderDto>(reservationResult.Errors);
+        }
+
+        var reservations = reservationResult.Value;
+        var now = DateTime.UtcNow;
+        var expiresAt = now.AddMinutes(ReservationMinutes);
+        
+        // Calculate total amount for this reservation
+        var ticketPrice = lottery.TicketPrice;
+        var reservationAmount = ticketPrice * reservations.Count;
+        
+        // Generate order ID (or use existing one)
+        var orderId = existingOrderId ?? Guid.NewGuid();
+        var isAddToExisting = existingOrderId.HasValue;
+
+        // Publish event to Order microservice to create/update the order
+        await _eventBus.Publish(new NumbersReservedEvent
+        {
+            OrderId = orderId,
+            LotteryId = lotteryId,
+            UserId = userId,
+            LotteryNumberIds = reservations.Select(r => r.NumberId).ToList(),
+            Numbers = reservations.Select(r => r.Number).ToArray(),
+            SeriesArray = reservations.Select(r => r.Series).ToArray(),
+            TicketPrice = ticketPrice,
+            TotalAmount = reservationAmount,
+            ExpiresAt = expiresAt,
+            IsAddToExistingOrder = isAddToExisting,
+            ExistingOrderId = existingOrderId
+        });
+
+        _logger.LogInformation(
+            "Published NumbersReservedEvent for user {UserId}. OrderId: {OrderId}, LotteryId: {LotteryId}, Count: {Count}, Amount: {Amount}",
+            userId, orderId, lotteryId, reservations.Count, reservationAmount);
+
+        return Result.Ok(new ReservationWithOrderDto
+        {
+            OrderId = orderId,
+            LotteryId = lotteryId,
+            TotalAmount = reservationAmount,
+            TicketPrice = ticketPrice,
+            ExpiresAt = expiresAt,
+            SecondsRemaining = ReservationMinutes * 60,
+            Reservations = reservations,
+            AddedToExistingOrder = isAddToExisting
+        });
     }
 }
 

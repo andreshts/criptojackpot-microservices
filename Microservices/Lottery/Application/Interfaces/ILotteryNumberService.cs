@@ -32,6 +32,23 @@ public interface ILotteryNumberService
     Task<Result<List<NumberReservationDto>>> ReserveNumberByQuantityAsync(Guid lotteryId, int number, int quantity, long userId);
 
     /// <summary>
+    /// Reserves N series of a specific number and creates/updates an order.
+    /// This is the primary method for the SignalR Hub - combines reservation + order creation.
+    /// </summary>
+    /// <param name="lotteryId">The lottery ID</param>
+    /// <param name="number">The number to reserve (e.g., 10)</param>
+    /// <param name="quantity">How many series to reserve</param>
+    /// <param name="userId">The user making the reservation</param>
+    /// <param name="existingOrderId">Optional: existing pending order to add to</param>
+    /// <returns>Reservation details with order information</returns>
+    Task<Result<ReservationWithOrderDto>> ReserveNumberWithOrderAsync(
+        Guid lotteryId, 
+        int number, 
+        int quantity, 
+        long userId,
+        Guid? existingOrderId = null);
+
+    /// <summary>
     /// Gets detailed number status for a lottery.
     /// </summary>
     Task<List<NumberStatusDto>> GetNumberStatusesAsync(Guid lotteryId);

@@ -50,6 +50,12 @@ public interface ILotteryHubClient
     Task ReservationsConfirmed(List<NumberReservationDto> reservations);
 
     /// <summary>
+    /// Confirms reservations with order information to the requesting client.
+    /// Used when reserving numbers via the Hub (creates order automatically).
+    /// </summary>
+    Task ReservationWithOrderConfirmed(ReservationWithOrderDto reservationWithOrder);
+
+    /// <summary>
     /// Sends an error message to a client.
     /// </summary>
     Task ReceiveError(string message);
