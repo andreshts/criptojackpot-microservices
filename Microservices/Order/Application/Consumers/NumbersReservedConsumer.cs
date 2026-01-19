@@ -3,6 +3,7 @@ using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Order.Domain.Enums;
 using CryptoJackpot.Order.Domain.Interfaces;
+using CryptoJackpot.Order.Domain.Models;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 
@@ -66,25 +67,45 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
             OrderGuid = message.OrderId,
             UserId = message.UserId,
             LotteryId = message.LotteryId,
-            TotalAmount = message.TotalAmount,
             Status = OrderStatus.Pending,
-            ExpiresAt = message.ExpiresAt,
-            SelectedNumbers = message.Numbers,
-            Series = message.SeriesArray.FirstOrDefault(),
-            LotteryNumberIds = message.LotteryNumberIds,
-            IsGift = false,
-            GiftRecipientId = null
+            ExpiresAt = message.ExpiresAt
         };
+
+        // Create order details from the reserved numbers
+        for (var i = 0; i < message.Numbers.Length; i++)
+        {
+            var series = i < message.SeriesArray.Length ? message.SeriesArray[i] : message.SeriesArray.FirstOrDefault();
+            var lotteryNumberId = i < message.LotteryNumberIds.Count ? message.LotteryNumberIds[i] : (Guid?)null;
+            var unitPrice = message.LotteryNumberIds.Count > 0 
+                ? message.TotalAmount / message.LotteryNumberIds.Count 
+                : message.TotalAmount;
+
+            order.OrderDetails.Add(new OrderDetail
+            {
+                Number = message.Numbers[i],
+                Series = series,
+                UnitPrice = unitPrice,
+                Quantity = 1,
+                LotteryNumberId = lotteryNumberId,
+                IsGift = false
+            });
+        }
 
         var createdOrder = await _orderRepository.CreateAsync(order);
 
-        // Publish OrderCreatedEvent to notify Lottery service (for backward compatibility)
+        // Get lottery number IDs for the event
+        var lotteryNumberIds = createdOrder.OrderDetails
+            .Where(od => od.LotteryNumberId.HasValue)
+            .Select(od => od.LotteryNumberId!.Value)
+            .ToList();
+
+        // Publish OrderCreatedEvent to notify Lottery service
         await _eventBus.Publish(new OrderCreatedEvent
         {
             OrderId = createdOrder.OrderGuid,
             LotteryId = createdOrder.LotteryId,
             UserId = createdOrder.UserId,
-            LotteryNumberIds = createdOrder.LotteryNumberIds,
+            LotteryNumberIds = lotteryNumberIds,
             ExpiresAt = createdOrder.ExpiresAt
         });
 
@@ -95,12 +116,12 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
             {
                 OrderId = createdOrder.OrderGuid,
                 LotteryId = createdOrder.LotteryId,
-                LotteryNumberIds = createdOrder.LotteryNumberIds
+                LotteryNumberIds = lotteryNumberIds
             });
 
         _logger.LogInformation(
-            "Created order {OrderId} from NumbersReservedEvent. Amount: {Amount}, Expires: {ExpiresAt}",
-            createdOrder.OrderGuid, createdOrder.TotalAmount, createdOrder.ExpiresAt);
+            "Created order {OrderId} from NumbersReservedEvent. Items: {ItemCount}, Amount: {Amount}, Expires: {ExpiresAt}",
+            createdOrder.OrderGuid, createdOrder.OrderDetails.Count, createdOrder.TotalAmount, createdOrder.ExpiresAt);
     }
 
     private async Task AddToExistingOrder(NumbersReservedEvent message)
@@ -136,10 +157,25 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
             return;
         }
 
-        // Add numbers to existing order
-        existingOrder.LotteryNumberIds.AddRange(message.LotteryNumberIds);
-        existingOrder.SelectedNumbers = existingOrder.SelectedNumbers.Concat(message.Numbers).ToArray();
-        existingOrder.TotalAmount += message.TotalAmount;
+        // Add new order details for the reserved numbers
+        for (var i = 0; i < message.Numbers.Length; i++)
+        {
+            var series = i < message.SeriesArray.Length ? message.SeriesArray[i] : message.SeriesArray.FirstOrDefault();
+            var lotteryNumberId = i < message.LotteryNumberIds.Count ? message.LotteryNumberIds[i] : (Guid?)null;
+            var unitPrice = message.LotteryNumberIds.Count > 0 
+                ? message.TotalAmount / message.LotteryNumberIds.Count 
+                : message.TotalAmount;
+
+            existingOrder.OrderDetails.Add(new OrderDetail
+            {
+                Number = message.Numbers[i],
+                Series = series,
+                UnitPrice = unitPrice,
+                Quantity = 1,
+                LotteryNumberId = lotteryNumberId,
+                IsGift = false
+            });
+        }
         
         // Extend expiration to match the new reservation
         if (message.ExpiresAt > existingOrder.ExpiresAt)
@@ -155,12 +191,12 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
             OrderId = existingOrder.OrderGuid,
             LotteryId = message.LotteryId,
             UserId = message.UserId,
-            LotteryNumberIds = message.LotteryNumberIds, // Only the new numbers
+            LotteryNumberIds = message.LotteryNumberIds,
             ExpiresAt = existingOrder.ExpiresAt
         });
 
         _logger.LogInformation(
-            "Added {Count} numbers to existing order {OrderId}. New total: {Amount}",
-            message.LotteryNumberIds.Count, existingOrder.OrderGuid, existingOrder.TotalAmount);
+            "Added {Count} items to existing order {OrderId}. New total: {Amount}",
+            message.Numbers.Length, existingOrder.OrderGuid, existingOrder.TotalAmount);
     }
 }

@@ -49,17 +49,32 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
                 OrderGuid = Guid.NewGuid(),
                 UserId = request.UserId,
                 LotteryId = request.LotteryId,
-                TotalAmount = request.TotalAmount,
                 Status = OrderStatus.Pending,
-                ExpiresAt = expiresAt,
-                SelectedNumbers = request.SelectedNumbers,
-                Series = request.Series,
-                LotteryNumberIds = request.LotteryNumberIds,
-                IsGift = request.IsGift,
-                GiftRecipientId = request.GiftRecipientId
+                ExpiresAt = expiresAt
             };
 
+            // Create order details from the request items
+            foreach (var item in request.Items)
+            {
+                order.OrderDetails.Add(new Domain.Models.OrderDetail
+                {
+                    UnitPrice = item.UnitPrice,
+                    Quantity = item.Quantity,
+                    Number = item.Number,
+                    Series = item.Series,
+                    LotteryNumberId = item.LotteryNumberId,
+                    IsGift = item.IsGift,
+                    GiftRecipientId = item.GiftRecipientId
+                });
+            }
+
             var createdOrder = await _orderRepository.CreateAsync(order);
+
+            // Get lottery number IDs for the event
+            var lotteryNumberIds = createdOrder.OrderDetails
+                .Where(od => od.LotteryNumberId.HasValue)
+                .Select(od => od.LotteryNumberId!.Value)
+                .ToList();
 
             // Publish event to notify Lottery Service about the order (reserve numbers)
             await _eventBus.Publish(new OrderCreatedEvent
@@ -67,7 +82,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
                 OrderId = createdOrder.OrderGuid,
                 LotteryId = createdOrder.LotteryId,
                 UserId = createdOrder.UserId,
-                LotteryNumberIds = createdOrder.LotteryNumberIds,
+                LotteryNumberIds = lotteryNumberIds,
                 ExpiresAt = createdOrder.ExpiresAt
             });
 
@@ -78,7 +93,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
                 {
                     OrderId = createdOrder.OrderGuid,
                     LotteryId = createdOrder.LotteryId,
-                    LotteryNumberIds = createdOrder.LotteryNumberIds
+                    LotteryNumberIds = lotteryNumberIds
                 },
                 cancellationToken);
 

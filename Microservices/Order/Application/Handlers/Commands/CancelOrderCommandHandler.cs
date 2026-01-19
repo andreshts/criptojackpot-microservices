@@ -53,12 +53,17 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Res
             var updatedOrder = await _orderRepository.UpdateAsync(order);
 
             // Publish event to release reserved numbers
+            var lotteryNumberIds = order.OrderDetails
+                .Where(od => od.LotteryNumberId.HasValue)
+                .Select(od => od.LotteryNumberId!.Value)
+                .ToList();
+
             await _eventBus.Publish(new OrderCancelledEvent
             {
                 OrderId = order.OrderGuid,
                 LotteryId = order.LotteryId,
                 UserId = order.UserId,
-                LotteryNumberIds = order.LotteryNumberIds,
+                LotteryNumberIds = lotteryNumberIds,
                 Reason = request.Reason
             });
 

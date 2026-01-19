@@ -10,14 +10,21 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
     {
         builder.ToTable("tickets");
 
-        builder.HasKey(t => t.TicketGuid);
+        builder.HasKey(t => t.Id);
+
+        builder.Property(t => t.Id)
+            .HasColumnName("id");
 
         builder.Property(t => t.TicketGuid)
             .HasColumnName("ticket_guid")
             .IsRequired();
 
-        builder.Property(t => t.OrderId)
-            .HasColumnName("order_id")
+        builder.HasIndex(t => t.TicketGuid)
+            .IsUnique()
+            .HasDatabaseName("ix_tickets_ticket_guid");
+
+        builder.Property(t => t.OrderDetailId)
+            .HasColumnName("order_detail_id")
             .IsRequired();
 
         builder.Property(t => t.LotteryId)
@@ -44,28 +51,26 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
 
         builder.Property(t => t.TransactionId)
             .HasColumnName("transaction_id")
-            .HasMaxLength(100)
+            .HasMaxLength(256)
             .IsRequired();
 
-        builder.Property(t => t.SelectedNumbers)
-            .HasColumnName("selected_numbers")
-            .HasColumnType("integer[]")
+        builder.Property(t => t.Number)
+            .HasColumnName("number")
             .IsRequired();
 
         builder.Property(t => t.Series)
             .HasColumnName("series")
             .IsRequired();
 
-        builder.Property(t => t.LotteryNumberIds)
-            .HasColumnName("lottery_number_ids")
-            .HasColumnType("uuid[]");
+        builder.Property(t => t.LotteryNumberId)
+            .HasColumnName("lottery_number_id");
 
         builder.Property(t => t.IsGift)
             .HasColumnName("is_gift")
-            .IsRequired();
+            .HasDefaultValue(false);
 
-        builder.Property(t => t.GiftRecipientId)
-            .HasColumnName("gift_recipient_id");
+        builder.Property(t => t.GiftSenderId)
+            .HasColumnName("gift_sender_id");
 
         builder.Property(t => t.WonPrizeIds)
             .HasColumnName("won_prize_ids")
@@ -85,7 +90,7 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         // Indexes
         builder.HasIndex(t => t.UserId).HasDatabaseName("ix_tickets_user_id");
         builder.HasIndex(t => t.LotteryId).HasDatabaseName("ix_tickets_lottery_id");
-        builder.HasIndex(t => t.OrderId).HasDatabaseName("ix_tickets_order_id");
+        builder.HasIndex(t => t.OrderDetailId).HasDatabaseName("ix_tickets_order_detail_id");
     }
 }
 

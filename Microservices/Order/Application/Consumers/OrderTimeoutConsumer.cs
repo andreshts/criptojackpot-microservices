@@ -56,17 +56,23 @@ public class OrderTimeoutConsumer : IConsumer<OrderTimeoutEvent>
         order.Status = OrderStatus.Expired;
         await _orderRepository.UpdateAsync(order);
 
+        // Get lottery number IDs from order details
+        var lotteryNumberIds = order.OrderDetails
+            .Where(od => od.LotteryNumberId.HasValue)
+            .Select(od => od.LotteryNumberId!.Value)
+            .ToList();
+
         // Publish OrderExpiredEvent to release reserved numbers in Lottery Service
         await _eventBus.Publish(new OrderExpiredEvent
         {
             OrderId = order.OrderGuid,
             LotteryId = order.LotteryId,
-            LotteryNumberIds = order.LotteryNumberIds
+            LotteryNumberIds = lotteryNumberIds
         });
 
         _logger.LogInformation(
             "Order {OrderId} expired after timeout. Published OrderExpiredEvent to release {Count} numbers.",
-            message.OrderId, order.LotteryNumberIds.Count);
+            message.OrderId, lotteryNumberIds.Count);
     }
 }
 

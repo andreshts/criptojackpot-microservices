@@ -9,11 +9,11 @@ namespace CryptoJackpot.Order.Domain.Models;
 /// </summary>
 public class Order : BaseEntity
 {
+    public long Id { get; set; }
     public Guid OrderGuid { get; set; }
     public long UserId { get; set; }
     public Guid LotteryId { get; set; }
     
-    public decimal TotalAmount { get; set; }
     public OrderStatus Status { get; set; }
     
     /// <summary>
@@ -27,36 +27,16 @@ public class Order : BaseEntity
     public bool IsExpired => Status == OrderStatus.Pending && DateTime.UtcNow > ExpiresAt;
     
     /// <summary>
-    /// Selected numbers for purchase
+    /// Total amount calculated from order details
     /// </summary>
-    public int[] SelectedNumbers { get; set; } = [];
+    public decimal TotalAmount => OrderDetails.Sum(d => d.Subtotal);
     
     /// <summary>
-    /// Selected series
+    /// Total number of items in the order
     /// </summary>
-    public int Series { get; set; }
+    public int TotalItems => OrderDetails.Sum(d => d.Quantity);
     
-    /// <summary>
-    /// IDs of reserved lottery numbers from Lottery microservice
-    /// </summary>
-    public List<Guid> LotteryNumberIds { get; set; } = [];
-    
-    /// <summary>
-    /// Is this order a gift for another user?
-    /// </summary>
-    public bool IsGift { get; set; }
-    
-    /// <summary>
-    /// User ID of the gift recipient (if IsGift is true)
-    /// </summary>
-    public long? GiftRecipientId { get; set; }
-    
-    /// <summary>
-    /// The ticket created after successful payment (null if pending/expired)
-    /// </summary>
-    public Guid? TicketId { get; set; }
-    
-    // Navigation
-    public virtual Ticket? Ticket { get; set; }
+    // Navigation properties
+    public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 }
 

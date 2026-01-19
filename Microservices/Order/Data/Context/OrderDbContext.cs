@@ -11,6 +11,7 @@ public class OrderDbContext : DbContext
     }
 
     public DbSet<Domain.Models.Order> Orders => Set<Domain.Models.Order>();
+    public DbSet<OrderDetail> OrderDetails => Set<OrderDetail>();
     public DbSet<Ticket> Tickets => Set<Ticket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

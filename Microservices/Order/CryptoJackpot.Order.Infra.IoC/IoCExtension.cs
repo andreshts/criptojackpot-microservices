@@ -222,6 +222,11 @@ public static class IoCExtension
         DependencyContainer.RegisterServicesWithKafka<OrderDbContext>(
             services,
             configuration,
+            configureBus: bus =>
+            {
+                // Register consumer for internal timeout events triggered by scheduler
+                bus.AddConsumer<OrderTimeoutConsumer>();
+            },
             configureRider: rider =>
             {
                 // Register producers for Order events
@@ -239,16 +244,6 @@ public static class IoCExtension
             },
             configureKafkaEndpoints: (context, kafka) =>
             {
-                // Order timeout - process scheduled timeout events
-                kafka.TopicEndpoint<OrderTimeoutEvent>(
-                    KafkaTopics.OrderTimeout,
-                    KafkaTopics.OrderGroup,
-                    e =>
-                    {
-                        e.ConfigureConsumer<OrderTimeoutConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
-                    });
-                    
                 // NumbersReserved - create/update orders when numbers are reserved via SignalR
                 kafka.TopicEndpoint<NumbersReservedEvent>(
                     KafkaTopics.NumbersReserved,

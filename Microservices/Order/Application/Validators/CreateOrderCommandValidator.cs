@@ -13,20 +13,31 @@ public class CreateOrderCommandValidator : AbstractValidator<CreateOrderCommand>
         RuleFor(c => c.LotteryId)
             .NotEmpty().WithMessage("LotteryId is required");
 
-        RuleFor(c => c.LotteryNumberIds)
-            .NotEmpty().WithMessage("At least one lottery number must be selected");
+        RuleFor(c => c.Items)
+            .NotEmpty().WithMessage("At least one item must be selected");
 
-        RuleFor(c => c.SelectedNumbers)
-            .NotEmpty().WithMessage("SelectedNumbers is required");
+        RuleForEach(c => c.Items).SetValidator(new CreateOrderItemCommandValidator());
+    }
+}
 
-        RuleFor(c => c.Series)
+public class CreateOrderItemCommandValidator : AbstractValidator<CreateOrderItemCommand>
+{
+    public CreateOrderItemCommandValidator()
+    {
+        RuleFor(i => i.Number)
+            .GreaterThan(0).WithMessage("Number must be greater than 0");
+
+        RuleFor(i => i.Series)
             .GreaterThan(0).WithMessage("Series must be greater than 0");
 
-        RuleFor(c => c.TotalAmount)
-            .GreaterThan(0).WithMessage("TotalAmount must be greater than 0");
+        RuleFor(i => i.UnitPrice)
+            .GreaterThan(0).WithMessage("UnitPrice must be greater than 0");
 
-        RuleFor(c => c.GiftRecipientId)
-            .GreaterThan(0).When(c => c.IsGift)
+        RuleFor(i => i.Quantity)
+            .GreaterThan(0).WithMessage("Quantity must be greater than 0");
+
+        RuleFor(i => i.GiftRecipientId)
+            .GreaterThan(0).When(i => i.IsGift)
             .WithMessage("GiftRecipientId is required when IsGift is true");
     }
 }

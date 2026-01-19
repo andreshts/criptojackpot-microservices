@@ -13,13 +13,7 @@ public interface ILotteryNumberService
     /// Gets available numbers for a lottery (grouped by number with series count).
     /// </summary>
     Task<List<AvailableNumberDto>> GetAvailableNumbersAsync(Guid lotteryId);
-
-    /// <summary>
-    /// Reserves a specific number for a user.
-    /// If series is null, reserves the first available series for that number.
-    /// </summary>
-    Task<Result<NumberReservationDto>> ReserveNumberAsync(Guid lotteryId, int number, int? series, long userId);
-
+    
     /// <summary>
     /// Reserves N series of a specific number for a user.
     /// The system automatically assigns the next available series in order.

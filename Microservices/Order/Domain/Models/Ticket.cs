@@ -5,12 +5,23 @@ namespace CryptoJackpot.Order.Domain.Models;
 
 /// <summary>
 /// Representa un boleto de lotería comprado (pago confirmado).
+/// Se genera un ticket por cada OrderDetail después del pago exitoso.
 /// </summary>
 public class Ticket : BaseEntity
 {
+    public long Id { get; set; }
     public Guid TicketGuid { get; set; }
-    public Guid OrderId { get; set; }
+    
+    /// <summary>
+    /// Foreign key to the OrderDetail that generated this ticket
+    /// </summary>
+    public long OrderDetailId { get; set; }
+    
     public Guid LotteryId { get; set; }
+    
+    /// <summary>
+    /// Owner of the ticket (can be different from buyer if it's a gift)
+    /// </summary>
     public long UserId { get; set; }
 
     public decimal PurchaseAmount { get; set; }
@@ -18,13 +29,20 @@ public class Ticket : BaseEntity
     public TicketStatus Status { get; set; }
     public string TransactionId { get; set; } = null!;
     
-    public int[] SelectedNumbers { get; set; } = [];
+    /// <summary>
+    /// The lottery number for this ticket
+    /// </summary>
+    public int Number { get; set; }
+    
+    /// <summary>
+    /// The series for this ticket
+    /// </summary>
     public int Series { get; set; }
     
     /// <summary>
-    /// IDs of purchased lottery numbers from Lottery microservice
+    /// ID of purchased lottery number from Lottery microservice
     /// </summary>
-    public List<Guid> LotteryNumberIds { get; set; } = [];
+    public Guid? LotteryNumberId { get; set; }
     
     /// <summary>
     /// Is this ticket a gift?
@@ -32,9 +50,9 @@ public class Ticket : BaseEntity
     public bool IsGift { get; set; }
     
     /// <summary>
-    /// User ID of the gift recipient (if IsGift is true)
+    /// User ID of the original buyer (if IsGift is true, this is different from UserId)
     /// </summary>
-    public long? GiftRecipientId { get; set; }
+    public long? GiftSenderId { get; set; }
     
     /// <summary>
     /// IDs of won prizes (if ticket won)
@@ -42,5 +60,5 @@ public class Ticket : BaseEntity
     public List<long>? WonPrizeIds { get; set; }
 
     // Navigation
-    public virtual Order Order { get; set; } = null!;
+    public virtual OrderDetail OrderDetail { get; set; } = null!;
 }

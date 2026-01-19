@@ -29,21 +29,25 @@ public class OrderRepository : IOrderRepository
     public async Task<Domain.Models.Order?> GetByIdAsync(Guid orderId)
         => await _context.Orders
             .AsNoTracking()
+            .Include(o => o.OrderDetails)
             .FirstOrDefaultAsync(o => o.OrderGuid == orderId);
 
     public async Task<Domain.Models.Order?> GetByIdWithTrackingAsync(Guid orderId)
         => await _context.Orders
+            .Include(o => o.OrderDetails)
             .FirstOrDefaultAsync(o => o.OrderGuid == orderId);
 
     public async Task<IEnumerable<Domain.Models.Order>> GetByUserIdAsync(long userId)
         => await _context.Orders
             .AsNoTracking()
+            .Include(o => o.OrderDetails)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync();
 
     public async Task<IEnumerable<Domain.Models.Order>> GetExpiredPendingOrdersAsync()
         => await _context.Orders
+            .Include(o => o.OrderDetails)
             .Where(o => o.Status == OrderStatus.Pending && o.ExpiresAt < DateTime.UtcNow)
             .ToListAsync();
 

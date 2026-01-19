@@ -50,6 +50,12 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
         if (order.Status != OrderStatus.Pending)
             return Result.Fail<TicketDto>(new BadRequestError($"Order cannot be completed. Current status: {order.Status}"));
 
+        // Get lottery number IDs for events
+        var lotteryNumberIds = order.OrderDetails
+            .Where(od => od.LotteryNumberId.HasValue)
+            .Select(od => od.LotteryNumberId!.Value)
+            .ToList();
+
         // Verify the order hasn't expired
         if (order.IsExpired)
         {
@@ -61,7 +67,7 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
             {
                 OrderId = order.OrderGuid,
                 LotteryId = order.LotteryId,
-                LotteryNumberIds = order.LotteryNumberIds
+                LotteryNumberIds = lotteryNumberIds
             });
             
             _logger.LogWarning("Order {OrderId} has expired", request.OrderId);
@@ -71,48 +77,56 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
         try
         {
             var now = DateTime.UtcNow;
+            Ticket? firstTicket = null;
 
-            // Create the ticket (confirmed purchase)
-            var ticket = new Ticket
+            // Create a ticket for each order detail
+            foreach (var detail in order.OrderDetails)
             {
-                TicketGuid = Guid.NewGuid(),
-                OrderId = order.OrderGuid,
-                LotteryId = order.LotteryId,
-                UserId = order.UserId,
-                PurchaseAmount = order.TotalAmount,
-                PurchaseDate = now,
-                Status = TicketStatus.Active,
-                TransactionId = request.TransactionId,
-                SelectedNumbers = order.SelectedNumbers,
-                Series = order.Series,
-                LotteryNumberIds = order.LotteryNumberIds,
-                IsGift = order.IsGift,
-                GiftRecipientId = order.GiftRecipientId
-            };
+                var ticket = new Ticket
+                {
+                    TicketGuid = Guid.NewGuid(),
+                    OrderDetailId = detail.Id,
+                    LotteryId = order.LotteryId,
+                    UserId = detail.IsGift && detail.GiftRecipientId.HasValue 
+                        ? detail.GiftRecipientId.Value 
+                        : order.UserId,
+                    PurchaseAmount = detail.Subtotal,
+                    PurchaseDate = now,
+                    Status = TicketStatus.Active,
+                    TransactionId = request.TransactionId,
+                    Number = detail.Number,
+                    Series = detail.Series,
+                    LotteryNumberId = detail.LotteryNumberId,
+                    IsGift = detail.IsGift,
+                    GiftSenderId = detail.IsGift ? order.UserId : null
+                };
 
-            var createdTicket = await _ticketRepository.CreateAsync(ticket);
+                var createdTicket = await _ticketRepository.CreateAsync(ticket);
+                detail.TicketId = createdTicket.TicketGuid;
+                
+                firstTicket ??= createdTicket;
+            }
 
             // Update order to completed
             order.Status = OrderStatus.Completed;
-            order.TicketId = createdTicket.TicketGuid;
             await _orderRepository.UpdateAsync(order);
 
             // Publish event to mark numbers as sold permanently
             await _eventBus.Publish(new OrderCompletedEvent
             {
                 OrderId = order.OrderGuid,
-                TicketId = createdTicket.TicketGuid,
+                TicketId = firstTicket!.TicketGuid,
                 LotteryId = order.LotteryId,
                 UserId = order.UserId,
-                LotteryNumberIds = order.LotteryNumberIds,
+                LotteryNumberIds = lotteryNumberIds,
                 TransactionId = request.TransactionId
             });
 
             _logger.LogInformation(
-                "Order {OrderId} completed. Ticket {TicketId} created for user {UserId}. Transaction: {TransactionId}. Event published.",
-                order.OrderGuid, createdTicket.TicketGuid, request.UserId, request.TransactionId);
+                "Order {OrderId} completed. {TicketCount} tickets created for user {UserId}. Transaction: {TransactionId}.",
+                order.OrderGuid, order.OrderDetails.Count, request.UserId, request.TransactionId);
 
-            return Result.Ok(_mapper.Map<TicketDto>(createdTicket));
+            return Result.Ok(_mapper.Map<TicketDto>(firstTicket));
         }
         catch (Exception ex)
         {

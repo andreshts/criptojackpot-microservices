@@ -8,7 +8,7 @@ public interface ITicketRepository
     Task<Ticket?> GetByIdAsync(Guid ticketId);
     Task<IEnumerable<Ticket>> GetByUserIdAsync(long userId);
     Task<IEnumerable<Ticket>> GetByLotteryIdAsync(Guid lotteryId);
-    Task<IEnumerable<Ticket>> GetByOrderIdAsync(Guid orderId);
+    Task<IEnumerable<Ticket>> GetByOrderIdAsync(long orderId);
     Task<Ticket> UpdateAsync(Ticket ticket);
 }
 

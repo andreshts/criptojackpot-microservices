@@ -44,10 +44,10 @@ public class TicketRepository : ITicketRepository
             .Where(t => t.LotteryId == lotteryId)
             .ToListAsync();
 
-    public async Task<IEnumerable<Ticket>> GetByOrderIdAsync(Guid orderId)
+    public async Task<IEnumerable<Ticket>> GetByOrderIdAsync(long orderId)
         => await _context.Tickets
             .AsNoTracking()
-            .Where(t => t.OrderId == orderId)
+            .Where(t => t.OrderDetail.OrderId == orderId)
             .ToListAsync();
 
     public async Task<Ticket> UpdateAsync(Ticket ticket)
