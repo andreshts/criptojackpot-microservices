@@ -53,7 +53,7 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
     private async Task CreateNewOrder(NumbersReservedEvent message)
     {
         // Check if order already exists (idempotency)
-        var existingOrder = await _orderRepository.GetByIdAsync(message.OrderId);
+        var existingOrder = await _orderRepository.GetByGuidAsync(message.OrderId);
         if (existingOrder != null)
         {
             _logger.LogInformation(
@@ -126,7 +126,7 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
 
     private async Task AddToExistingOrder(NumbersReservedEvent message)
     {
-        var existingOrder = await _orderRepository.GetByIdWithTrackingAsync(message.ExistingOrderId!.Value);
+        var existingOrder = await _orderRepository.GetByGuidWithTrackingAsync(message.ExistingOrderId!.Value);
         
         if (existingOrder == null)
         {

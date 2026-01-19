@@ -37,7 +37,7 @@ public class CompleteOrderCommandHandler : IRequestHandler<CompleteOrderCommand,
 
     public async Task<Result<TicketDto>> Handle(CompleteOrderCommand request, CancellationToken cancellationToken)
     {
-        var order = await _orderRepository.GetByIdWithTrackingAsync(request.OrderId);
+        var order = await _orderRepository.GetByGuidWithTrackingAsync(request.OrderId);
 
         if (order is null)
             return Result.Fail<TicketDto>(new NotFoundError("Order not found"));

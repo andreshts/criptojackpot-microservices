@@ -13,7 +13,8 @@ public class OrderDetailConfiguration : IEntityTypeConfiguration<OrderDetail>
         builder.HasKey(od => od.Id);
 
         builder.Property(od => od.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .ValueGeneratedOnAdd();
 
         builder.Property(od => od.OrderId)
             .HasColumnName("order_id")

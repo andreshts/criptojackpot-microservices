@@ -13,7 +13,8 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.HasKey(t => t.Id);
 
         builder.Property(t => t.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .ValueGeneratedOnAdd();
 
         builder.Property(t => t.TicketGuid)
             .HasColumnName("ticket_guid")

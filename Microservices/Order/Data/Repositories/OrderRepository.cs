@@ -26,16 +26,16 @@ public class OrderRepository : IOrderRepository
         return order;
     }
 
-    public async Task<Domain.Models.Order?> GetByIdAsync(Guid orderId)
+    public async Task<Domain.Models.Order?> GetByGuidAsync(Guid orderGuid)
         => await _context.Orders
             .AsNoTracking()
             .Include(o => o.OrderDetails)
-            .FirstOrDefaultAsync(o => o.OrderGuid == orderId);
+            .FirstOrDefaultAsync(o => o.OrderGuid == orderGuid);
 
-    public async Task<Domain.Models.Order?> GetByIdWithTrackingAsync(Guid orderId)
+    public async Task<Domain.Models.Order?> GetByGuidWithTrackingAsync(Guid orderGuid)
         => await _context.Orders
             .Include(o => o.OrderDetails)
-            .FirstOrDefaultAsync(o => o.OrderGuid == orderId);
+            .FirstOrDefaultAsync(o => o.OrderGuid == orderGuid);
 
     public async Task<IEnumerable<Domain.Models.Order>> GetByUserIdAsync(long userId)
         => await _context.Orders

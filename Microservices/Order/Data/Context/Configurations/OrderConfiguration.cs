@@ -12,7 +12,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Domain.Models.Order>
         builder.HasKey(o => o.Id);
 
         builder.Property(o => o.Id)
-            .HasColumnName("id");
+            .HasColumnName("id")
+            .ValueGeneratedOnAdd();
 
         builder.Property(o => o.OrderGuid)
             .HasColumnName("order_guid")

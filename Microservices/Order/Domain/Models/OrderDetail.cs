@@ -8,8 +8,6 @@ namespace CryptoJackpot.Order.Domain.Models;
 /// </summary>
 public class OrderDetail : BaseEntity
 {
-    public long Id { get; set; }
-    
     /// <summary>
     /// Foreign key to the parent Order
     /// </summary>

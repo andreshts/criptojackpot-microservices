@@ -35,7 +35,7 @@ public class OrderTimeoutConsumer : IConsumer<OrderTimeoutEvent>
             "Received OrderTimeoutEvent for Order {OrderId}. Checking if still pending...",
             message.OrderId);
 
-        var order = await _orderRepository.GetByIdWithTrackingAsync(message.OrderId);
+        var order = await _orderRepository.GetByGuidWithTrackingAsync(message.OrderId);
 
         if (order is null)
         {

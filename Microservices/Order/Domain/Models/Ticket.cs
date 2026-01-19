@@ -9,8 +9,10 @@ namespace CryptoJackpot.Order.Domain.Models;
 /// </summary>
 public class Ticket : BaseEntity
 {
-    public long Id { get; set; }
-    public Guid TicketGuid { get; set; }
+    /// <summary>
+    /// External GUID for API exposure and cross-service communication
+    /// </summary>
+    public Guid TicketGuid { get; set; } = Guid.NewGuid();
     
     /// <summary>
     /// Foreign key to the OrderDetail that generated this ticket

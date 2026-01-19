@@ -9,8 +9,11 @@ namespace CryptoJackpot.Order.Domain.Models;
 /// </summary>
 public class Order : BaseEntity
 {
-    public long Id { get; set; }
-    public Guid OrderGuid { get; set; }
+    /// <summary>
+    /// External GUID for API exposure and cross-service communication
+    /// </summary>
+    public Guid OrderGuid { get; set; } = Guid.NewGuid();
+    
     public long UserId { get; set; }
     public Guid LotteryId { get; set; }
     

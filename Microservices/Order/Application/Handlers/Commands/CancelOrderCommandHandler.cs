@@ -33,7 +33,7 @@ public class CancelOrderCommandHandler : IRequestHandler<CancelOrderCommand, Res
 
     public async Task<Result<OrderDto>> Handle(CancelOrderCommand request, CancellationToken cancellationToken)
     {
-        var order = await _orderRepository.GetByIdWithTrackingAsync(request.OrderId);
+        var order = await _orderRepository.GetByGuidWithTrackingAsync(request.OrderId);
 
         if (order is null)
             return Result.Fail<OrderDto>(new NotFoundError("Order not found"));

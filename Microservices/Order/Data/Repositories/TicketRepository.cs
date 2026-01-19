@@ -26,10 +26,10 @@ public class TicketRepository : ITicketRepository
         return ticket;
     }
 
-    public async Task<Ticket?> GetByIdAsync(Guid ticketId)
+    public async Task<Ticket?> GetByGuidAsync(Guid ticketGuid)
         => await _context.Tickets
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.TicketGuid == ticketId);
+            .FirstOrDefaultAsync(t => t.TicketGuid == ticketGuid);
 
     public async Task<IEnumerable<Ticket>> GetByUserIdAsync(long userId)
         => await _context.Tickets
