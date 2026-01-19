@@ -47,9 +47,7 @@ public class LotteryHub : Hub<ILotteryHubClient>
     public async Task JoinLottery(Guid lotteryId)
     {
         try
-        {
-            _logger.LogInformation("JoinLottery called with lotteryId: {LotteryId}", lotteryId);
-            
+        { 
             var groupName = GetLotteryGroupName(lotteryId);
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             _logger.LogInformation("Client {ConnectionId} joined lottery {LotteryId}", Context.ConnectionId, lotteryId);
@@ -154,7 +152,8 @@ public class LotteryHub : Hub<ILotteryHubClient>
             }
             else
             {
-                var errorMessage = result.Errors.First().Message;
+                var errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Unknown error";
+    
                 _logger.LogWarning("ReserveNumberWithOrder failed: {Error}", errorMessage);
                 await Clients.Caller.ReceiveError(errorMessage);
             }
