@@ -1,3 +1,4 @@
+using CryptoJackpot.Lottery.Application.DTOs;
 using CryptoJackpot.Lottery.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
@@ -97,39 +98,45 @@ public class LotteryHub : Hub<ILotteryHubClient>
     }
     
     /// <summary>
-    /// Reserve N series of a number and automatically create/update an order.
-    /// This is the recommended method - it combines number reservation with order creation.
+    /// Reserve numbers from cart and automatically create/update an order.
+    /// Supports both single number and multiple numbers (full cart checkout).
     /// </summary>
     /// <param name="lotteryId">The lottery ID</param>
-    /// <param name="number">The number to reserve (e.g., 10)</param>
-    /// <param name="quantity">How many series to reserve (default: 1)</param>
-    /// <param name="existingOrderId">Optional: existing pending order to add numbers to (cart functionality)</param>
-    public async Task ReserveNumberWithOrder(Guid lotteryId, int number, int quantity = 1, Guid? existingOrderId = null)
+    /// <param name="items">Cart items to reserve. Each item has Number and Quantity.</param>
+    /// <param name="existingOrderId">Optional: existing pending order to add numbers to</param>
+    public async Task ReserveNumbersWithOrder(Guid lotteryId, List<CartItemDto> items, Guid? existingOrderId = null)
     {
         try
         {
             _logger.LogInformation(
-                "ReserveNumberWithOrder called - LotteryId: {LotteryId}, Number: {Number}, Quantity: {Quantity}, ExistingOrderId: {ExistingOrderId}",
-                lotteryId, number, quantity, existingOrderId);
+                "ReserveNumbersWithOrder called - LotteryId: {LotteryId}, Items: {ItemCount}, ExistingOrderId: {ExistingOrderId}",
+                lotteryId, items?.Count ?? 0, existingOrderId);
 
             var userId = GetUserId();
             
             if (userId == null)
             {
-                _logger.LogWarning("ReserveNumberWithOrder failed: Unauthorized - no userId in token");
+                _logger.LogWarning("ReserveNumbersWithOrder failed: Unauthorized - no userId in token");
                 await Clients.Caller.ReceiveError("Unauthorized");
                 return;
             }
 
-            var result = await _lotteryNumberService.ReserveNumberWithOrderAsync(
-                lotteryId, number, quantity, userId.Value, existingOrderId);
+            if (items == null || items.Count == 0)
+            {
+                _logger.LogWarning("ReserveNumbersWithOrder failed: No items provided");
+                await Clients.Caller.ReceiveError("At least one item is required");
+                return;
+            }
+
+            var result = await _lotteryNumberService.ReserveNumbersWithOrderAsync(
+                lotteryId, items, userId.Value, existingOrderId);
             
             if (result.IsSuccess)
             {
                 var reservationWithOrder = result.Value;
                 var groupName = GetLotteryGroupName(lotteryId);
                 
-                // Notify all clients in the lottery group about each reserved series
+                // Notify all clients in the lottery group about each reserved number
                 foreach (var reservation in reservationWithOrder.Reservations)
                 {
                     await Clients.Group(groupName).NumberReserved(
@@ -154,16 +161,16 @@ public class LotteryHub : Hub<ILotteryHubClient>
             {
                 var errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Unknown error";
     
-                _logger.LogWarning("ReserveNumberWithOrder failed: {Error}", errorMessage);
+                _logger.LogWarning("ReserveNumbersWithOrder failed: {Error}", errorMessage);
                 await Clients.Caller.ReceiveError(errorMessage);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, 
-                "Exception in ReserveNumberWithOrder - LotteryId: {LotteryId}, Number: {Number}, Quantity: {Quantity}",
-                lotteryId, number, quantity);
-            await Clients.Caller.ReceiveError($"Error reserving number: {ex.Message}");
+                "Exception in ReserveNumbersWithOrder - LotteryId: {LotteryId}, Items: {ItemCount}",
+                lotteryId, items?.Count ?? 0);
+            await Clients.Caller.ReceiveError($"Error reserving numbers: {ex.Message}");
         }
     }
 

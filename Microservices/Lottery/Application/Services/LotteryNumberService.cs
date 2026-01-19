@@ -204,13 +204,18 @@ public class LotteryNumberService : ILotteryNumberService
         return Result.Ok(reservations);
     }
 
-    public async Task<Result<ReservationWithOrderDto>> ReserveNumberWithOrderAsync(
+    public async Task<Result<ReservationWithOrderDto>> ReserveNumbersWithOrderAsync(
         Guid lotteryId,
-        int number,
-        int quantity,
+        List<CartItemDto> items,
         long userId,
         Guid? existingOrderId = null)
     {
+        // Validation
+        if (items == null || items.Count == 0)
+        {
+            return Result.Fail<ReservationWithOrderDto>("At least one item is required");
+        }
+
         // First, get the lottery to get the ticket price
         var lottery = await _lotteryDrawRepository.GetLotteryByIdAsync(lotteryId);
         if (lottery == null)
@@ -218,20 +223,32 @@ public class LotteryNumberService : ILotteryNumberService
             return Result.Fail<ReservationWithOrderDto>("Lottery not found");
         }
 
-        // Reserve the numbers using existing logic
-        var reservationResult = await ReserveNumberByQuantityAsync(lotteryId, number, quantity, userId);
-        if (reservationResult.IsFailed)
+        // Reserve all numbers from the cart
+        var allReservations = new List<NumberReservationDto>();
+        
+        foreach (var item in items)
         {
-            return Result.Fail<ReservationWithOrderDto>(reservationResult.Errors);
+            var reservationResult = await ReserveNumberByQuantityAsync(lotteryId, item.Number, item.Quantity, userId);
+            if (reservationResult.IsFailed)
+            {
+                // If any reservation fails, we should release the already reserved numbers
+                // For now, log the error and continue (the timeout will release them)
+                _logger.LogWarning(
+                    "Failed to reserve number {Number} x{Quantity} for user {UserId}: {Error}",
+                    item.Number, item.Quantity, userId, reservationResult.Errors.FirstOrDefault()?.Message);
+                
+                return Result.Fail<ReservationWithOrderDto>(reservationResult.Errors);
+            }
+            
+            allReservations.AddRange(reservationResult.Value);
         }
 
-        var reservations = reservationResult.Value;
         var now = DateTime.UtcNow;
         var expiresAt = now.AddMinutes(ReservationMinutes);
         
-        // Calculate total amount for this reservation
+        // Calculate total amount for all reservations
         var ticketPrice = lottery.TicketPrice;
-        var reservationAmount = ticketPrice * reservations.Count;
+        var reservationAmount = ticketPrice * allReservations.Count;
         
         // Generate order ID (or use existing one)
         var orderId = existingOrderId ?? Guid.NewGuid();
@@ -243,9 +260,9 @@ public class LotteryNumberService : ILotteryNumberService
             OrderId = orderId,
             LotteryId = lotteryId,
             UserId = userId,
-            LotteryNumberIds = reservations.Select(r => r.NumberId).ToList(),
-            Numbers = reservations.Select(r => r.Number).ToArray(),
-            SeriesArray = reservations.Select(r => r.Series).ToArray(),
+            LotteryNumberIds = allReservations.Select(r => r.NumberId).ToList(),
+            Numbers = allReservations.Select(r => r.Number).ToArray(),
+            SeriesArray = allReservations.Select(r => r.Series).ToArray(),
             TicketPrice = ticketPrice,
             TotalAmount = reservationAmount,
             ExpiresAt = expiresAt,
@@ -254,8 +271,8 @@ public class LotteryNumberService : ILotteryNumberService
         });
 
         _logger.LogInformation(
-            "Published NumbersReservedEvent for user {UserId}. OrderId: {OrderId}, LotteryId: {LotteryId}, Count: {Count}, Amount: {Amount}",
-            userId, orderId, lotteryId, reservations.Count, reservationAmount);
+            "Published NumbersReservedEvent for user {UserId}. OrderId: {OrderId}, LotteryId: {LotteryId}, Items: {ItemCount}, Count: {Count}, Amount: {Amount}",
+            userId, orderId, lotteryId, items.Count, allReservations.Count, reservationAmount);
 
         return Result.Ok(new ReservationWithOrderDto
         {
@@ -265,7 +282,7 @@ public class LotteryNumberService : ILotteryNumberService
             TicketPrice = ticketPrice,
             ExpiresAt = expiresAt,
             SecondsRemaining = ReservationMinutes * 60,
-            Reservations = reservations,
+            Reservations = allReservations,
             AddedToExistingOrder = isAddToExisting
         });
     }

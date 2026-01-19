@@ -26,19 +26,18 @@ public interface ILotteryNumberService
     Task<Result<List<NumberReservationDto>>> ReserveNumberByQuantityAsync(Guid lotteryId, int number, int quantity, long userId);
 
     /// <summary>
-    /// Reserves N series of a specific number and creates/updates an order.
+    /// Reserves numbers from cart items and creates/updates an order.
     /// This is the primary method for the SignalR Hub - combines reservation + order creation.
+    /// Supports both single number and multiple numbers (cart checkout).
     /// </summary>
     /// <param name="lotteryId">The lottery ID</param>
-    /// <param name="number">The number to reserve (e.g., 10)</param>
-    /// <param name="quantity">How many series to reserve</param>
+    /// <param name="items">Cart items to reserve (each with number and quantity)</param>
     /// <param name="userId">The user making the reservation</param>
     /// <param name="existingOrderId">Optional: existing pending order to add to</param>
     /// <returns>Reservation details with order information</returns>
-    Task<Result<ReservationWithOrderDto>> ReserveNumberWithOrderAsync(
+    Task<Result<ReservationWithOrderDto>> ReserveNumbersWithOrderAsync(
         Guid lotteryId, 
-        int number, 
-        int quantity, 
+        List<CartItemDto> items, 
         long userId,
         Guid? existingOrderId = null);
 
