@@ -125,6 +125,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra.IoC", "Infra.IoC", "{
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Order.Infra.IoC", "Microservices\Order\CryptoJackpot.Order.Infra.IoC\CryptoJackpot.Order.Infra.IoC.csproj", "{8D767A98-55CD-4230-82B8-A874B32A2BFF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra.IoC", "Infra.IoC", "{9E6641B1-C58B-4D46-B89D-FA8B4A361010}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Notification.Infra.IoC", "Microservices\Notification\CryptoJackpot.Notification.Infra.IoC\CryptoJackpot.Notification.Infra.IoC.csproj", "{B591014D-9004-49EC-ACDF-EDC056376400}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -459,6 +463,18 @@ Global
 		{8D767A98-55CD-4230-82B8-A874B32A2BFF}.Release|x64.Build.0 = Release|Any CPU
 		{8D767A98-55CD-4230-82B8-A874B32A2BFF}.Release|x86.ActiveCfg = Release|Any CPU
 		{8D767A98-55CD-4230-82B8-A874B32A2BFF}.Release|x86.Build.0 = Release|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Debug|x64.Build.0 = Debug|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Debug|x86.Build.0 = Debug|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Release|x64.ActiveCfg = Release|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Release|x64.Build.0 = Release|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Release|x86.ActiveCfg = Release|Any CPU
+		{B591014D-9004-49EC-ACDF-EDC056376400}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -521,5 +537,7 @@ Global
 		{90356A11-690A-4B90-BF50-C5EF51F81E11} = {8AE2727D-0F6F-456D-85C5-8A65A93D8263}
 		{E9EE9095-4892-4CCC-A01C-B156D58B11E3} = {57100A56-520E-DBBB-C014-D73AA721F2C7}
 		{8D767A98-55CD-4230-82B8-A874B32A2BFF} = {E9EE9095-4892-4CCC-A01C-B156D58B11E3}
+		{9E6641B1-C58B-4D46-B89D-FA8B4A361010} = {0A5DD24C-022C-ED9C-5A32-26D44E9A4B1B}
+		{B591014D-9004-49EC-ACDF-EDC056376400} = {9E6641B1-C58B-4D46-B89D-FA8B4A361010}
 	EndGlobalSection
 EndGlobal

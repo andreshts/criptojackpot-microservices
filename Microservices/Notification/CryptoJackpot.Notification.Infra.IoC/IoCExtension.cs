@@ -1,11 +1,11 @@
-using CryptoJackpot.Domain.Core.Constants;
+﻿using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Notification;
 using CryptoJackpot.Infra.IoC;
+using CryptoJackpot.Notification.Application;
 using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Consumers;
-using CryptoJackpot.Notification.Application.Handlers.Commands;
 using CryptoJackpot.Notification.Application.Interfaces;
 using CryptoJackpot.Notification.Application.Providers;
 using CryptoJackpot.Notification.Data.Context;
@@ -18,12 +18,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+namespace CryptoJackpot.Notification.Infra.IoC;
 
-namespace CryptoJackpot.Notification.Application;
-
-public static class DependencyInjection
+public static class IoCExtension
 {
-    public static IServiceCollection AddNotificationServices(
+    public static void AddNotificationServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -35,8 +34,6 @@ public static class DependencyInjection
         AddProviders(services);
         AddApplicationServices(services);
         AddInfrastructure(services, configuration);
-
-        return services;
     }
 
     /// <summary>
@@ -145,8 +142,9 @@ public static class DependencyInjection
 
     private static void AddApplicationServices(IServiceCollection services)
     {
+        var assembly = typeof(IAssemblyReference).Assembly;
         // MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(SendEmailConfirmationHandler).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
@@ -164,7 +162,7 @@ public static class DependencyInjection
                 rider.AddConsumer<ReferralCreatedConsumer>();
                 rider.AddConsumer<LotteryMarketingConsumer>();
                 rider.AddConsumer<SendMarketingEmailConsumer>();
-                
+
                 // Register producer for distributing individual email jobs
                 rider.AddProducer<SendMarketingEmailEvent>(KafkaTopics.SendMarketingEmail);
             },

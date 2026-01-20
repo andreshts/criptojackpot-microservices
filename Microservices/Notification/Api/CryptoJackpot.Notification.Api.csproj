@@ -14,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Application\CryptoJackpot.Notification.Application.csproj" />
+    <ProjectReference Include="..\CryptoJackpot.Notification.Infra.IoC\CryptoJackpot.Notification.Infra.IoC.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Templates\**\*" CopyToOutputDirectory="PreserveNewest" />

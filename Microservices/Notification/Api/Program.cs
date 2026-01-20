@@ -1,4 +1,4 @@
-using CryptoJackpot.Notification.Application;
+using CryptoJackpot.Notification.Infra.IoC;
 
 var builder = WebApplication.CreateBuilder(args);
 
