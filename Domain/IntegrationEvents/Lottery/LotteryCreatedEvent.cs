@@ -5,6 +5,7 @@ namespace CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 /// <summary>
 /// Integration event published when a lottery is created.
 /// Consumed by: Lottery microservice (to generate lottery numbers asynchronously)
+///              Notification microservice (to send marketing emails)
 /// </summary>
 public class LotteryCreatedEvent : Event
 {
@@ -21,5 +22,13 @@ public class LotteryCreatedEvent : Event
     public int MinNumber { get; set; }
     public int MaxNumber { get; set; }
     public int TotalSeries { get; set; }
+    
+    // Marketing information
+    public string Title { get; set; } = null!;
+    public string Description { get; set; } = null!;
+    public decimal TicketPrice { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public int MaxTickets { get; set; }
 }
 

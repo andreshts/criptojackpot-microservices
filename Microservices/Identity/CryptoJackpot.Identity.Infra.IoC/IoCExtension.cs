@@ -5,6 +5,7 @@ using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application;
 using CryptoJackpot.Identity.Application.Configuration;
+using CryptoJackpot.Identity.Application.Consumers;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Application.Services;
 using CryptoJackpot.Identity.Data;
@@ -73,7 +74,7 @@ public static class IoCExtension
                         }
                         catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P07") // relation already exists
                         {
-                            logger.LogWarning("Some tables already exist, skipping migration. Consider updating __EFMigrationsHistory table manually.");
+                            logger.LogWarning(ex, "Some tables already exist, skipping migration. Consider updating __EFMigrationsHistory table manually.");
                         }
                     }
                 }
@@ -267,6 +268,11 @@ public static class IoCExtension
                 rider.AddProducer<PasswordResetRequestedEvent>(KafkaTopics.PasswordResetRequested);
                 rider.AddProducer<ReferralCreatedEvent>(KafkaTopics.ReferralCreated);
                 rider.AddProducer<UserLoggedInEvent>(KafkaTopics.UserLoggedIn);
+            },
+            configureBus: bus =>
+            {
+                // Register consumer for Request/Response pattern (used by Notification service)
+                bus.AddConsumer<GetAllUsersConsumer>();
             });
     }
 }

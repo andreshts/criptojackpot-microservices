@@ -59,7 +59,14 @@ public class CreateLotteryDrawCommandHandler : IRequestHandler<CreateLotteryDraw
                 LotteryDbId = createdLottery.Id,
                 MinNumber = createdLottery.MinNumber,
                 MaxNumber = createdLottery.MaxNumber,
-                TotalSeries = createdLottery.TotalSeries
+                TotalSeries = createdLottery.TotalSeries,
+                // Marketing information
+                Title = createdLottery.Title,
+                Description = createdLottery.Description,
+                TicketPrice = createdLottery.TicketPrice,
+                StartDate = createdLottery.StartDate,
+                EndDate = createdLottery.EndDate,
+                MaxTickets = createdLottery.MaxTickets
             });
 
             _logger.LogInformation("Lottery {LotteryId} created successfully. Number generation queued.", createdLottery.LotteryGuid);

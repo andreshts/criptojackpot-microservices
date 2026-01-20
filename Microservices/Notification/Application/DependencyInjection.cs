@@ -1,5 +1,6 @@
 using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Consumers;
@@ -160,24 +161,35 @@ public static class DependencyInjection
                 rider.AddConsumer<UserRegisteredConsumer>();
                 rider.AddConsumer<PasswordResetRequestedConsumer>();
                 rider.AddConsumer<ReferralCreatedConsumer>();
+                rider.AddConsumer<LotteryMarketingConsumer>();
+            },
+            configureBus: bus =>
+            {
+                // Register request client for getting users from Identity service
+                bus.AddRequestClient<GetAllUsersRequest>();
             },
             configureKafkaEndpoints: (context, kafka) =>
             {
                 // Configure topic endpoints using shared constants
                 kafka.TopicEndpoint<UserRegisteredEvent>(
-                    KafkaTopics.UserRegistered, 
-                    KafkaTopics.NotificationGroup, 
+                    KafkaTopics.UserRegistered,
+                    KafkaTopics.NotificationGroup,
                     e => e.ConfigureConsumer<UserRegisteredConsumer>(context));
 
                 kafka.TopicEndpoint<PasswordResetRequestedEvent>(
-                    KafkaTopics.PasswordResetRequested, 
-                    KafkaTopics.NotificationGroup, 
+                    KafkaTopics.PasswordResetRequested,
+                    KafkaTopics.NotificationGroup,
                     e => e.ConfigureConsumer<PasswordResetRequestedConsumer>(context));
 
                 kafka.TopicEndpoint<ReferralCreatedEvent>(
-                    KafkaTopics.ReferralCreated, 
-                    KafkaTopics.NotificationGroup, 
+                    KafkaTopics.ReferralCreated,
+                    KafkaTopics.NotificationGroup,
                     e => e.ConfigureConsumer<ReferralCreatedConsumer>(context));
+
+                kafka.TopicEndpoint<LotteryCreatedEvent>(
+                    KafkaTopics.LotteryCreated,
+                    KafkaTopics.NotificationGroup,
+                    e => e.ConfigureConsumer<LotteryMarketingConsumer>(context));
             });
     }
 }
