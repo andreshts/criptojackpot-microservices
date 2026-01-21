@@ -190,6 +190,9 @@ public static class DependencyInjection
             configureRider: rider =>
             {
                 // Register producers/consumers for events here
-            });
+            },
+            configureBus: null,
+            configureKafkaEndpoints: null,
+            useMessageScheduler: false);
     }
 }

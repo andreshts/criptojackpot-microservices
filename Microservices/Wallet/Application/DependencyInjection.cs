@@ -21,7 +21,7 @@ public static class DependencyInjection
         AddAuthentication(services, configuration);
         AddDatabase(services, configuration);
         AddSwagger(services);
-        AddControllers(services);
+        AddControllers(services, configuration);
         AddRepositories(services);
         AddApplicationServices(services);
         AddInfrastructure(services, configuration);
@@ -190,7 +190,9 @@ public static class DependencyInjection
             configureRider: rider =>
             {
                 // Register producers/consumers for events here
-            });
+            },
+            configureBus: null,
+            configureKafkaEndpoints: null,
+            useMessageScheduler: false);
     }
 }
-
