@@ -79,6 +79,9 @@ public static class DependencyContainer
                 {
                     kafka.Host(kafkaHost);
                     
+                    // Configure global Kafka settings
+                    kafka.ClientId = "cryptojackpot";
+                    
                     // Allow microservices to configure topic endpoints
                     configureKafkaEndpoints?.Invoke(context, kafka);
                 });

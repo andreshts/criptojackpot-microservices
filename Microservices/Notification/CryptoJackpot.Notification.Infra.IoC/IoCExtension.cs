@@ -195,28 +195,48 @@ public static class IoCExtension
                 kafka.TopicEndpoint<UserRegisteredEvent>(
                     KafkaTopics.UserRegistered,
                     KafkaTopics.NotificationGroup,
-                    e => e.ConfigureConsumer<UserRegisteredConsumer>(context));
+                    e =>
+                    {
+                        e.ConfigureConsumer<UserRegisteredConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
 
                 kafka.TopicEndpoint<PasswordResetRequestedEvent>(
                     KafkaTopics.PasswordResetRequested,
                     KafkaTopics.NotificationGroup,
-                    e => e.ConfigureConsumer<PasswordResetRequestedConsumer>(context));
+                    e =>
+                    {
+                        e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
 
                 kafka.TopicEndpoint<ReferralCreatedEvent>(
                     KafkaTopics.ReferralCreated,
                     KafkaTopics.NotificationGroup,
-                    e => e.ConfigureConsumer<ReferralCreatedConsumer>(context));
+                    e =>
+                    {
+                        e.ConfigureConsumer<ReferralCreatedConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
 
                 kafka.TopicEndpoint<LotteryCreatedEvent>(
                     KafkaTopics.LotteryCreated,
                     KafkaTopics.NotificationGroup,
-                    e => e.ConfigureConsumer<LotteryMarketingConsumer>(context));
+                    e =>
+                    {
+                        e.ConfigureConsumer<LotteryMarketingConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
 
                 // Marketing users response - Saga pattern response from Identity service
                 kafka.TopicEndpoint<GetUsersForMarketingResponseEvent>(
                     KafkaTopics.GetUsersForMarketingResponse,
                     KafkaTopics.NotificationGroup,
-                    e => e.ConfigureConsumer<MarketingUsersResponseConsumer>(context));
+                    e =>
+                    {
+                        e.ConfigureConsumer<MarketingUsersResponseConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
 
                 // Marketing email distribution topic - multiple consumers can process in parallel
                 kafka.TopicEndpoint<SendMarketingEmailEvent>(
@@ -225,6 +245,9 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<SendMarketingEmailConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        // Checkpoint every message for reliable processing
+                        e.CheckpointInterval = TimeSpan.FromSeconds(1);
                         // Enable concurrent message processing for higher throughput
                         e.ConcurrentMessageLimit = 10;
                     });
