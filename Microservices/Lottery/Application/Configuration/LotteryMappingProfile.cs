@@ -29,11 +29,11 @@ public class LotteryMappingProfile : Profile
         CreateMap<CreatePrizeCommand, Prize>()
             .ForMember(dest => dest.PrizeGuid, opt => opt.MapFrom(_ => Guid.NewGuid()))
             .ForMember(dest => dest.AdditionalImages, opt => opt.MapFrom(src => 
-                src.AdditionalImageUrls.Select((url, index) => new PrizeImage
+                src.AdditionalImageUrls.Select(img => new PrizeImage
                 {
-                    ImageUrl = url,
-                    Caption = string.Empty,
-                    DisplayOrder = index
+                    ImageUrl = img.ImageUrl,
+                    Caption = img.Caption,
+                    DisplayOrder = img.DisplayOrder
                 }).ToList()));
 
         CreateMap<CreateLotteryDrawCommand, LotteryDraw>()

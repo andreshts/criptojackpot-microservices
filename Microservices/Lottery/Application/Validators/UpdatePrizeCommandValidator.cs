@@ -32,8 +32,16 @@ public class UpdatePrizeCommandValidator : AbstractValidator<UpdatePrizeCommand>
             .WithMessage("MainImageUrl must be a valid absolute URL");
 
         RuleForEach(c => c.AdditionalImageUrls)
-            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
-            .WithMessage("Each additional image URL must be a valid absolute URL");
+            .ChildRules(img =>
+            {
+                img.RuleFor(i => i.ImageUrl)
+                    .NotEmpty().WithMessage("ImageUrl is required")
+                    .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+                    .WithMessage("ImageUrl must be a valid absolute URL");
+                
+                img.RuleFor(i => i.DisplayOrder)
+                    .GreaterThanOrEqualTo(0).WithMessage("DisplayOrder must be greater than or equal to 0");
+            });
 
         RuleFor(c => c.CashAlternative)
             .GreaterThan(0).When(c => c.CashAlternative.HasValue)

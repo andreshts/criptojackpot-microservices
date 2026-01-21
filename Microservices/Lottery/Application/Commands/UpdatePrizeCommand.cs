@@ -1,4 +1,5 @@
 using CryptoJackpot.Lottery.Application.DTOs;
+using CryptoJackpot.Lottery.Application.Requests;
 using CryptoJackpot.Lottery.Domain.Enums;
 using FluentResults;
 using MediatR;
@@ -14,7 +15,7 @@ public class UpdatePrizeCommand : IRequest<Result<PrizeDto>>
     public PrizeType Type { get; set; }
     public int Tier { get; set; }
     public string MainImageUrl { get; set; } = null!;
-    public List<string> AdditionalImageUrls { get; set; } = [];
+    public List<PrizeImageRequest> AdditionalImageUrls { get; set; } = [];
     public Dictionary<string, string> Specifications { get; set; } = [];
     public decimal? CashAlternative { get; set; }
     public bool IsDeliverable { get; set; }

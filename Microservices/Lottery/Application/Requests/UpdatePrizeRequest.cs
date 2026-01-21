@@ -10,7 +10,7 @@ public class UpdatePrizeRequest
     public PrizeType Type { get; set; }
     public int Tier { get; set; } = 1;
     public string MainImageUrl { get; set; } = null!;
-    public List<string> AdditionalImageUrls { get; set; } = [];
+    public List<PrizeImageRequest> AdditionalImageUrls { get; set; } = [];
     public Dictionary<string, string> Specifications { get; set; } = [];
     public decimal? CashAlternative { get; set; }
     public bool IsDeliverable { get; set; }

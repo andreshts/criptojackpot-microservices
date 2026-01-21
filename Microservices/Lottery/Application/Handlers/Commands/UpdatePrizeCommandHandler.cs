@@ -47,12 +47,12 @@ public class UpdatePrizeCommandHandler : IRequestHandler<UpdatePrizeCommand, Res
             prize.IsDeliverable = request.IsDeliverable;
             prize.IsDigital = request.IsDigital;
             prize.AdditionalImages = request.AdditionalImageUrls
-                .Select((url, index) => new PrizeImage
+                .Select(img => new PrizeImage
                 {
                     PrizeId = prize.Id,
-                    ImageUrl = url,
-                    Caption = string.Empty,
-                    DisplayOrder = index
+                    ImageUrl = img.ImageUrl,
+                    Caption = img.Caption,
+                    DisplayOrder = img.DisplayOrder
                 })
                 .ToList();
 
