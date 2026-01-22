@@ -253,6 +253,16 @@ public static class IoCExtension
                         e.ConfigureConsumer<NumbersReservedConsumer>(context);
                         e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
                     });
+                
+                // OrderTimeout - process order expiration after 5 minutes
+                kafka.TopicEndpoint<OrderTimeoutEvent>(
+                    KafkaTopics.OrderTimeout,
+                    KafkaTopics.OrderGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<OrderTimeoutConsumer>(context);
+                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                    });
             },
             useMessageScheduler: true);
     }
