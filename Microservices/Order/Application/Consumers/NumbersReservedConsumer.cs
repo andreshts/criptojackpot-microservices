@@ -1,6 +1,7 @@
 ﻿using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
+using CryptoJackpot.Order.Application.Interfaces;
 using CryptoJackpot.Order.Domain.Enums;
 using CryptoJackpot.Order.Domain.Interfaces;
 using CryptoJackpot.Order.Domain.Models;
@@ -17,18 +18,18 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IEventBus _eventBus;
-    private readonly IMessageScheduler _messageScheduler;
+    private readonly IOrderTimeoutScheduler _orderTimeoutScheduler;
     private readonly ILogger<NumbersReservedConsumer> _logger;
 
     public NumbersReservedConsumer(
         IOrderRepository orderRepository,
         IEventBus eventBus,
-        IMessageScheduler messageScheduler,
+        IOrderTimeoutScheduler orderTimeoutScheduler,
         ILogger<NumbersReservedConsumer> logger)
     {
         _orderRepository = orderRepository;
         _eventBus = eventBus;
-        _messageScheduler = messageScheduler;
+        _orderTimeoutScheduler = orderTimeoutScheduler;
         _logger = logger;
     }
 
@@ -109,15 +110,12 @@ public class NumbersReservedConsumer : IConsumer<NumbersReservedEvent>
             ExpiresAt = createdOrder.ExpiresAt
         });
 
-        // Schedule timeout event
-        await _messageScheduler.SchedulePublish(
-            message.ExpiresAt,
-            new OrderTimeoutEvent
-            {
-                OrderId = createdOrder.OrderGuid,
-                LotteryId = createdOrder.LotteryId,
-                LotteryNumberIds = lotteryNumberIds
-            });
+        // Schedule timeout using Quartz with database persistence
+        await _orderTimeoutScheduler.ScheduleOrderTimeoutAsync(
+            createdOrder.OrderGuid,
+            createdOrder.LotteryId,
+            lotteryNumberIds,
+            createdOrder.ExpiresAt);
 
         _logger.LogInformation(
             "Created order {OrderId} from NumbersReservedEvent. Items: {ItemCount}, Amount: {Amount}, Expires: {ExpiresAt}",

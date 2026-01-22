@@ -51,6 +51,14 @@ public class OrderRepository : IOrderRepository
             .Where(o => o.Status == OrderStatus.Pending && o.ExpiresAt < DateTime.UtcNow)
             .ToListAsync();
 
+    public async Task<List<Domain.Models.Order>> GetExpiredPendingOrdersAsync(
+        DateTime cutoffTime, 
+        CancellationToken cancellationToken = default)
+        => await _context.Orders
+            .Include(o => o.OrderDetails)
+            .Where(o => o.Status == OrderStatus.Pending && o.ExpiresAt < cutoffTime)
+            .ToListAsync(cancellationToken);
+
     public async Task<Domain.Models.Order> UpdateAsync(Domain.Models.Order order)
     {
         order.UpdatedAt = DateTime.UtcNow;

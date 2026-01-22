@@ -5,10 +5,10 @@ using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Order.Application.Commands;
 using CryptoJackpot.Order.Application.DTOs;
+using CryptoJackpot.Order.Application.Interfaces;
 using CryptoJackpot.Order.Domain.Enums;
 using CryptoJackpot.Order.Domain.Interfaces;
 using FluentResults;
-using MassTransit;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -18,7 +18,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IEventBus _eventBus;
-    private readonly IMessageScheduler _messageScheduler;
+    private readonly IOrderTimeoutScheduler _orderTimeoutScheduler;
     private readonly IMapper _mapper;
     private readonly ILogger<CreateOrderCommandHandler> _logger;
     private const int OrderExpirationMinutes = 5;
@@ -26,13 +26,13 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
     public CreateOrderCommandHandler(
         IOrderRepository orderRepository,
         IEventBus eventBus,
-        IMessageScheduler messageScheduler,
+        IOrderTimeoutScheduler orderTimeoutScheduler,
         IMapper mapper,
         ILogger<CreateOrderCommandHandler> logger)
     {
         _orderRepository = orderRepository;
         _eventBus = eventBus;
-        _messageScheduler = messageScheduler;
+        _orderTimeoutScheduler = orderTimeoutScheduler;
         _mapper = mapper;
         _logger = logger;
     }
@@ -86,15 +86,12 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Res
                 ExpiresAt = createdOrder.ExpiresAt
             });
 
-            // Schedule timeout event to fire after 5 minutes
-            await _messageScheduler.SchedulePublish(
-                expiresAt,
-                new OrderTimeoutEvent
-                {
-                    OrderId = createdOrder.OrderGuid,
-                    LotteryId = createdOrder.LotteryId,
-                    LotteryNumberIds = lotteryNumberIds
-                },
+            // Schedule timeout using Quartz with database persistence
+            await _orderTimeoutScheduler.ScheduleOrderTimeoutAsync(
+                createdOrder.OrderGuid,
+                createdOrder.LotteryId,
+                lotteryNumberIds,
+                createdOrder.ExpiresAt,
                 cancellationToken);
 
             _logger.LogInformation(

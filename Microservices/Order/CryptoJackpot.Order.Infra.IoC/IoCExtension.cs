@@ -8,6 +8,8 @@ using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Order.Application;
 using CryptoJackpot.Order.Application.Configuration;
 using CryptoJackpot.Order.Application.Consumers;
+using CryptoJackpot.Order.Application.Interfaces;
+using CryptoJackpot.Order.Application.Services;
 using CryptoJackpot.Order.Data.Context;
 using CryptoJackpot.Order.Data.Repositories;
 using CryptoJackpot.Order.Domain.Interfaces;
@@ -22,6 +24,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Quartz;
 
 namespace CryptoJackpot.Order.Infra.IoC;
 
@@ -37,6 +40,7 @@ public static class IoCExtension
         AddControllers(services, configuration);
         AddRepositories(services);
         AddApplicationServices(services);
+        AddQuartzScheduler(services, configuration);
         AddInfrastructure(services, configuration);
     }
 
@@ -216,17 +220,60 @@ public static class IoCExtension
         services.AddAutoMapper(typeof(OrderMappingProfile).Assembly);
     }
 
+    private static void AddQuartzScheduler(IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+        // Configure Quartz.NET with PostgreSQL persistence
+        services.AddQuartz(q =>
+        {
+
+            // Configure persistent job store with PostgreSQL
+            q.UsePersistentStore(store =>
+            {
+                store.UsePostgres(connectionString!);
+                store.UseNewtonsoftJsonSerializer();
+                
+                // Use clustered mode for multi-instance support
+                store.UseClustering(c =>
+                {
+                    c.CheckinMisfireThreshold = TimeSpan.FromSeconds(20);
+                    c.CheckinInterval = TimeSpan.FromSeconds(10);
+                });
+
+                // Configure table prefix (optional, for organization)
+                store.SetProperty("quartz.jobStore.tablePrefix", "qrtz_");
+            });
+
+            // Scheduler settings
+            q.SchedulerName = "OrderTimeoutScheduler";
+            q.SchedulerId = "AUTO";
+
+            // Configure misfire handling - fire immediately if trigger was missed
+            q.MisfireThreshold = TimeSpan.FromSeconds(60);
+        });
+
+        // Add Quartz hosted service
+        services.AddQuartzHostedService(options =>
+        {
+            options.WaitForJobsToComplete = true;
+            options.AwaitApplicationStarted = true;
+        });
+
+        // Register the order timeout scheduler service
+        services.AddScoped<IOrderTimeoutScheduler, QuartzOrderTimeoutScheduler>();
+
+        // Register the background cleanup service as a fallback
+        services.AddHostedService<ExpiredOrdersCleanupService>();
+    }
+
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
     {
-        // Use shared infrastructure with Kafka, Transactional Outbox, and Message Scheduler
+        // Use shared infrastructure with Kafka and Transactional Outbox
+        // Note: We use Quartz.NET for order timeout scheduling instead of MassTransit scheduler
         DependencyContainer.RegisterServicesWithKafka<OrderDbContext>(
             services,
             configuration,
-            configureBus: bus =>
-            {
-                // Register consumer for internal timeout events triggered by scheduler
-                bus.AddConsumer<OrderTimeoutConsumer>();
-            },
             configureRider: rider =>
             {
                 // Register producers for Order events
@@ -234,11 +281,7 @@ public static class IoCExtension
                 rider.AddProducer<OrderCompletedEvent>(KafkaTopics.OrderCompleted);
                 rider.AddProducer<OrderExpiredEvent>(KafkaTopics.OrderExpired);
                 rider.AddProducer<OrderCancelledEvent>(KafkaTopics.OrderCancelled);
-                rider.AddProducer<OrderTimeoutEvent>(KafkaTopics.OrderTimeout);
 
-                // Register consumer for timeout events
-                rider.AddConsumer<OrderTimeoutConsumer>();
-                
                 // Register consumer for NumbersReserved events from Lottery
                 rider.AddConsumer<NumbersReservedConsumer>();
             },
@@ -253,17 +296,6 @@ public static class IoCExtension
                         e.ConfigureConsumer<NumbersReservedConsumer>(context);
                         e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
                     });
-                
-                // OrderTimeout - process order expiration after 5 minutes
-                kafka.TopicEndpoint<OrderTimeoutEvent>(
-                    KafkaTopics.OrderTimeout,
-                    KafkaTopics.OrderGroup,
-                    e =>
-                    {
-                        e.ConfigureConsumer<OrderTimeoutConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
-                    });
-            },
-            useMessageScheduler: true);
+            });
     }
 }
