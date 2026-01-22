@@ -40,7 +40,7 @@ public class LotteryNumberService : ILotteryNumberService
             return [];
 
         var numbers = await _lotteryNumberRepository.GetNumbersByLotteryAsync(lottery.Id);
-        
+
         // Group by number and count available series
         var grouped = numbers
             .GroupBy(n => n.Number)
@@ -57,9 +57,9 @@ public class LotteryNumberService : ILotteryNumberService
     }
 
     public async Task<Result<NumberReservationDto>> ReserveNumberAsync(
-        Guid lotteryGuid, 
-        int number, 
-        int? series, 
+        Guid lotteryGuid,
+        int number,
+        int? series,
         long userId)
     {
         var lottery = await _lotteryDrawRepository.GetLotteryByGuidAsync(lotteryGuid);
@@ -75,11 +75,11 @@ public class LotteryNumberService : ILotteryNumberService
             var message = series.HasValue
                 ? $"Number {number} series {series} is not available"
                 : $"Number {number} is not available in any series";
-            
+
             _logger.LogWarning(
                 "Failed to reserve number {Number} series {Series} in lottery {LotteryId}: not available",
                 number, series, lotteryGuid);
-            
+
             return Result.Fail<NumberReservationDto>(message);
         }
 
@@ -116,7 +116,7 @@ public class LotteryNumberService : ILotteryNumberService
             return [];
 
         var numbers = await _lotteryNumberRepository.GetNumbersByLotteryAsync(lottery.Id);
-        
+
         return numbers.Select(n => new NumberStatusDto
         {
             NumberId = n.Id,
@@ -134,9 +134,9 @@ public class LotteryNumberService : ILotteryNumberService
     private const int MaxQuantityPerRequest = 10;
 
     public async Task<Result<List<NumberReservationDto>>> ReserveNumberByQuantityAsync(
-        Guid lotteryGuid, 
-        int number, 
-        int quantity, 
+        Guid lotteryGuid,
+        int number,
+        int quantity,
         long userId)
     {
         // Validation: quantity must be positive
@@ -149,7 +149,7 @@ public class LotteryNumberService : ILotteryNumberService
             _logger.LogWarning(
                 "User {UserId} attempted to reserve {Quantity} series (max allowed: {Max}) for number {Number} in lottery {LotteryId}",
                 userId, quantity, MaxQuantityPerRequest, number, lotteryGuid);
-            
+
             return Result.Fail<List<NumberReservationDto>>(
                 $"Maximum {MaxQuantityPerRequest} series can be reserved per request");
         }
@@ -168,7 +168,7 @@ public class LotteryNumberService : ILotteryNumberService
             _logger.LogWarning(
                 "Failed to reserve number {Number} in lottery {LotteryId}: no series available",
                 number, lotteryGuid);
-            
+
             return Result.Fail<List<NumberReservationDto>>($"Number {number} is not available in any series");
         }
 
@@ -177,7 +177,7 @@ public class LotteryNumberService : ILotteryNumberService
             _logger.LogWarning(
                 "Insufficient stock for number {Number} in lottery {LotteryId}. Requested: {Requested}, Available: {Available}",
                 number, lotteryGuid, quantity, availableNumbers.Count);
-            
+
             return Result.Fail<List<NumberReservationDto>>(
                 $"Insufficient stock. Requested {quantity} series of number {number}, but only {availableNumbers.Count} available");
         }
@@ -209,10 +209,104 @@ public class LotteryNumberService : ILotteryNumberService
 
         _logger.LogInformation(
             "Reserved {Count} series of number {Number} for user {UserId} in lottery {LotteryId}. Series: [{Series}]. Expires at {ExpiresAt}",
-            availableNumbers.Count, 
-            number, 
-            userId, 
-            lotteryGuid, 
+            availableNumbers.Count,
+            number,
+            userId,
+            lotteryGuid,
+            string.Join(", ", availableNumbers.Select(n => n.Series)),
+            expiresAt);
+
+        return Result.Ok(reservations);
+    }
+
+    /// <summary>
+    /// Reserve multiple series of a number with an associated OrderId.
+    /// This ensures the OrderId is set on the LotteryNumber records so the 
+    /// MassTransit scheduler can properly release them when they expire.
+    /// </summary>
+    private async Task<Result<List<NumberReservationDto>>> ReserveNumberByQuantityWithOrderAsync(
+        Guid lotteryGuid,
+        int number,
+        int quantity,
+        long userId,
+        Guid orderId)
+    {
+        // Validation: quantity must be positive
+        if (quantity <= 0)
+            return Result.Fail<List<NumberReservationDto>>("Quantity must be greater than 0");
+
+        // Validation: prevent abuse by limiting max quantity per request
+        if (quantity > MaxQuantityPerRequest)
+        {
+            _logger.LogWarning(
+                "User {UserId} attempted to reserve {Quantity} series (max allowed: {Max}) for number {Number} in lottery {LotteryId}",
+                userId, quantity, MaxQuantityPerRequest, number, lotteryGuid);
+
+            return Result.Fail<List<NumberReservationDto>>(
+                $"Maximum {MaxQuantityPerRequest} series can be reserved per request");
+        }
+
+        var lottery = await _lotteryDrawRepository.GetLotteryByGuidAsync(lotteryGuid);
+        if (lottery == null)
+            return Result.Fail<List<NumberReservationDto>>("Lottery not found");
+
+        // Get the next N available series for this number, ordered by series ASC
+        // Uses pessimistic locking (FOR UPDATE SKIP LOCKED) to prevent race conditions
+        var availableNumbers = await _lotteryNumberRepository.GetNextAvailableSeriesAsync(
+            lottery.Id, number, quantity);
+
+        if (availableNumbers.Count == 0)
+        {
+            _logger.LogWarning(
+                "Failed to reserve number {Number} in lottery {LotteryId}: no series available",
+                number, lotteryGuid);
+
+            return Result.Fail<List<NumberReservationDto>>($"Number {number} is not available in any series");
+        }
+
+        if (availableNumbers.Count < quantity)
+        {
+            _logger.LogWarning(
+                "Insufficient stock for number {Number} in lottery {LotteryId}. Requested: {Requested}, Available: {Available}",
+                number, lotteryGuid, quantity, availableNumbers.Count);
+
+            return Result.Fail<List<NumberReservationDto>>(
+                $"Insufficient stock. Requested {quantity} series of number {number}, but only {availableNumbers.Count} available");
+        }
+
+        // Reserve all the numbers WITH OrderId
+        var now = DateTime.UtcNow;
+        var expiresAt = now.AddMinutes(ReservationMinutes);
+        var reservations = new List<NumberReservationDto>();
+
+        foreach (var availableNumber in availableNumbers)
+        {
+            availableNumber.Status = NumberStatus.Reserved;
+            availableNumber.ReservationExpiresAt = expiresAt;
+            availableNumber.OrderId = orderId; // <-- KEY FIX: Assign OrderId
+            availableNumber.UpdatedAt = now;
+
+            reservations.Add(new NumberReservationDto
+            {
+                NumberId = availableNumber.Id,
+                LotteryNumberGuid = availableNumber.LotteryNumberGuid,
+                LotteryGuid = lotteryGuid,
+                Number = availableNumber.Number,
+                Series = availableNumber.Series,
+                ReservationExpiresAt = expiresAt,
+                SecondsRemaining = ReservationMinutes * 60
+            });
+        }
+
+        await _lotteryNumberRepository.UpdateRangeAsync(availableNumbers);
+
+        _logger.LogInformation(
+            "Reserved {Count} series of number {Number} for user {UserId} in lottery {LotteryId}. OrderId: {OrderId}, Series: [{Series}]. Expires at {ExpiresAt}",
+            availableNumbers.Count,
+            number,
+            userId,
+            lotteryGuid,
+            orderId,
             string.Join(", ", availableNumbers.Select(n => n.Series)),
             expiresAt);
 
@@ -226,7 +320,7 @@ public class LotteryNumberService : ILotteryNumberService
         Guid? existingOrderId = null)
     {
         // Validation
-        if (items == null || items.Count == 0)
+        if (items.Count == 0)
         {
             return Result.Fail<ReservationWithOrderDto>("At least one item is required");
         }
@@ -238,12 +332,17 @@ public class LotteryNumberService : ILotteryNumberService
             return Result.Fail<ReservationWithOrderDto>("Lottery not found");
         }
 
+        // Generate order ID FIRST (or use existing one)
+        var orderId = existingOrderId ?? Guid.NewGuid();
+        var isAddToExisting = existingOrderId.HasValue;
+
         // Reserve all numbers from the cart
         var allReservations = new List<NumberReservationDto>();
-        
+
         foreach (var item in items)
         {
-            var reservationResult = await ReserveNumberByQuantityAsync(lotteryGuid, item.Number, item.Quantity, userId);
+            var reservationResult = await ReserveNumberByQuantityWithOrderAsync(
+                lotteryGuid, item.Number, item.Quantity, userId, orderId);
             if (reservationResult.IsFailed)
             {
                 // If any reservation fails, we should release the already reserved numbers
@@ -251,23 +350,19 @@ public class LotteryNumberService : ILotteryNumberService
                 _logger.LogWarning(
                     "Failed to reserve number {Number} x{Quantity} for user {UserId}: {Error}",
                     item.Number, item.Quantity, userId, reservationResult.Errors.FirstOrDefault()?.Message);
-                
+
                 return Result.Fail<ReservationWithOrderDto>(reservationResult.Errors);
             }
-            
+
             allReservations.AddRange(reservationResult.Value);
         }
 
         var now = DateTime.UtcNow;
         var expiresAt = now.AddMinutes(ReservationMinutes);
-        
+
         // Calculate total amount for all reservations
         var ticketPrice = lottery.TicketPrice;
         var reservationAmount = ticketPrice * allReservations.Count;
-        
-        // Generate order ID (or use existing one)
-        var orderId = existingOrderId ?? Guid.NewGuid();
-        var isAddToExisting = existingOrderId.HasValue;
 
         // Publish event to Order microservice to create/update the order
         await _eventBus.Publish(new NumbersReservedEvent
@@ -302,4 +397,3 @@ public class LotteryNumberService : ILotteryNumberService
         });
     }
 }
-

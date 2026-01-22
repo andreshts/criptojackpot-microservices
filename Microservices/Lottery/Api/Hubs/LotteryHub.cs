@@ -48,15 +48,15 @@ public class LotteryHub : Hub<ILotteryHubClient>
     public async Task JoinLottery(Guid lotteryId)
     {
         try
-        { 
+        {
             var groupName = GetLotteryGroupName(lotteryId);
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             _logger.LogInformation("Client {ConnectionId} joined lottery {LotteryId}", Context.ConnectionId, lotteryId);
-            
+
             // Send current available numbers to the newly connected client
             var availableNumbers = await _lotteryNumberService.GetAvailableNumbersAsync(lotteryId);
             _logger.LogInformation("Retrieved {Count} available numbers for lottery {LotteryId}", availableNumbers.Count, lotteryId);
-            
+
             await Clients.Caller.ReceiveAvailableNumbers(lotteryId, availableNumbers);
         }
         catch (Exception ex)
@@ -96,7 +96,7 @@ public class LotteryHub : Hub<ILotteryHubClient>
             await Clients.Caller.ReceiveError($"Error refreshing numbers: {ex.Message}");
         }
     }
-    
+
     /// <summary>
     /// Reserve numbers from cart and automatically create/update an order.
     /// Supports both single number and multiple numbers (full cart checkout).
@@ -110,10 +110,10 @@ public class LotteryHub : Hub<ILotteryHubClient>
         {
             _logger.LogInformation(
                 "ReserveNumbersWithOrder called - LotteryId: {LotteryId}, Items: {ItemCount}, ExistingOrderId: {ExistingOrderId}",
-                lotteryId, items?.Count ?? 0, existingOrderId);
+                lotteryId, items.Count, existingOrderId);
 
             var userId = GetUserId();
-            
+
             if (userId == null)
             {
                 _logger.LogWarning("ReserveNumbersWithOrder failed: Unauthorized - no userId in token");
@@ -121,7 +121,7 @@ public class LotteryHub : Hub<ILotteryHubClient>
                 return;
             }
 
-            if (items == null || items.Count == 0)
+            if (items.Count == 0)
             {
                 _logger.LogWarning("ReserveNumbersWithOrder failed: No items provided");
                 await Clients.Caller.ReceiveError("At least one item is required");
@@ -130,30 +130,30 @@ public class LotteryHub : Hub<ILotteryHubClient>
 
             var result = await _lotteryNumberService.ReserveNumbersWithOrderAsync(
                 lotteryId, items, userId.Value, existingOrderId);
-            
+
             if (result.IsSuccess)
             {
                 var reservationWithOrder = result.Value;
                 var groupName = GetLotteryGroupName(lotteryId);
-                
+
                 // Notify all clients in the lottery group about each reserved number
                 foreach (var reservation in reservationWithOrder.Reservations)
                 {
                     await Clients.Group(groupName).NumberReserved(
-                        lotteryId, 
+                        lotteryId,
                         reservation.NumberId,
                         reservation.LotteryNumberGuid,
-                        reservation.Number, 
+                        reservation.Number,
                         reservation.Series);
                 }
-                
+
                 // Send reservation with order info to the caller
                 await Clients.Caller.ReservationWithOrderConfirmed(reservationWithOrder);
-                
+
                 _logger.LogInformation(
                     "User {UserId} reserved {Count} numbers in lottery {LotteryId}. OrderId: {OrderId}, Amount: {Amount}",
-                    userId, 
-                    reservationWithOrder.Reservations.Count, 
+                    userId,
+                    reservationWithOrder.Reservations.Count,
                     lotteryId,
                     reservationWithOrder.OrderId,
                     reservationWithOrder.TotalAmount);
@@ -161,16 +161,16 @@ public class LotteryHub : Hub<ILotteryHubClient>
             else
             {
                 var errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Unknown error";
-    
+
                 _logger.LogWarning("ReserveNumbersWithOrder failed: {Error}", errorMessage);
                 await Clients.Caller.ReceiveError(errorMessage);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, 
+            _logger.LogError(ex,
                 "Exception in ReserveNumbersWithOrder - LotteryId: {LotteryId}, Items: {ItemCount}",
-                lotteryId, items?.Count ?? 0);
+                lotteryId, items.Count);
             await Clients.Caller.ReceiveError($"Error reserving numbers: {ex.Message}");
         }
     }
@@ -187,17 +187,16 @@ public class LotteryHub : Hub<ILotteryHubClient>
     {
         // Try NameIdentifier first (standard .NET claim)
         var userIdClaim = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        
+
         // Fallback to 'sub' claim (standard JWT claim)
         if (string.IsNullOrEmpty(userIdClaim))
         {
             userIdClaim = Context.User?.FindFirst("sub")?.Value;
         }
-        
-        _logger.LogDebug("GetUserId - Claims: {Claims}", 
+
+        _logger.LogDebug("GetUserId - Claims: {Claims}",
             string.Join(", ", Context.User?.Claims.Select(c => $"{c.Type}={c.Value}") ?? Array.Empty<string>()));
-        
+
         return long.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 }
-
