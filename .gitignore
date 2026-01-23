@@ -205,4 +205,5 @@ deploy-config.json
 k8s/local/secrets/*.local.yaml
 
 # Local secrets with real API keys
-k8s/local/secrets/brevo-secrets.local.yaml
+k8s/local/secrets/brevo-secrets.yaml
+
