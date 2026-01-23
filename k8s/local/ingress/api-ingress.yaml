@@ -1,104 +1,114 @@
-﻿# Ingress para APIs
-apiVersion: networking.k8s.io/v1
+﻿apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: cryptojackpot-ingress
-  namespace: cryptojackpot
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"nginx.ingress.kubernetes.io/cors-allow-headers":"DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization","nginx.ingress.kubernetes.io/cors-allow-methods":"GET, POST, PUT, DELETE, PATCH, OPTIONS","nginx.ingress.kubernetes.io/cors-allow-origin":"*","nginx.ingress.kubernetes.io/enable-cors":"true","nginx.ingress.kubernetes.io/proxy-body-size":"10m","nginx.ingress.kubernetes.io/proxy-read-timeout":"60","nginx.ingress.kubernetes.io/proxy-send-timeout":"60"},"name":"cryptojackpot-ingress","namespace":"cryptojackpot"},"spec":{"ingressClassName":"nginx","rules":[{"host":"cryptojackpot.local","http":{"paths":[{"backend":{"service":{"name":"identity-api","port":{"number":80}}},"path":"/api/v1/auth","pathType":"Prefix"},{"backend":{"service":{"name":"identity-api","port":{"number":80}}},"path":"/api/v1/users","pathType":"Prefix"},{"backend":{"service":{"name":"identity-api","port":{"number":80}}},"path":"/api/v1/roles","pathType":"Prefix"},{"backend":{"service":{"name":"identity-api","port":{"number":80}}},"path":"/api/v1/countries","pathType":"Prefix"},{"backend":{"service":{"name":"identity-api","port":{"number":80}}},"path":"/api/v1/user-referrals","pathType":"Prefix"},{"backend":{"service":{"name":"lottery-api","port":{"number":80}}},"path":"/api/v1/lotteries","pathType":"Prefix"},{"backend":{"service":{"name":"lottery-api","port":{"number":80}}},"path":"/api/v1/prizes","pathType":"Prefix"},{"backend":{"service":{"name":"lottery-api","port":{"number":80}}},"path":"/api/v1/lottery-numbers","pathType":"Prefix"},{"backend":{"service":{"name":"order-api","port":{"number":80}}},"path":"/api/v1/orders","pathType":"Prefix"},{"backend":{"service":{"name":"wallet-api","port":{"number":80}}},"path":"/api/v1/wallets","pathType":"Prefix"},{"backend":{"service":{"name":"winner-api","port":{"number":80}}},"path":"/api/v1/winners","pathType":"Prefix"},{"backend":{"service":{"name":"notification-api","port":{"number":80}}},"path":"/api/v1/notifications","pathType":"Prefix"}]}}]}}
+    nginx.ingress.kubernetes.io/cors-allow-headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization
+    nginx.ingress.kubernetes.io/cors-allow-methods: GET, POST, PUT, DELETE, PATCH,
+      OPTIONS
+    nginx.ingress.kubernetes.io/cors-allow-origin: '*'
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
     nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
-    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+  creationTimestamp: "2026-01-22T23:11:34Z"
+  generation: 1
+  name: cryptojackpot-ingress
+  namespace: cryptojackpot
+  resourceVersion: "8574"
+  uid: f5f7b306-4bc4-401f-b192-0103926b57a9
 spec:
   ingressClassName: nginx
   rules:
-    - host: cryptojackpot.local
-      http:
-        paths:
-          - path: /api/v1/auth
-            pathType: Prefix
-            backend:
-              service:
-                name: identity-api
-                port:
-                  number: 80
-          - path: /api/v1/users
-            pathType: Prefix
-            backend:
-              service:
-                name: identity-api
-                port:
-                  number: 80
-          - path: /api/v1/roles
-            pathType: Prefix
-            backend:
-              service:
-                name: identity-api
-                port:
-                  number: 80
-          - path: /api/v1/countries
-            pathType: Prefix
-            backend:
-              service:
-                name: identity-api
-                port:
-                  number: 80
-          - path: /api/v1/user-referrals
-            pathType: Prefix
-            backend:
-              service:
-                name: identity-api
-                port:
-                  number: 80
-          - path: /api/v1/lotteries
-            pathType: Prefix
-            backend:
-              service:
-                name: lottery-api
-                port:
-                  number: 80
-          - path: /api/v1/prizes
-            pathType: Prefix
-            backend:
-              service:
-                name: lottery-api
-                port:
-                  number: 80
-          - path: /api/v1/lottery-numbers
-            pathType: Prefix
-            backend:
-              service:
-                name: lottery-api
-                port:
-                  number: 80
-          - path: /api/v1/orders
-            pathType: Prefix
-            backend:
-              service:
-                name: order-api
-                port:
-                  number: 80
-          - path: /api/v1/wallets
-            pathType: Prefix
-            backend:
-              service:
-                name: wallet-api
-                port:
-                  number: 80
-          - path: /api/v1/winners
-            pathType: Prefix
-            backend:
-              service:
-                name: winner-api
-                port:
-                  number: 80
-          - path: /api/v1/notifications
-            pathType: Prefix
-            backend:
-              service:
-                name: notification-api
-                port:
-                  number: 80
+  - host: cryptojackpot.local
+    http:
+      paths:
+      - backend:
+          service:
+            name: identity-api
+            port:
+              number: 80
+        path: /api/v1/auth
+        pathType: Prefix
+      - backend:
+          service:
+            name: identity-api
+            port:
+              number: 80
+        path: /api/v1/users
+        pathType: Prefix
+      - backend:
+          service:
+            name: identity-api
+            port:
+              number: 80
+        path: /api/v1/roles
+        pathType: Prefix
+      - backend:
+          service:
+            name: identity-api
+            port:
+              number: 80
+        path: /api/v1/countries
+        pathType: Prefix
+      - backend:
+          service:
+            name: identity-api
+            port:
+              number: 80
+        path: /api/v1/user-referrals
+        pathType: Prefix
+      - backend:
+          service:
+            name: lottery-api
+            port:
+              number: 80
+        path: /api/v1/lotteries
+        pathType: Prefix
+      - backend:
+          service:
+            name: lottery-api
+            port:
+              number: 80
+        path: /api/v1/prizes
+        pathType: Prefix
+      - backend:
+          service:
+            name: lottery-api
+            port:
+              number: 80
+        path: /api/v1/lottery-numbers
+        pathType: Prefix
+      - backend:
+          service:
+            name: order-api
+            port:
+              number: 80
+        path: /api/v1/orders
+        pathType: Prefix
+      - backend:
+          service:
+            name: wallet-api
+            port:
+              number: 80
+        path: /api/v1/wallets
+        pathType: Prefix
+      - backend:
+          service:
+            name: winner-api
+            port:
+              number: 80
+        path: /api/v1/winners
+        pathType: Prefix
+      - backend:
+          service:
+            name: notification-api
+            port:
+              number: 80
+        path: /api/v1/notifications
+        pathType: Prefix
+status:
+  loadBalancer:
+    ingress:
+    - hostname: localhost

@@ -200,3 +200,6 @@ terraform/.terraform.lock.hcl
 k8s/base/secrets.generated.yaml
 deploy-config.json
 
+
+# Local secrets with real values
+k8s/local/secrets/*.local.yaml
