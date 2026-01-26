@@ -141,6 +141,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Wallet.Application", "Microservices\Wallet\Application\CryptoJackpot.Wallet.Application.csproj", "{041DB1D4-FD58-4726-B1E6-B2C6FC795AD7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra.IoC", "Infra.IoC", "{301A0E17-3BA5-40E0-81F2-841874257B09}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Wallet.Infra.IoC", "Microservices\Wallet\CryptoJackpot.Wallet.Infra.IoC\CryptoJackpot.Wallet.Infra.IoC.csproj", "{CAAB62B4-622B-4F30-8B86-C3C99627E066}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -523,6 +527,18 @@ Global
 		{041DB1D4-FD58-4726-B1E6-B2C6FC795AD7}.Release|x64.Build.0 = Release|Any CPU
 		{041DB1D4-FD58-4726-B1E6-B2C6FC795AD7}.Release|x86.ActiveCfg = Release|Any CPU
 		{041DB1D4-FD58-4726-B1E6-B2C6FC795AD7}.Release|x86.Build.0 = Release|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Debug|x64.Build.0 = Debug|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Debug|x86.Build.0 = Debug|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Release|x64.ActiveCfg = Release|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Release|x64.Build.0 = Release|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Release|x86.ActiveCfg = Release|Any CPU
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -593,5 +609,7 @@ Global
 		{530ECCB1-3C2F-4FD8-8279-3672F5585712} = {F6A5D50E-A25C-D223-0EE9-6BE9687FBBA9}
 		{E456E29F-476A-9674-CBD9-26A22F2433F6} = {0FBFBE9C-FD1F-0E9F-7F5D-58EBFFBBE36B}
 		{041DB1D4-FD58-4726-B1E6-B2C6FC795AD7} = {E456E29F-476A-9674-CBD9-26A22F2433F6}
+		{301A0E17-3BA5-40E0-81F2-841874257B09} = {0FBFBE9C-FD1F-0E9F-7F5D-58EBFFBBE36B}
+		{CAAB62B4-622B-4F30-8B86-C3C99627E066} = {301A0E17-3BA5-40E0-81F2-841874257B09}
 	EndGlobalSection
 EndGlobal

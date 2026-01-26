@@ -1,6 +1,7 @@
-using System.Text;
-using CryptoJackpot.Wallet.Data.Context;
+﻿using System.Text;
 using CryptoJackpot.Infra.IoC;
+using CryptoJackpot.Wallet.Application;
+using CryptoJackpot.Wallet.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,11 +11,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
-namespace CryptoJackpot.Wallet.Application;
+namespace CryptoJackpot.Wallet.Infra.IoC;
 
-public static class DependencyInjection
+public static class IoCExtension
 {
-    public static IServiceCollection AddWalletServices(
+    public static void AddWalletServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -25,14 +26,12 @@ public static class DependencyInjection
         AddRepositories(services);
         AddApplicationServices(services);
         AddInfrastructure(services, configuration);
-
-        return services;
     }
 
     /// <summary>
     /// Applies pending database migrations only in development environment.
     /// </summary>
-    public static async Task ApplyMigrationsAsync(this IHost host)
+    public async static Task ApplyMigrationsAsync(this IHost host)
     {
         using var scope = host.Services.CreateScope();
         var services = scope.ServiceProvider;
@@ -177,8 +176,10 @@ public static class DependencyInjection
 
     private static void AddApplicationServices(IServiceCollection services)
     {
+        var assembly = typeof(IAssemblyReference).Assembly;
+
         // MediatR
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly));
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
@@ -187,7 +188,7 @@ public static class DependencyInjection
         DependencyContainer.RegisterServicesWithKafka<WalletDbContext>(
             services,
             configuration,
-            configureRider: rider =>
+            configureRider: _ =>
             {
                 // Register producers/consumers for events here
             },

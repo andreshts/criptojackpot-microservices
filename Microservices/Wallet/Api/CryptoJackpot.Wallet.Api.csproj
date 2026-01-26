@@ -10,6 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Application\CryptoJackpot.Wallet.Application.csproj" />
+    <ProjectReference Include="..\CryptoJackpot.Wallet.Infra.IoC\CryptoJackpot.Wallet.Infra.IoC.csproj" />
   </ItemGroup>
 </Project>
 
