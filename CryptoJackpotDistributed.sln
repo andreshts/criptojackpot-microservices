@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -296,7 +296,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "network", "network", "{2222
 		infrastructure\k8s\prod\network\network-policies.yaml = infrastructure\k8s\prod\network\network-policies.yaml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{B2C3D4E5-F6A7-5B6C-9D0E-2F3A4B5C6D7E}"
 	ProjectSection(SolutionItems) = preProject
