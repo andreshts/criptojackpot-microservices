@@ -2,13 +2,14 @@
 using System.Security.Cryptography;
 using System.Text;
 using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Wallet.Domain.Constants;
 using CryptoJackpot.Wallet.Domain.Interfaces;
 
 namespace CryptoJackpot.Wallet.Application.Providers;
 
 public class CoinPaymentProvider : ICoinPaymentProvider
 {
-    private const string ApiUrl = "https://www.coinpayments.net/api.php";
+    private const string ApiUrl = ServiceDefaults.CoinPaymentsBaseUrl;
     private const string ApiVersion = "1";
     
     private readonly string _privateKey;

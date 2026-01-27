@@ -1,10 +1,13 @@
 ﻿using System.Text;
+using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Infra.IoC;
 using CryptoJackpot.Wallet.Application;
 using CryptoJackpot.Wallet.Application.Providers;
 using CryptoJackpot.Wallet.Data.Context;
 using CryptoJackpot.Wallet.Domain.Constants;
 using CryptoJackpot.Wallet.Domain.Interfaces;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -186,6 +189,15 @@ public static class IoCExtension
 
         // MediatR
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+        
+        // Validators
+        services.AddValidatorsFromAssembly(assembly);
+        
+        // Behavior
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        
+        // AutoMapper
+        services.AddAutoMapper(assembly);
     }
 
     private static void AddCoinPayments(IServiceCollection services, IConfiguration configuration)

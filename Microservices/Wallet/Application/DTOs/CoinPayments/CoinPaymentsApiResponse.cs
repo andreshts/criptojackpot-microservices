@@ -9,7 +9,7 @@ namespace CryptoJackpot.Wallet.Application.DTOs.CoinPayments;
 public class CoinPaymentsApiResponse<T> where T : class
 {
     [JsonPropertyName("error")]
-    private string Error { get; set; } = string.Empty;
+    public string Error { get; set; } = string.Empty;
 
     [JsonPropertyName("result")]
     public T? Result { get; set; }
