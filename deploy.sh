@@ -31,8 +31,8 @@ docker push $REGISTRY/notification-api:$VERSION
 echo "☸️ Aplicando configuraciones de Kubernetes..."
 
 # Aplicar en orden
-kubectl apply -f k8s/base/namespace.yaml
-kubectl apply -f k8s/base/configmap.yaml
+kubectl apply -f infrastructure/k8s/base/namespace.yaml
+kubectl apply -f infrastructure/k8s/base/configmap.yaml
 
 # -----------------------------------------------------------------------------
 # Secrets - Lógica inteligente para detectar gestión de Terraform
@@ -44,53 +44,53 @@ if [ -f "$CONFIG_PATH" ]; then
     echo "   Los secrets ya fueron aplicados por Terraform al cluster"
     
     # Aplicar archivo generado como actualización si existe
-    if [ -f "k8s/base/secrets.generated.yaml" ]; then
+    if [ -f "infrastructure/k8s/base/secrets.generated.yaml" ]; then
         echo "   Aplicando secrets.generated.yaml como actualización..."
-        kubectl apply -f k8s/base/secrets.generated.yaml
+        kubectl apply -f infrastructure/k8s/base/secrets.generated.yaml
     fi
-elif [ -f "k8s/base/secrets.generated.yaml" ]; then
+elif [ -f "infrastructure/k8s/base/secrets.generated.yaml" ]; then
     # Usar archivo generado por Terraform
     echo "🔐 Usando secrets.generated.yaml (generado por Terraform)..."
-    kubectl apply -f k8s/base/secrets.generated.yaml
-elif [ -f "k8s/base/secrets.yaml" ]; then
+    kubectl apply -f infrastructure/k8s/base/secrets.generated.yaml
+elif [ -f "infrastructure/k8s/base/secrets.yaml" ]; then
     # Fallback a archivo manual - advertir al usuario
     echo "⚠️ ADVERTENCIA: Usando secrets.yaml (puede contener placeholders)"
-    echo "   Asegúrate de haber editado k8s/base/secrets.yaml con valores reales!"
-    echo "   Para gestión automatizada, ejecuta: cd terraform && terraform apply"
+    echo "   Asegúrate de haber editado infrastructure/k8s/base/secrets.yaml con valores reales!"
+    echo "   Para gestión automatizada, ejecuta: cd infrastructure/terraform && terraform apply"
     read -p "   ¿Continuar? (s/N) " confirm
     if [ "$confirm" != "s" ] && [ "$confirm" != "S" ]; then
         echo "   Cancelado. Edita secrets.yaml o ejecuta Terraform primero."
         exit 1
     fi
-    kubectl apply -f k8s/base/secrets.yaml
+    kubectl apply -f infrastructure/k8s/base/secrets.yaml
 else
     echo "❌ ERROR: No se encontró ningún archivo de secrets"
-    echo "   Ejecuta 'terraform apply' o crea k8s/base/secrets.yaml manualmente"
+    echo "   Ejecuta 'terraform apply' o crea infrastructure/k8s/base/secrets.yaml manualmente"
     exit 1
 fi
 
 # NetworkPolicies (seguridad de red)
-kubectl apply -f k8s/network/
+kubectl apply -f infrastructure/k8s/network/
 
 # Kafka/Redpanda
-kubectl apply -f k8s/kafka/redpanda.yaml
+kubectl apply -f infrastructure/k8s/kafka/redpanda.yaml
 
 # Esperar a que Redpanda esté listo
 echo "⏳ Esperando a que Redpanda esté listo..."
 kubectl wait --for=condition=ready pod -l app=redpanda -n cryptojackpot --timeout=120s
 
 # Microservicios
-kubectl apply -f k8s/microservices/identity/
-kubectl apply -f k8s/microservices/lottery/
-kubectl apply -f k8s/microservices/order/
-kubectl apply -f k8s/microservices/wallet/
-kubectl apply -f k8s/microservices/winner/
-kubectl apply -f k8s/microservices/notification/
+kubectl apply -f infrastructure/k8s/microservices/identity/
+kubectl apply -f infrastructure/k8s/microservices/lottery/
+kubectl apply -f infrastructure/k8s/microservices/order/
+kubectl apply -f infrastructure/k8s/microservices/wallet/
+kubectl apply -f infrastructure/k8s/microservices/winner/
+kubectl apply -f infrastructure/k8s/microservices/notification/
 
 # Ingress namespace y configuración
-kubectl apply -f k8s/ingress/namespace.yaml
+kubectl apply -f infrastructure/k8s/ingress/namespace.yaml
 kubectl label namespace ingress-nginx name=ingress-nginx --overwrite 2>/dev/null || true
-kubectl apply -f k8s/ingress/ingress.yaml
+kubectl apply -f infrastructure/k8s/ingress/ingress.yaml
 
 echo "✅ Despliegue completado!"
 echo ""

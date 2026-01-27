@@ -32,7 +32,7 @@ if [ -f "$CONFIG_PATH" ]; then
 else
     echo "⚠️ deploy-config.json no encontrado, usando valores por defecto"
     echo "   Para configuración automatizada, ejecuta primero:"
-    echo "   cd terraform && terraform apply"
+    echo "   cd infrastructure/terraform && terraform apply"
 fi
 
 # -----------------------------------------------------------------------------

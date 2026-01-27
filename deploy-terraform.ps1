@@ -32,7 +32,7 @@ if (Test-Path $configPath) {
 else {
     Write-Host "⚠️ deploy-config.json no encontrado, usando valores por defecto" -ForegroundColor Yellow
     Write-Host "   Para configuración automatizada, ejecuta primero:" -ForegroundColor Gray
-    Write-Host "   cd terraform && terraform apply" -ForegroundColor Gray
+    Write-Host "   cd infrastructure/terraform && terraform apply" -ForegroundColor Gray
 }
 
 # -----------------------------------------------------------------------------

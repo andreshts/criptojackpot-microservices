@@ -42,14 +42,14 @@ profiles:
             dockerfile: Microservices/Notification/Api/Dockerfile
     manifests:
       rawYaml:
-        - k8s/local/namespace.yaml
-        - k8s/local/configmap.yaml
-        - k8s/local/secrets/*.yaml
-        - k8s/local/postgres/*.yaml
-        - k8s/local/redpanda/*.yaml
-        - k8s/local/minio/*.yaml
-        - k8s/local/microservices/**/*.yaml
-        - k8s/local/ingress/*.yaml
+        - infrastructure/k8s/local/namespace.yaml
+        - infrastructure/k8s/local/configmap.yaml
+        - infrastructure/k8s/local/secrets/*.yaml
+        - infrastructure/k8s/local/postgres/*.yaml
+        - infrastructure/k8s/local/redpanda/*.yaml
+        - infrastructure/k8s/local/minio/*.yaml
+        - infrastructure/k8s/local/microservices/**/*.yaml
+        - infrastructure/k8s/local/ingress/*.yaml
     deploy:
       kubectl: {}
     portForward:
@@ -138,14 +138,14 @@ build:
 # Manifests por defecto
 manifests:
   rawYaml:
-    - k8s/local/namespace.yaml
-    - k8s/local/configmap.yaml
-    - k8s/local/secrets/*.yaml
-    - k8s/local/postgres/*.yaml
-    - k8s/local/redpanda/*.yaml
-    - k8s/local/minio/*.yaml
-    - k8s/local/microservices/**/*.yaml
-    - k8s/local/ingress/*.yaml
+    - infrastructure/k8s/local/namespace.yaml
+    - infrastructure/k8s/local/configmap.yaml
+    - infrastructure/k8s/local/secrets/*.yaml
+    - infrastructure/k8s/local/postgres/*.yaml
+    - infrastructure/k8s/local/redpanda/*.yaml
+    - infrastructure/k8s/local/minio/*.yaml
+    - infrastructure/k8s/local/microservices/**/*.yaml
+    - infrastructure/k8s/local/ingress/*.yaml
 
 # Deploy por defecto
 deploy:

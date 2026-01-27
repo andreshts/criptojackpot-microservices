@@ -126,6 +126,7 @@ output "deploy_images_command" {
 # -----------------------------------------------------------------------------
 output "cloudflare_dns_record" {
   description = "Registro DNS creado en Cloudflare"
+  sensitive   = true
   value       = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? {
     name    = cloudflare_record.api_endpoint[0].name
     type    = cloudflare_record.api_endpoint[0].type
@@ -137,5 +138,6 @@ output "cloudflare_dns_record" {
 output "cloudflare_dns_hostname" {
   description = "Hostname completo del registro DNS"
   value       = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? cloudflare_record.api_endpoint[0].hostname : "Not configured or pending"
+  sensitive   = true
 }
 

@@ -1,4 +1,3 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -144,6 +143,264 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infra.IoC", "Infra.IoC", "{301A0E17-3BA5-40E0-81F2-841874257B09}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Wallet.Infra.IoC", "Microservices\Wallet\CryptoJackpot.Wallet.Infra.IoC\CryptoJackpot.Wallet.Infra.IoC.csproj", "{CAAB62B4-622B-4F30-8B86-C3C99627E066}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\README.md = infrastructure\k8s\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "local", "local", "{F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\README.md = infrastructure\k8s\local\README.md
+		infrastructure\k8s\local\configmap.yaml = infrastructure\k8s\local\configmap.yaml
+		infrastructure\k8s\local\namespace.yaml = infrastructure\k8s\local\namespace.yaml
+		infrastructure\k8s\local\kind-config.yaml = infrastructure\k8s\local\kind-config.yaml
+		infrastructure\k8s\local\dev-k8s.ps1 = infrastructure\k8s\local\dev-k8s.ps1
+		infrastructure\k8s\local\setup-local-k8s.ps1 = infrastructure\k8s\local\setup-local-k8s.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ingress", "ingress", "{11111111-1111-1111-1111-111111111111}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\ingress\api-ingress.yaml = infrastructure\k8s\local\ingress\api-ingress.yaml
+		infrastructure\k8s\local\ingress\tools-ingress.yaml = infrastructure\k8s\local\ingress\tools-ingress.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "microservices", "microservices", "{11111111-1111-1111-1111-111111111112}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "identity", "identity", "{11111111-1111-1111-1111-111111111113}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\microservices\identity\deployment.yaml = infrastructure\k8s\local\microservices\identity\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lottery", "lottery", "{11111111-1111-1111-1111-111111111114}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\microservices\lottery\deployment.yaml = infrastructure\k8s\local\microservices\lottery\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notification", "notification", "{11111111-1111-1111-1111-111111111115}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\microservices\notification\deployment.yaml = infrastructure\k8s\local\microservices\notification\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "order", "order", "{11111111-1111-1111-1111-111111111116}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\microservices\order\deployment.yaml = infrastructure\k8s\local\microservices\order\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wallet", "wallet", "{11111111-1111-1111-1111-111111111117}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\microservices\wallet\deployment.yaml = infrastructure\k8s\local\microservices\wallet\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "winner", "winner", "{11111111-1111-1111-1111-111111111118}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\microservices\winner\deployment.yaml = infrastructure\k8s\local\microservices\winner\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "minio", "minio", "{11111111-1111-1111-1111-111111111119}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\minio\minio-bucket-job.yaml = infrastructure\k8s\local\minio\minio-bucket-job.yaml
+		infrastructure\k8s\local\minio\minio-deployment.yaml = infrastructure\k8s\local\minio\minio-deployment.yaml
+		infrastructure\k8s\local\minio\minio-service.yaml = infrastructure\k8s\local\minio\minio-service.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postgres", "postgres", "{11111111-1111-1111-1111-11111111111A}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\postgres\postgres-configmap.yaml = infrastructure\k8s\local\postgres\postgres-configmap.yaml
+		infrastructure\k8s\local\postgres\postgres-service.yaml = infrastructure\k8s\local\postgres\postgres-service.yaml
+		infrastructure\k8s\local\postgres\postgres-statefulset.yaml = infrastructure\k8s\local\postgres\postgres-statefulset.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "redpanda", "redpanda", "{11111111-1111-1111-1111-11111111111B}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\redpanda\kafka-topics-job.yaml = infrastructure\k8s\local\redpanda\kafka-topics-job.yaml
+		infrastructure\k8s\local\redpanda\redpanda-console-deployment.yaml = infrastructure\k8s\local\redpanda\redpanda-console-deployment.yaml
+		infrastructure\k8s\local\redpanda\redpanda-console-service.yaml = infrastructure\k8s\local\redpanda\redpanda-console-service.yaml
+		infrastructure\k8s\local\redpanda\redpanda-service.yaml = infrastructure\k8s\local\redpanda\redpanda-service.yaml
+		infrastructure\k8s\local\redpanda\redpanda-statefulset.yaml = infrastructure\k8s\local\redpanda\redpanda-statefulset.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "secrets", "secrets", "{11111111-1111-1111-1111-11111111111C}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\local\secrets\brevo-secrets.yaml = infrastructure\k8s\local\secrets\brevo-secrets.yaml
+		infrastructure\k8s\local\secrets\brevo-secrets.yaml.example = infrastructure\k8s\local\secrets\brevo-secrets.yaml.example
+		infrastructure\k8s\local\secrets\jwt-secrets.yaml = infrastructure\k8s\local\secrets\jwt-secrets.yaml
+		infrastructure\k8s\local\secrets\kafka-secrets.yaml = infrastructure\k8s\local\secrets\kafka-secrets.yaml
+		infrastructure\k8s\local\secrets\postgres-secrets.yaml = infrastructure\k8s\local\secrets\postgres-secrets.yaml
+		infrastructure\k8s\local\secrets\redpanda-secrets.yaml = infrastructure\k8s\local\secrets\redpanda-secrets.yaml
+		infrastructure\k8s\local\secrets\spaces-secrets.yaml = infrastructure\k8s\local\secrets\spaces-secrets.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prod", "prod", "{A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\README.md = infrastructure\k8s\prod\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "base", "base", "{22222222-2222-2222-2222-222222222221}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\base\configmap.yaml = infrastructure\k8s\prod\base\configmap.yaml
+		infrastructure\k8s\prod\base\namespace.yaml = infrastructure\k8s\prod\base\namespace.yaml
+		infrastructure\k8s\prod\base\secrets.yaml = infrastructure\k8s\prod\base\secrets.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "databases", "databases", "{22222222-2222-2222-2222-222222222222}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\databases\init-databases.sql = infrastructure\k8s\prod\databases\init-databases.sql
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ingress", "ingress", "{22222222-2222-2222-2222-222222222223}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\ingress\ingress.yaml = infrastructure\k8s\prod\ingress\ingress.yaml
+		infrastructure\k8s\prod\ingress\namespace.yaml = infrastructure\k8s\prod\ingress\namespace.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "kafka", "kafka", "{22222222-2222-2222-2222-222222222224}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\kafka\redpanda.yaml = infrastructure\k8s\prod\kafka\redpanda.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "microservices", "microservices", "{22222222-2222-2222-2222-222222222225}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "identity", "identity", "{22222222-2222-2222-2222-222222222226}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\microservices\identity\deployment.yaml = infrastructure\k8s\prod\microservices\identity\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lottery", "lottery", "{22222222-2222-2222-2222-222222222227}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\microservices\lottery\deployment.yaml = infrastructure\k8s\prod\microservices\lottery\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notification", "notification", "{22222222-2222-2222-2222-222222222228}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\microservices\notification\deployment.yaml = infrastructure\k8s\prod\microservices\notification\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "order", "order", "{22222222-2222-2222-2222-222222222229}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\microservices\order\deployment.yaml = infrastructure\k8s\prod\microservices\order\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wallet", "wallet", "{22222222-2222-2222-2222-22222222222A}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\microservices\wallet\deployment.yaml = infrastructure\k8s\prod\microservices\wallet\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "winner", "winner", "{22222222-2222-2222-2222-22222222222B}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\microservices\winner\deployment.yaml = infrastructure\k8s\prod\microservices\winner\deployment.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "network", "network", "{22222222-2222-2222-2222-22222222222C}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\k8s\prod\network\network-policies.yaml = infrastructure\k8s\prod\network\network-policies.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{B2C3D4E5-F6A7-5B6C-9D0E-2F3A4B5C6D7E}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\docs\diagrama_websocket_eventos.md = infrastructure\docs\diagrama_websocket_eventos.md
+		infrastructure\docs\marketing_lottery_saga_flow.md = infrastructure\docs\marketing_lottery_saga_flow.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docker", "docker", "{C3D4E5F6-A7B8-6C7D-0E1F-3A4B5C6D7E8F}"
+	ProjectSection(SolutionItems) = preProject
+		docker-compose.yaml = docker-compose.yaml
+		docker-compose.infra.yaml = docker-compose.infra.yaml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{B3C4D5E6-F7A8-6D7E-1F2A-3B4C5D6E7F8A}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\docker\nginx\nginx.conf = infrastructure\docker\nginx\nginx.conf
+		infrastructure\docker\nginx\cors.conf = infrastructure\docker\nginx\cors.conf
+		infrastructure\docker\nginx\proxy.conf = infrastructure\docker\nginx\proxy.conf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postgres", "postgres", "{C4D5E6F7-A8B9-7E8F-2A3B-4C5D6E7F8A9B}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\docker\postgres\init-multiple-dbs.sh = infrastructure\docker\postgres\init-multiple-dbs.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "terraform", "terraform", "{D4E5F6A7-B8C9-7D8E-1F2A-4B5C6D7E8F9A}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\README.md = infrastructure\terraform\README.md
+		infrastructure\terraform\main.tf = infrastructure\terraform\main.tf
+		infrastructure\terraform\variables.tf = infrastructure\terraform\variables.tf
+		infrastructure\terraform\outputs.tf = infrastructure\terraform\outputs.tf
+		infrastructure\terraform\providers.tf = infrastructure\terraform\providers.tf
+		infrastructure\terraform\versions.tf = infrastructure\terraform\versions.tf
+		infrastructure\terraform\terraform.tfvars.example = infrastructure\terraform\terraform.tfvars.example
+		infrastructure\terraform\CLOUDFLARE_SETUP.md = infrastructure\terraform\CLOUDFLARE_SETUP.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "environments", "environments", "{33333333-3333-3333-3333-333333333331}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\environments\dev.tfvars = infrastructure\terraform\environments\dev.tfvars
+		infrastructure\terraform\environments\prod.tfvars = infrastructure\terraform\environments\prod.tfvars
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{33333333-3333-3333-3333-333333333332}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "database", "database", "{33333333-3333-3333-3333-333333333333}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\database\main.tf = infrastructure\terraform\modules\database\main.tf
+		infrastructure\terraform\modules\database\outputs.tf = infrastructure\terraform\modules\database\outputs.tf
+		infrastructure\terraform\modules\database\variables.tf = infrastructure\terraform\modules\database\variables.tf
+		infrastructure\terraform\modules\database\versions.tf = infrastructure\terraform\modules\database\versions.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docr", "docr", "{33333333-3333-3333-3333-333333333334}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\docr\main.tf = infrastructure\terraform\modules\docr\main.tf
+		infrastructure\terraform\modules\docr\outputs.tf = infrastructure\terraform\modules\docr\outputs.tf
+		infrastructure\terraform\modules\docr\variables.tf = infrastructure\terraform\modules\docr\variables.tf
+		infrastructure\terraform\modules\docr\versions.tf = infrastructure\terraform\modules\docr\versions.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doks", "doks", "{33333333-3333-3333-3333-333333333335}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\doks\main.tf = infrastructure\terraform\modules\doks\main.tf
+		infrastructure\terraform\modules\doks\outputs.tf = infrastructure\terraform\modules\doks\outputs.tf
+		infrastructure\terraform\modules\doks\variables.tf = infrastructure\terraform\modules\doks\variables.tf
+		infrastructure\terraform\modules\doks\versions.tf = infrastructure\terraform\modules\doks\versions.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ingress", "ingress", "{33333333-3333-3333-3333-333333333336}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\ingress\main.tf = infrastructure\terraform\modules\ingress\main.tf
+		infrastructure\terraform\modules\ingress\outputs.tf = infrastructure\terraform\modules\ingress\outputs.tf
+		infrastructure\terraform\modules\ingress\variables.tf = infrastructure\terraform\modules\ingress\variables.tf
+		infrastructure\terraform\modules\ingress\versions.tf = infrastructure\terraform\modules\ingress\versions.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "secrets", "secrets", "{33333333-3333-3333-3333-333333333337}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\secrets\main.tf = infrastructure\terraform\modules\secrets\main.tf
+		infrastructure\terraform\modules\secrets\outputs.tf = infrastructure\terraform\modules\secrets\outputs.tf
+		infrastructure\terraform\modules\secrets\variables.tf = infrastructure\terraform\modules\secrets\variables.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "spaces", "spaces", "{33333333-3333-3333-3333-333333333338}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\spaces\main.tf = infrastructure\terraform\modules\spaces\main.tf
+		infrastructure\terraform\modules\spaces\outputs.tf = infrastructure\terraform\modules\spaces\outputs.tf
+		infrastructure\terraform\modules\spaces\variables.tf = infrastructure\terraform\modules\spaces\variables.tf
+		infrastructure\terraform\modules\spaces\versions.tf = infrastructure\terraform\modules\spaces\versions.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "vpc", "vpc", "{33333333-3333-3333-3333-333333333339}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\modules\vpc\main.tf = infrastructure\terraform\modules\vpc\main.tf
+		infrastructure\terraform\modules\vpc\outputs.tf = infrastructure\terraform\modules\vpc\outputs.tf
+		infrastructure\terraform\modules\vpc\variables.tf = infrastructure\terraform\modules\vpc\variables.tf
+		infrastructure\terraform\modules\vpc\versions.tf = infrastructure\terraform\modules\vpc\versions.tf
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{33333333-3333-3333-3333-33333333333B}"
+	ProjectSection(SolutionItems) = preProject
+		infrastructure\terraform\templates\deploy-config.tpl = infrastructure\terraform\templates\deploy-config.tpl
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -611,5 +868,47 @@ Global
 		{041DB1D4-FD58-4726-B1E6-B2C6FC795AD7} = {E456E29F-476A-9674-CBD9-26A22F2433F6}
 		{301A0E17-3BA5-40E0-81F2-841874257B09} = {0FBFBE9C-FD1F-0E9F-7F5D-58EBFFBBE36B}
 		{CAAB62B4-622B-4F30-8B86-C3C99627E066} = {301A0E17-3BA5-40E0-81F2-841874257B09}
+		{F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F} = {A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}
+		{A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A} = {A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}
+		{B3C4D5E6-F7A8-6D7E-1F2A-3B4C5D6E7F8A} = {C3D4E5F6-A7B8-6C7D-0E1F-3A4B5C6D7E8F}
+		{C4D5E6F7-A8B9-7E8F-2A3B-4C5D6E7F8A9B} = {C3D4E5F6-A7B8-6C7D-0E1F-3A4B5C6D7E8F}
+		{11111111-1111-1111-1111-111111111111} = {F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}
+		{11111111-1111-1111-1111-111111111112} = {F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}
+		{11111111-1111-1111-1111-111111111113} = {11111111-1111-1111-1111-111111111112}
+		{11111111-1111-1111-1111-111111111114} = {11111111-1111-1111-1111-111111111112}
+		{11111111-1111-1111-1111-111111111115} = {11111111-1111-1111-1111-111111111112}
+		{11111111-1111-1111-1111-111111111116} = {11111111-1111-1111-1111-111111111112}
+		{11111111-1111-1111-1111-111111111117} = {11111111-1111-1111-1111-111111111112}
+		{11111111-1111-1111-1111-111111111118} = {11111111-1111-1111-1111-111111111112}
+		{11111111-1111-1111-1111-111111111119} = {F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}
+		{11111111-1111-1111-1111-11111111111A} = {F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}
+		{11111111-1111-1111-1111-11111111111B} = {F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}
+		{11111111-1111-1111-1111-11111111111C} = {F1E2D3C4-B5A6-4C5D-9E8F-1A2B3C4D5E6F}
+		{22222222-2222-2222-2222-222222222221} = {A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}
+		{22222222-2222-2222-2222-222222222222} = {A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}
+		{22222222-2222-2222-2222-222222222223} = {A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}
+		{22222222-2222-2222-2222-222222222224} = {A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}
+		{22222222-2222-2222-2222-222222222225} = {A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}
+		{22222222-2222-2222-2222-222222222226} = {22222222-2222-2222-2222-222222222225}
+		{22222222-2222-2222-2222-222222222227} = {22222222-2222-2222-2222-222222222225}
+		{22222222-2222-2222-2222-222222222228} = {22222222-2222-2222-2222-222222222225}
+		{22222222-2222-2222-2222-222222222229} = {22222222-2222-2222-2222-222222222225}
+		{22222222-2222-2222-2222-22222222222A} = {22222222-2222-2222-2222-222222222225}
+		{22222222-2222-2222-2222-22222222222B} = {22222222-2222-2222-2222-222222222225}
+		{22222222-2222-2222-2222-22222222222C} = {A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}
+		{33333333-3333-3333-3333-333333333331} = {D4E5F6A7-B8C9-7D8E-1F2A-4B5C6D7E8F9A}
+		{33333333-3333-3333-3333-333333333332} = {D4E5F6A7-B8C9-7D8E-1F2A-4B5C6D7E8F9A}
+		{33333333-3333-3333-3333-333333333333} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-333333333334} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-333333333335} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-333333333336} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-333333333337} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-333333333338} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-333333333339} = {33333333-3333-3333-3333-333333333332}
+		{33333333-3333-3333-3333-33333333333B} = {D4E5F6A7-B8C9-7D8E-1F2A-4B5C6D7E8F9A}
+		{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D} = {AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}
+		{D4E5F6A7-B8C9-7D8E-1F2A-4B5C6D7E8F9A} = {AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}
+		{C3D4E5F6-A7B8-6C7D-0E1F-3A4B5C6D7E8F} = {AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}
+		{B2C3D4E5-F6A7-5B6C-9D0E-2F3A4B5C6D7E} = {AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE}
 	EndGlobalSection
 EndGlobal
