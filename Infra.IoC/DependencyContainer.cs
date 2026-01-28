@@ -6,18 +6,34 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace CryptoJackpot.Infra.IoC;
 
+/// <summary>
+/// Provides methods for registering services in the dependency injection container
+/// with support for Kafka and MassTransit configurations.
+/// </summary>
 public static class DependencyContainer
 {
     /// <summary>
     /// Registers shared infrastructure with Kafka and Transactional Outbox.
     /// </summary>
-    /// <typeparam name="TDbContext">The DbContext type for the microservice</typeparam>
-    /// <param name="services">Service collection</param>
-    /// <param name="configuration">Configuration</param>
-    /// <param name="configureRider">Configure rider (add producers/consumers)</param>
-    /// <param name="configureBus">Configure bus (add consumers)</param>
-    /// <param name="configureKafkaEndpoints">Configure Kafka topic endpoints (for consumers)</param>
-    /// <param name="useMessageScheduler">Enable in-memory message scheduler for delayed messages</param>
+    /// <typeparam name="TDbContext">The DbContext type for the microservice.</typeparam>
+    /// <param name="services">The service collection used for dependency injection.</param>
+    /// <param name="configuration">The application's configuration object.</param>
+    /// <param name="configureRider">
+    /// Optional action to configure the rider, allowing the registration of producers and consumers.
+    /// </param>
+    /// <param name="configureBus">
+    /// Optional action to configure the bus, allowing the registration of consumers.
+    /// </param>
+    /// <param name="configureKafkaEndpoints">
+    /// Optional action to configure Kafka topic endpoints, enabling consumers to subscribe to specific topics.
+    /// </param>
+    /// <param name="useMessageScheduler">
+    /// Indicates whether to enable the in-memory message scheduler for handling delayed messages.
+    /// </param>
+    /// <remarks>
+    /// This method integrates Kafka with MassTransit, enabling transactional outbox pattern support. It also
+    /// provides configuration capabilities for producers, consumers, and Kafka endpoints per microservice.
+    /// </remarks>
     public static void RegisterServicesWithKafka<TDbContext>(
         IServiceCollection services,
         IConfiguration configuration,
@@ -90,8 +106,15 @@ public static class DependencyContainer
     }
 
     /// <summary>
-    /// Registers shared infrastructure with Kafka (without Outbox - for microservices that don't need it).
+    /// Registers shared infrastructure with Kafka.
     /// </summary>
+    /// <typeparam name="TDbContext">The DbContext type for the microservice.</typeparam>
+    /// <param name="services">The service collection used to register dependencies.</param>
+    /// <param name="configuration">The application configuration instance.</param>
+    /// <param name="configureRider">Optional delegate to configure Kafka rider (for producers/consumers).</param>
+    /// <param name="configureBus">Optional delegate to configure the message bus (for consumers).</param>
+    /// <param name="configureKafkaEndpoints">Optional delegate to configure Kafka topic endpoints (for consumers).</param>
+    /// <param name="useMessageScheduler">Determines whether to enable the in-memory message scheduler for delayed messages.</param>
     public static void RegisterServicesWithKafka(
         IServiceCollection services,
         IConfiguration configuration,
