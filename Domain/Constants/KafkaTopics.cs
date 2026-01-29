@@ -31,11 +31,15 @@ public static class KafkaTopics
     public const string NotificationFailed = "notification-failed";
     public const string SendMarketingEmail = "send-marketing-email";
     
+    // Audit Events
+    public const string AuditLog = "audit-log";
+    
     // Consumer Groups
     public const string NotificationGroup = "notification-group";
     public const string AnalyticsGroup = "analytics-group";
     public const string LotteryGroup = "lottery-group";
     public const string OrderGroup = "order-group";
     public const string IdentityGroup = "identity-group";
+    public const string AuditGroup = "audit-group";
 }
 
