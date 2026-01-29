@@ -40,6 +40,10 @@ profiles:
           context: .
           docker:
             dockerfile: Microservices/Notification/Api/Dockerfile.debug
+        - image: cryptojackpot/audit-api
+          context: .
+          docker:
+            dockerfile: Microservices/Audit/Api/Dockerfile
     manifests:
       rawYaml:
         - infrastructure/k8s/local/namespace.yaml
@@ -48,6 +52,7 @@ profiles:
         - infrastructure/k8s/local/postgres/*.yaml
         - infrastructure/k8s/local/redpanda/*.yaml
         - infrastructure/k8s/local/minio/*.yaml
+        - infrastructure/k8s/local/mongodb/*.yaml
         - infrastructure/k8s/local/microservices/**/*.yaml
         - infrastructure/k8s/local/ingress/*.yaml
     deploy:
@@ -83,6 +88,11 @@ profiles:
         namespace: cryptojackpot
         port: 80
         localPort: 5006
+      - resourceType: service
+        resourceName: audit-api
+        namespace: cryptojackpot
+        port: 80
+        localPort: 5007
 
   # Perfil de desarrollo con hot-reload
   - name: dev
@@ -117,6 +127,10 @@ profiles:
           context: .
           docker:
             dockerfile: Microservices/Notification/Api/Dockerfile
+        - image: cryptojackpot/audit-api
+          context: .
+          docker:
+            dockerfile: Microservices/Audit/Api/Dockerfile
     manifests:
       rawYaml:
         - infrastructure/k8s/local/namespace.yaml
@@ -125,6 +139,7 @@ profiles:
         - infrastructure/k8s/local/postgres/*.yaml
         - infrastructure/k8s/local/redpanda/*.yaml
         - infrastructure/k8s/local/minio/*.yaml
+        - infrastructure/k8s/local/mongodb/*.yaml
         - infrastructure/k8s/local/microservices/**/*.yaml
         - infrastructure/k8s/local/ingress/*.yaml
     deploy:
@@ -161,6 +176,11 @@ profiles:
         port: 80
         localPort: 5006
       - resourceType: service
+        resourceName: audit-api
+        namespace: cryptojackpot
+        port: 80
+        localPort: 5007
+      - resourceType: service
         resourceName: postgres
         namespace: cryptojackpot
         port: 5432
@@ -180,6 +200,11 @@ profiles:
         namespace: cryptojackpot
         port: 9001
         localPort: 9001
+      - resourceType: service
+        resourceName: mongodb
+        namespace: cryptojackpot
+        port: 27017
+        localPort: 27017
 
 # Build por defecto
 build:
@@ -211,6 +236,10 @@ build:
       context: .
       docker:
         dockerfile: Microservices/Notification/Api/Dockerfile
+    - image: cryptojackpot/audit-api
+      context: .
+      docker:
+        dockerfile: Microservices/Audit/Api/Dockerfile
 
 # Manifests por defecto
 manifests:
@@ -221,6 +250,7 @@ manifests:
     - infrastructure/k8s/local/postgres/*.yaml
     - infrastructure/k8s/local/redpanda/*.yaml
     - infrastructure/k8s/local/minio/*.yaml
+    - infrastructure/k8s/local/mongodb/*.yaml
     - infrastructure/k8s/local/microservices/**/*.yaml
     - infrastructure/k8s/local/ingress/*.yaml
 

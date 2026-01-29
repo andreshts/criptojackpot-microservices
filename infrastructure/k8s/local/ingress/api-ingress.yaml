@@ -128,3 +128,11 @@ spec:
             name: notification-api
             port:
               number: 80
+      # Audit API
+      - path: /api/v1/audit
+        pathType: Prefix
+        backend:
+          service:
+            name: audit-api
+            port:
+              number: 80

@@ -230,6 +230,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "secrets", "secrets", "{1111
 		Infrastructure\k8s\local\secrets\postgres-secrets.yaml = Infrastructure\k8s\local\secrets\postgres-secrets.yaml
 		Infrastructure\k8s\local\secrets\redpanda-secrets.yaml = Infrastructure\k8s\local\secrets\redpanda-secrets.yaml
 		Infrastructure\k8s\local\secrets\spaces-secrets.yaml = Infrastructure\k8s\local\secrets\spaces-secrets.yaml
+		infrastructure\k8s\local\secrets\mongodb-secrets.yaml = infrastructure\k8s\local\secrets\mongodb-secrets.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prod", "prod", "{A2B3C4D5-E6F7-5D6E-0F1A-2B3C4D5E6F7A}"

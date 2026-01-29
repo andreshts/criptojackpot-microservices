@@ -1,0 +1,110 @@
+# Audit API - Deployment local
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-api
+  namespace: cryptojackpot
+  labels:
+    app: audit-api
+    tier: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-api
+  template:
+    metadata:
+      labels:
+        app: audit-api
+        tier: api
+    spec:
+      initContainers:
+        - name: wait-for-mongodb
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z mongodb.cryptojackpot.svc.cluster.local 27017; do
+                echo "Waiting for MongoDB..."
+                sleep 2
+              done
+              echo "MongoDB is ready!"
+      containers:
+        - name: audit-api
+          image: cryptojackpot/audit-api
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: app-config
+          env:
+            - name: MongoDB__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secrets
+                  key: MONGODB_AUDIT_CONNECTION
+            - name: MongoDB__DatabaseName
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secrets
+                  key: MONGODB_AUDIT_DATABASE
+            - name: MongoDB__AuditLogsCollection
+              value: "audit_logs"
+            - name: MongoDB__RetentionDays
+              value: "365"
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secrets
+                  key: JWT_SECRET_KEY
+            - name: JwtSettings__Issuer
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secrets
+                  key: JWT_ISSUER
+            - name: JwtSettings__Audience
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secrets
+                  key: JWT_AUDIENCE
+            - name: Kafka__BootstrapServers
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_BOOTSTRAP_SERVERS
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-api
+  namespace: cryptojackpot
+  labels:
+    app: audit-api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: audit-api
