@@ -10,6 +10,7 @@ using CryptoJackpot.Domain.Core.Behaviors;
 using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Audit;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using FluentValidation;
 using MassTransit;
 using MediatR;
@@ -210,6 +211,7 @@ public static class IoCExtension
         {
             // Register the audit log consumer
             x.AddConsumer<AuditLogEventConsumer>();
+            x.AddConsumer<UserLoggedInEventConsumer>();
 
             // In-memory for internal messaging
             x.UsingInMemory((context, cfg) =>
@@ -221,6 +223,7 @@ public static class IoCExtension
             x.AddRider(rider =>
             {
                 rider.AddConsumer<AuditLogEventConsumer>();
+                rider.AddConsumer<UserLoggedInEventConsumer>();
 
                 rider.UsingKafka((context, kafka) =>
                 {
@@ -234,6 +237,15 @@ public static class IoCExtension
                         e =>
                         {
                             e.ConfigureConsumer<AuditLogEventConsumer>(context);
+                        });
+
+                    // Subscribe to user login events for auditing
+                    kafka.TopicEndpoint<UserLoggedInEvent>(
+                        KafkaTopics.UserLoggedIn,
+                        KafkaTopics.AuditGroup,
+                        e =>
+                        {
+                            e.ConfigureConsumer<UserLoggedInEventConsumer>(context);
                         });
                 });
             });

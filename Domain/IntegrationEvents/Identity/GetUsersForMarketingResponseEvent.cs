@@ -9,9 +9,9 @@ namespace CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 public class GetUsersForMarketingResponseEvent : Event
 {
     /// <summary>
-    /// Correlation ID to match with the original request
+    /// Correlation ID to match with the original request (Guid type for request-response pattern)
     /// </summary>
-    public Guid CorrelationId { get; set; }
+    public new Guid CorrelationId { get; set; }
     
     /// <summary>
     /// List of users for the marketing campaign

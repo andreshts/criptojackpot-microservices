@@ -23,12 +23,7 @@ public class AuditLogEvent : Event
     /// Status of the operation (e.g., 1=Success, 2=Failed)
     /// </summary>
     public int Status { get; set; }
-
-    /// <summary>
-    /// Correlation ID for tracing related events
-    /// </summary>
-    public string? CorrelationId { get; set; }
-
+    
     /// <summary>
     /// User ID if applicable
     /// </summary>
