@@ -78,6 +78,25 @@ output "database_names" {
 }
 
 # -----------------------------------------------------------------------------
+# Redis Outputs
+# -----------------------------------------------------------------------------
+output "redis_host" {
+  description = "Host de Redis (SignalR Backplane)"
+  value       = module.redis.private_host
+}
+
+output "redis_port" {
+  description = "Puerto de Redis"
+  value       = module.redis.port
+}
+
+output "redis_connection_string" {
+  description = "Connection string de Redis para .NET"
+  value       = module.redis.connection_string
+  sensitive   = true
+}
+
+# -----------------------------------------------------------------------------
 # Spaces Outputs
 # -----------------------------------------------------------------------------
 output "spaces_endpoint" {

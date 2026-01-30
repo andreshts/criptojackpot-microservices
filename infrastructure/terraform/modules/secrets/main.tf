@@ -113,6 +113,20 @@ resource "kubernetes_secret" "redpanda_credentials" {
   type = "Opaque"
 }
 
+# Secret para Redis (SignalR Backplane)
+resource "kubernetes_secret" "redis" {
+  metadata {
+    name      = "redis-secrets"
+    namespace = kubernetes_namespace.main.metadata[0].name
+  }
+
+  data = {
+    REDIS_CONNECTION_STRING = var.redis_connection_string
+  }
+
+  type = "Opaque"
+}
+
 # Generar el archivo secrets.yaml para referencia/backup
 # ⚠️ IMPORTANTE: Este archivo contiene credenciales sensibles
 # Está incluido en .gitignore para evitar commits accidentales
@@ -191,6 +205,15 @@ stringData:
   REDPANDA_SASL_PASSWORD: "${var.kafka_app_password}"
   REDPANDA_ADMIN_USERNAME: "admin"
   REDPANDA_ADMIN_PASSWORD: "${var.redpanda_admin_password}"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secrets
+  namespace: ${var.namespace}
+type: Opaque
+stringData:
+  REDIS_CONNECTION_STRING: "${var.redis_connection_string}"
 EOT
 }
 

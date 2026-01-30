@@ -106,3 +106,9 @@ variable "spaces_secret_key" {
   sensitive   = true
 }
 
+# Redis Configuration (SignalR Backplane)
+variable "redis_connection_string" {
+  description = "Connection string para Redis (SignalR Backplane)"
+  type        = string
+  sensitive   = true
+}

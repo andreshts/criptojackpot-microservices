@@ -104,6 +104,28 @@ module "database" {
 }
 
 # -----------------------------------------------------------------------------
+# Redis (SignalR Backplane) Module
+# -----------------------------------------------------------------------------
+module "redis" {
+  source = "./modules/redis"
+
+  name          = "${local.resource_prefix}-redis"
+  region        = var.region
+  size          = var.redis_size
+  node_count    = var.redis_node_count
+  version_redis = var.redis_version
+  vpc_uuid      = module.vpc.vpc_id
+
+  # Eviction policy para SignalR (LRU es ideal)
+  eviction_policy = "allkeys_lru"
+
+  # Trusted sources - solo el cluster puede acceder
+  trusted_sources_ids = [module.doks.cluster_id]
+
+  tags = local.common_tags
+}
+
+# -----------------------------------------------------------------------------
 # Spaces (Object Storage) Module
 # -----------------------------------------------------------------------------
 module "spaces" {
@@ -127,7 +149,7 @@ module "spaces" {
 module "k8s_secrets" {
   source = "./modules/secrets"
 
-  depends_on = [module.doks, module.database, module.spaces]
+  depends_on = [module.doks, module.database, module.spaces, module.redis]
 
   namespace = var.project_name
 
@@ -148,6 +170,9 @@ module "k8s_secrets" {
   kafka_app_username      = "${var.project_name}-app"
   kafka_app_password      = local.kafka_app_password
   redpanda_admin_password = local.redpanda_admin_password
+
+  # Redis Configuration (SignalR Backplane)
+  redis_connection_string = module.redis.connection_string
 
   # DigitalOcean Spaces Configuration
   spaces_endpoint   = module.spaces.endpoint

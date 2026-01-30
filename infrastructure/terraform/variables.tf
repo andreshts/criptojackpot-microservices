@@ -133,6 +133,27 @@ variable "databases" {
 }
 
 # -----------------------------------------------------------------------------
+# Redis (SignalR Backplane) Configuration
+# -----------------------------------------------------------------------------
+variable "redis_size" {
+  description = "Plan de Redis (db-s-1vcpu-1gb, db-s-1vcpu-2gb, etc.)"
+  type        = string
+  default     = "db-s-1vcpu-1gb"
+}
+
+variable "redis_node_count" {
+  description = "Número de nodos de Redis (1 = standalone, 2+ = HA)"
+  type        = number
+  default     = 1
+}
+
+variable "redis_version" {
+  description = "Versión de Redis"
+  type        = string
+  default     = "7"
+}
+
+# -----------------------------------------------------------------------------
 # Container Registry (DOCR) Configuration
 # -----------------------------------------------------------------------------
 variable "registry_subscription_tier" {

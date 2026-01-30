@@ -67,6 +67,12 @@ spec:
                 secretKeyRef:
                   name: kafka-secrets
                   key: KAFKA_SECURITY_PROTOCOL
+            # Redis for SignalR Backplane (multi-replica support)
+            - name: ConnectionStrings__RedisConnection
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_CONNECTION_STRING
           resources:
             requests:
               memory: "128Mi"
