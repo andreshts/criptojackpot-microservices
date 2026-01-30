@@ -242,7 +242,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:80
-      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_winner_db;Username=postgres;Password=postgres"
+      ConnectionStrings__DefaultConnection: "Host=pgbouncer;Port=6432;Database=cryptojackpot_winner_db;Username=postgres;Password=postgres"
       JwtSettings__SecretKey: "4ffe50319fbe565a10c6cb8b2300cf91ad85c31a73f1a96826f0907535fb868f"
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
@@ -251,7 +251,7 @@ services:
     ports:
       - "5005:80"
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redpanda:
         condition: service_healthy
@@ -264,7 +264,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:80
-      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_notification_db;Username=postgres;Password=postgres"
+      ConnectionStrings__DefaultConnection: "Host=pgbouncer;Port=6432;Database=cryptojackpot_notification_db;Username=postgres;Password=postgres"
       Kafka__BootstrapServers: "redpanda:9092"
       Brevo__ApiKey: "${BREVO_API_KEY}"
       Brevo__SenderEmail: "${BREVO_SENDER_EMAIL:-noreply@cryptojackpot.com}"
@@ -273,7 +273,7 @@ services:
     ports:
       - "5006:80"
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redpanda:
         condition: service_healthy

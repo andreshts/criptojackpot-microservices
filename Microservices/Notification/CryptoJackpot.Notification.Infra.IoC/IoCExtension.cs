@@ -19,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 namespace CryptoJackpot.Notification.Infra.IoC;
 
 public static class IoCExtension
@@ -101,9 +102,18 @@ public static class IoCExtension
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidOperationException("Database connection string 'DefaultConnection' is not configured");
 
-        services.AddDbContext<NotificationDbContext>(options =>
-            options.UseNpgsql(connectionString)
-                .UseSnakeCaseNamingConvention());
+        // Configure Npgsql DataSource
+        // When using PgBouncer in transaction mode, Npgsql's internal pooling works alongside it
+        // PgBouncer handles the real connection pool to PostgreSQL (DEFAULT_POOL_SIZE=20)
+        var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+        dataSourceBuilder.EnableDynamicJson();
+        var dataSource = dataSourceBuilder.Build();
+
+        // Use AddDbContextPool to reuse DbContext instances (memory optimization)
+        services.AddDbContextPool<NotificationDbContext>(options =>
+            options.UseNpgsql(dataSource)
+                .UseSnakeCaseNamingConvention(),
+            poolSize: 100);
     }
 
     private static void AddSwagger(IServiceCollection services)

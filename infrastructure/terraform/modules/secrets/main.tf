@@ -34,8 +34,8 @@ resource "kubernetes_secret" "postgres" {
     LOTTERY_DB_CONNECTION      = "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_lottery_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
     ORDER_DB_CONNECTION        = "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_order_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
     WALLET_DB_CONNECTION       = "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_wallet_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
-    WINNER_DB_CONNECTION       = "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_winner_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true"
-    NOTIFICATION_DB_CONNECTION = "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_notification_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true"
+    WINNER_DB_CONNECTION       = "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_winner_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
+    NOTIFICATION_DB_CONNECTION = "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_notification_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
   }
 
   type = "Opaque"
@@ -156,8 +156,8 @@ stringData:
   LOTTERY_DB_CONNECTION: "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_lottery_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
   ORDER_DB_CONNECTION: "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_order_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
   WALLET_DB_CONNECTION: "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_wallet_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
-  WINNER_DB_CONNECTION: "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_winner_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true"
-  NOTIFICATION_DB_CONNECTION: "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_notification_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true"
+  WINNER_DB_CONNECTION: "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_winner_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
+  NOTIFICATION_DB_CONNECTION: "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_notification_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
 ---
 apiVersion: v1
 kind: Secret
