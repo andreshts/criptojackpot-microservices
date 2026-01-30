@@ -139,17 +139,21 @@ public static class IoCExtension
         if (string.IsNullOrEmpty(connectionString))
             throw new InvalidOperationException("Database connection string 'DefaultConnection' is not configured");
 
-        // Configure Npgsql DataSource with optimizations for multi-replica scenarios
+        // Configure Npgsql DataSource
+        // When using PgBouncer in transaction mode, Npgsql's internal pooling works alongside it
+        // PgBouncer handles the real connection pool to PostgreSQL (DEFAULT_POOL_SIZE=20)
+        // Npgsql manages virtual connections from the application side
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
         dataSourceBuilder.EnableDynamicJson();
         var dataSource = dataSourceBuilder.Build();
 
-        // Use AddDbContextPool instead of AddDbContext for better performance
-        // This reuses DbContext instances, reducing object creation overhead in high-concurrency scenarios
+        // Use AddDbContextPool to reuse DbContext instances (memory optimization)
+        // This reduces object creation overhead in high-concurrency scenarios
+        // The poolSize here is for DbContext instances, not database connections
         services.AddDbContextPool<IdentityDbContext>(options =>
             options.UseNpgsql(dataSource)
                 .UseSnakeCaseNamingConvention(),
-            poolSize: 128);
+            poolSize: 100);
     }
 
     private static void AddSwagger(IServiceCollection services)

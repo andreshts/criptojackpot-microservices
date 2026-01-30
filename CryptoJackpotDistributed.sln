@@ -210,6 +210,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "postgres", "postgres", "{11
 		Infrastructure\k8s\local\postgres\postgres-configmap.yaml = Infrastructure\k8s\local\postgres\postgres-configmap.yaml
 		Infrastructure\k8s\local\postgres\postgres-service.yaml = Infrastructure\k8s\local\postgres\postgres-service.yaml
 		Infrastructure\k8s\local\postgres\postgres-statefulset.yaml = Infrastructure\k8s\local\postgres\postgres-statefulset.yaml
+		infrastructure\k8s\local\postgres\pgbouncer.yaml = infrastructure\k8s\local\postgres\pgbouncer.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "redpanda", "redpanda", "{11111111-1111-1111-1111-11111111111B}"
@@ -248,6 +249,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "databases", "databases", "{22222222-2222-2222-2222-222222222222}"
 	ProjectSection(SolutionItems) = preProject
 		Infrastructure\k8s\prod\databases\init-databases.sql = Infrastructure\k8s\prod\databases\init-databases.sql
+		infrastructure\k8s\prod\databases\pgbouncer.yaml = infrastructure\k8s\prod\databases\pgbouncer.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ingress", "ingress", "{22222222-2222-2222-2222-222222222223}"

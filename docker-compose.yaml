@@ -46,6 +46,32 @@ services:
       timeout: 5s
       retries: 5
 
+  # PgBouncer - Connection Pooler for PostgreSQL
+  # Manages hundreds of virtual connections from microservices into a small real pool
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: cryptojackpot-pgbouncer
+    environment:
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - LISTEN_PORT=6432
+      - AUTH_TYPE=md5
+      - POOL_MODE=transaction
+      - MAX_CLIENT_CONN=1000
+      - DEFAULT_POOL_SIZE=20
+    ports:
+      - "6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "localhost", "-p", "6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Redpanda (Kafka compatible)
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v23.3.5
@@ -121,7 +147,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:80
-      ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_identity_db;Username=postgres;Password=postgres;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
+      ConnectionStrings__DefaultConnection: "Host=pgbouncer;Port=6432;Database=cryptojackpot_identity_db;Username=postgres;Password=postgres"
       JwtSettings__SecretKey: "4ffe50319fbe565a10c6cb8b2300cf91ad85c31a73f1a96826f0907535fb868f"
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
@@ -134,7 +160,7 @@ services:
     ports:
       - "5001:80"
     depends_on:
-      postgres:
+      pgbouncer:
         condition: service_healthy
       redpanda:
         condition: service_healthy

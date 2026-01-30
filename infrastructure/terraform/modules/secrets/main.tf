@@ -28,8 +28,9 @@ resource "kubernetes_secret" "postgres" {
     POSTGRES_SSLMODE  = "require"
 
     # Connection strings para cada microservicio
-    # Identity and Lottery have optimized pool settings for multi-replica scaling
-    IDENTITY_DB_CONNECTION     = "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_identity_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
+    # Services using PgBouncer connect via pgbouncer.cryptojackpot.svc.cluster.local:6432
+    # PgBouncer handles connection pooling to the actual PostgreSQL server
+    IDENTITY_DB_CONNECTION     = "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_identity_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
     LOTTERY_DB_CONNECTION      = "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_lottery_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
     ORDER_DB_CONNECTION        = "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_order_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
     WALLET_DB_CONNECTION       = "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_wallet_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true"
@@ -151,7 +152,7 @@ stringData:
   POSTGRES_USER: "${var.postgres_user}"
   POSTGRES_PASSWORD: "${var.postgres_password}"
   POSTGRES_SSLMODE: "require"
-  IDENTITY_DB_CONNECTION: "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_identity_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
+  IDENTITY_DB_CONNECTION: "Host=pgbouncer.cryptojackpot.svc.cluster.local;Port=6432;Database=cryptojackpot_identity_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Disable"
   LOTTERY_DB_CONNECTION: "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_lottery_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
   ORDER_DB_CONNECTION: "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_order_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true;MaxPoolSize=50;MinPoolSize=10;ConnectionLifetime=300"
   WALLET_DB_CONNECTION: "Host=${var.postgres_host};Port=${var.postgres_port};Database=cryptojackpot_wallet_db;Username=${var.postgres_user};Password=${var.postgres_password};SSL Mode=Require;Trust Server Certificate=true"

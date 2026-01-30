@@ -176,6 +176,24 @@ function Deploy-Infrastructure {
     }
     Write-Host "  ✓ PostgreSQL listo" -ForegroundColor Green
     
+    # PgBouncer (Connection Pooler)
+    Write-Host "  Desplegando PgBouncer (Connection Pooler)..." -ForegroundColor Cyan
+    kubectl apply -f "$basePath\postgres\pgbouncer.yaml"
+    
+    # Esperar a que PgBouncer esté listo
+    Write-Host "  Esperando a que PgBouncer esté listo..." -ForegroundColor Cyan
+    $retryCount = 0
+    while ($retryCount -lt $maxRetries) {
+        $ready = kubectl get pod -l app=pgbouncer -n cryptojackpot -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>$null
+        if ($ready -eq "True") {
+            break
+        }
+        Start-Sleep -Seconds 2
+        $retryCount++
+        Write-Host "    Esperando... ($retryCount/$maxRetries)" -ForegroundColor Gray
+    }
+    Write-Host "  ✓ PgBouncer listo" -ForegroundColor Green
+    
     # Redpanda
     Write-Host "  Desplegando Redpanda (Kafka)..." -ForegroundColor Cyan
     kubectl apply -f "$basePath\redpanda\redpanda.yaml"
