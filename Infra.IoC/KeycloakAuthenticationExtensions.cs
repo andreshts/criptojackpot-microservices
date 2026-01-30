@@ -13,6 +13,11 @@ namespace CryptoJackpot.Infra.IoC;
 public static class KeycloakAuthenticationExtensions
 {
     /// <summary>
+    /// Claim type for roles in Keycloak tokens.
+    /// </summary>
+    private const string RolesClaimType = "roles";
+    
+    /// <summary>
     /// Adds Keycloak JWT Bearer authentication to the service collection.
     /// All microservices should use this method for consistent token validation.
     /// </summary>
@@ -60,7 +65,7 @@ public static class KeycloakAuthenticationExtensions
                 
                 // Map the 'sub' claim to ClaimTypes.NameIdentifier
                 NameClaimType = ClaimTypes.NameIdentifier,
-                RoleClaimType = "roles",
+                RoleClaimType = RolesClaimType,
                 
                 // Clock skew tolerance (default is 5 minutes)
                 ClockSkew = TimeSpan.FromMinutes(1)
@@ -95,13 +100,13 @@ public static class KeycloakAuthenticationExtensions
         {
             // Add role-based policies
             options.AddPolicy("RequireAdminRole", policy => 
-                policy.RequireClaim("roles", "admin"));
+                policy.RequireClaim(RolesClaimType, "admin"));
             
             options.AddPolicy("RequireModeratorRole", policy => 
-                policy.RequireClaim("roles", "admin", "moderator"));
+                policy.RequireClaim(RolesClaimType, "admin", "moderator"));
             
             options.AddPolicy("RequireUserRole", policy => 
-                policy.RequireClaim("roles", "admin", "moderator", "user"));
+                policy.RequireClaim(RolesClaimType, "admin", "moderator", "user"));
         });
 
         return services;
@@ -151,6 +156,6 @@ public static class KeycloakAuthenticationExtensions
     /// <returns>True if the user has the role.</returns>
     public static bool HasRole(this ClaimsPrincipal principal, string role)
     {
-        return principal.HasClaim("roles", role);
+        return principal.HasClaim(RolesClaimType, role);
     }
 }

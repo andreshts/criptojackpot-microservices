@@ -255,6 +255,35 @@ function Deploy-Infrastructure {
     }
     Write-Host "  ✓ Redis listo" -ForegroundColor Green
     
+    # Keycloak (Identity Provider)
+    Write-Host "  Desplegando Keycloak (Identity Provider)..." -ForegroundColor Cyan
+    kubectl apply -f "$basePath\keycloak\keycloak-configmap.yaml"
+    kubectl apply -f "$basePath\keycloak\keycloak-secrets.yaml"
+    kubectl apply -f "$basePath\keycloak\keycloak-realm-configmap.yaml"
+    kubectl apply -f "$basePath\keycloak\keycloak-deployment.yaml"
+    kubectl apply -f "$basePath\keycloak\keycloak-service.yaml"
+    
+    # Esperar a que Keycloak esté listo (toma más tiempo por JVM)
+    Write-Host "  Esperando a que Keycloak esté listo (puede tomar 1-2 minutos)..." -ForegroundColor Cyan
+    $keycloakMaxRetries = 90
+    $retryCount = 0
+    while ($retryCount -lt $keycloakMaxRetries) {
+        $ready = kubectl get pod -l app=keycloak -n cryptojackpot -o jsonpath='{.items[0].status.conditions[?(@.type=="Ready")].status}' 2>$null
+        if ($ready -eq "True") {
+            break
+        }
+        Start-Sleep -Seconds 2
+        $retryCount++
+        if ($retryCount % 10 -eq 0) {
+            Write-Host "    Esperando... ($retryCount/$keycloakMaxRetries)" -ForegroundColor Gray
+        }
+    }
+    if ($retryCount -lt $keycloakMaxRetries) {
+        Write-Host "  ✓ Keycloak listo" -ForegroundColor Green
+    } else {
+        Write-Host "  ⚠ Keycloak aún iniciando, continúa en background" -ForegroundColor Yellow
+    }
+    
     Write-Host ""
 }
 
@@ -281,6 +310,9 @@ function Show-Summary {
     Write-Host "  - Winner API:       http://localhost:5005" -ForegroundColor Gray
     Write-Host "  - Notification API: http://localhost:5006" -ForegroundColor Gray
     Write-Host "  - Audit API:        http://localhost:5007" -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Infraestructura:" -ForegroundColor White
+    Write-Host "  - Keycloak Admin:   http://localhost:30180 (admin/admin)" -ForegroundColor Cyan
     Write-Host "  - PostgreSQL:       localhost:5433" -ForegroundColor Gray
     Write-Host "  - MongoDB:          localhost:27017" -ForegroundColor Gray
     Write-Host "  - Redis:            localhost:6379" -ForegroundColor Gray

@@ -13,6 +13,8 @@ data:
     CREATE DATABASE cryptojackpot_wallet_db;
     CREATE DATABASE cryptojackpot_winner_db;
     CREATE DATABASE cryptojackpot_notification_db;
+    -- Base de datos para Keycloak (Identity Provider)
+    CREATE DATABASE cryptojackpot_keycloak_db;
 
   02-init-quartz.sql: |
     -- Conectarse a la base de datos order y crear tablas de Quartz

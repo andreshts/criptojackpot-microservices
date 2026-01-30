@@ -1,0 +1,20 @@
+# Keycloak ConfigMap para desarrollo local
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: cryptojackpot
+  labels:
+    app: keycloak
+data:
+  KC_DB: "postgres"
+  KC_DB_SCHEMA: "public"
+  KC_HEALTH_ENABLED: "true"
+  KC_METRICS_ENABLED: "true"
+  KC_HTTP_ENABLED: "true"
+  KC_HOSTNAME_STRICT: "false"
+  KC_HOSTNAME_STRICT_HTTPS: "false"
+  KC_PROXY: "edge"
+  KC_FEATURES: "token-exchange,admin-fine-grained-authz"
+  # Log level for development
+  KC_LOG_LEVEL: "INFO"

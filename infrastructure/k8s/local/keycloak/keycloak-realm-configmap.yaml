@@ -1,0 +1,242 @@
+# Keycloak Realm Configuration ConfigMap
+# Este ConfigMap contiene la configuración del realm para importación automática
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm-config
+  namespace: cryptojackpot
+  labels:
+    app: keycloak
+data:
+  realm-export.json: |
+    {
+      "realm": "cryptojackpot",
+      "enabled": true,
+      "displayName": "CryptoJackpot",
+      "displayNameHtml": "<div class=\"kc-logo-text\"><span>CryptoJackpot</span></div>",
+      "sslRequired": "external",
+      "registrationAllowed": true,
+      "registrationEmailAsUsername": true,
+      "rememberMe": true,
+      "verifyEmail": true,
+      "loginWithEmailAllowed": true,
+      "duplicateEmailsAllowed": false,
+      "resetPasswordAllowed": true,
+      "editUsernameAllowed": false,
+      "bruteForceProtected": true,
+      "permanentLockout": false,
+      "maxFailureWaitSeconds": 900,
+      "minimumQuickLoginWaitSeconds": 60,
+      "waitIncrementSeconds": 60,
+      "quickLoginCheckMilliSeconds": 1000,
+      "maxDeltaTimeSeconds": 43200,
+      "failureFactor": 5,
+      "roles": {
+        "realm": [
+          {
+            "name": "admin",
+            "description": "Administrator role with full access",
+            "composite": false
+          },
+          {
+            "name": "user",
+            "description": "Standard user role",
+            "composite": false
+          },
+          {
+            "name": "moderator",
+            "description": "Moderator role with limited admin access",
+            "composite": false
+          }
+        ]
+      },
+      "clients": [
+        {
+          "clientId": "cryptojackpot-backend",
+          "name": "CryptoJackpot Backend API",
+          "description": "Backend API client for microservices",
+          "enabled": true,
+          "clientAuthenticatorType": "client-secret",
+          "secret": "cryptojackpot-backend-secret-change-in-production",
+          "publicClient": false,
+          "bearerOnly": false,
+          "consentRequired": false,
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": true,
+          "serviceAccountsEnabled": true,
+          "authorizationServicesEnabled": true,
+          "protocol": "openid-connect",
+          "redirectUris": [
+            "http://localhost:5000/*",
+            "http://localhost:5001/*",
+            "https://api.cryptojackpot.com/*"
+          ],
+          "webOrigins": [
+            "http://localhost:5000",
+            "http://localhost:3000",
+            "https://cryptojackpot.com",
+            "https://www.cryptojackpot.com",
+            "https://app.cryptojackpot.com"
+          ],
+          "attributes": {
+            "access.token.lifespan": "3600"
+          },
+          "protocolMappers": [
+            {
+              "name": "user-id-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "user_id",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "user_id",
+                "jsonType.label": "long"
+              }
+            },
+            {
+              "name": "realm-roles-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-realm-role-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "multivalued": "true",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "roles",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        },
+        {
+          "clientId": "cryptojackpot-frontend",
+          "name": "CryptoJackpot Frontend SPA",
+          "description": "Public client for frontend SPA application",
+          "enabled": true,
+          "publicClient": true,
+          "bearerOnly": false,
+          "consentRequired": false,
+          "standardFlowEnabled": true,
+          "implicitFlowEnabled": false,
+          "directAccessGrantsEnabled": false,
+          "serviceAccountsEnabled": false,
+          "protocol": "openid-connect",
+          "redirectUris": [
+            "http://localhost:3000/*",
+            "https://cryptojackpot.com/*",
+            "https://www.cryptojackpot.com/*",
+            "https://app.cryptojackpot.com/*"
+          ],
+          "webOrigins": [
+            "http://localhost:3000",
+            "https://cryptojackpot.com",
+            "https://www.cryptojackpot.com",
+            "https://app.cryptojackpot.com"
+          ],
+          "attributes": {
+            "access.token.lifespan": "300",
+            "pkce.code.challenge.method": "S256"
+          },
+          "protocolMappers": [
+            {
+              "name": "user-id-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-attribute-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "user.attribute": "user_id",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "user_id",
+                "jsonType.label": "long"
+              }
+            },
+            {
+              "name": "realm-roles-mapper",
+              "protocol": "openid-connect",
+              "protocolMapper": "oidc-usermodel-realm-role-mapper",
+              "consentRequired": false,
+              "config": {
+                "userinfo.token.claim": "true",
+                "multivalued": "true",
+                "id.token.claim": "true",
+                "access.token.claim": "true",
+                "claim.name": "roles",
+                "jsonType.label": "String"
+              }
+            }
+          ]
+        }
+      ],
+      "identityProviders": [
+        {
+          "alias": "google",
+          "displayName": "Google",
+          "providerId": "google",
+          "enabled": false,
+          "updateProfileFirstLoginMode": "on",
+          "trustEmail": true,
+          "storeToken": true,
+          "addReadTokenRoleOnCreate": false,
+          "authenticateByDefault": false,
+          "linkOnly": false,
+          "firstBrokerLoginFlowAlias": "first broker login",
+          "config": {
+            "clientId": "google-client-id-placeholder",
+            "clientSecret": "google-client-secret-placeholder",
+            "defaultScope": "openid email profile",
+            "syncMode": "IMPORT"
+          }
+        }
+      ],
+      "requiredActions": [
+        {
+          "alias": "CONFIGURE_TOTP",
+          "name": "Configure OTP",
+          "providerId": "CONFIGURE_TOTP",
+          "enabled": true,
+          "defaultAction": false,
+          "priority": 10
+        },
+        {
+          "alias": "UPDATE_PASSWORD",
+          "name": "Update Password",
+          "providerId": "UPDATE_PASSWORD",
+          "enabled": true,
+          "defaultAction": false,
+          "priority": 30
+        },
+        {
+          "alias": "VERIFY_EMAIL",
+          "name": "Verify Email",
+          "providerId": "VERIFY_EMAIL",
+          "enabled": true,
+          "defaultAction": false,
+          "priority": 50
+        }
+      ],
+      "otpPolicyType": "totp",
+      "otpPolicyAlgorithm": "HmacSHA1",
+      "otpPolicyDigits": 6,
+      "otpPolicyPeriod": 30,
+      "passwordPolicy": "length(8) and maxLength(128) and notUsername and notEmail",
+      "eventsEnabled": true,
+      "eventsListeners": ["jboss-logging"],
+      "enabledEventTypes": [
+        "LOGIN",
+        "LOGIN_ERROR",
+        "LOGOUT",
+        "REGISTER",
+        "REGISTER_ERROR"
+      ],
+      "adminEventsEnabled": true,
+      "internationalizationEnabled": true,
+      "supportedLocales": ["en", "es"],
+      "defaultLocale": "en"
+    }

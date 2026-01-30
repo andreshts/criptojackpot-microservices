@@ -86,6 +86,12 @@ spec:
                 secretKeyRef:
                   name: kafka-secrets
                   key: KAFKA_BOOTSTRAP_SERVERS
+            # Keycloak Client Secret for Admin API access
+            - name: Keycloak__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secrets
+                  key: KEYCLOAK_CLIENT_SECRET
           resources:
             requests:
               memory: "128Mi"

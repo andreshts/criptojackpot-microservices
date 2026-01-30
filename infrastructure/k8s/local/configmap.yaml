@@ -18,3 +18,9 @@ data:
   # CORS - Orígenes permitidos para SignalR y APIs
   Cors__AllowedOrigins__0: "http://localhost:3000"
   Cors__AllowedOrigins__1: "http://cryptojackpot.local"
+  # Keycloak OIDC Configuration
+  Keycloak__Authority: "http://keycloak.cryptojackpot.svc.cluster.local:8080"
+  Keycloak__Realm: "cryptojackpot"
+  Keycloak__ClientId: "cryptojackpot-backend"
+  Keycloak__RequireHttpsMetadata: "false"
+  Keycloak__ValidateAudience: "false"
