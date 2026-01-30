@@ -94,6 +94,21 @@ services:
       redpanda:
         condition: service_healthy
 
+  # Redis (SignalR Backplane para múltiples réplicas)
+  redis:
+    image: redis:7-alpine
+    container_name: cryptojackpot-redis
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ============================================
   # MICROSERVICIOS
   # ============================================
@@ -133,6 +148,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:80
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=cryptojackpot_lottery_db;Username=postgres;Password=postgres"
+      ConnectionStrings__RedisConnection: "redis:6379"
       JwtSettings__SecretKey: "4ffe50319fbe565a10c6cb8b2300cf91ad85c31a73f1a96826f0907535fb868f"
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
@@ -144,6 +160,8 @@ services:
       postgres:
         condition: service_healthy
       redpanda:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   order-api:
@@ -255,4 +273,5 @@ volumes:
   postgres_data:
   redpanda_data:
   minio_data:
+  redis_data:
 

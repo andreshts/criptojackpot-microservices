@@ -252,11 +252,13 @@ public static class IoCExtension
     public static void AddLotterySignalR(this IServiceCollection services, IConfiguration configuration)
     {
         var redisConnection = configuration.GetConnectionString("RedisConnection");
+        var environment = configuration["ASPNETCORE_ENVIRONMENT"] ?? "Production";
+        var isDevelopment = environment.Equals("Development", StringComparison.OrdinalIgnoreCase);
         
         var signalBuilder = services.AddSignalR(options =>
         {
-            // Optional: Configure SignalR options for better performance
-            options.EnableDetailedErrors = true;
+            // Only enable detailed errors in development (security risk in production)
+            options.EnableDetailedErrors = isDevelopment;
             options.MaximumReceiveMessageSize = 64 * 1024; // 64 KB
         });
 
