@@ -37,7 +37,7 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infrastructure/k8s/databases/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+      - ./infrastructure/k8s/prod/databases/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     ports:
       - "5433:5432"
     healthcheck:
@@ -132,6 +132,43 @@ services:
       retries: 5
 
   # ============================================
+  # KEYCLOAK - Identity Provider (OIDC/OAuth2)
+  # ============================================
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: cryptojackpot-keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/cryptojackpot_keycloak_db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_FEATURES: token-exchange,admin-fine-grained-authz
+    volumes:
+      - ./infrastructure/docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8180:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ============================================
   # MICROSERVICIOS
   # ============================================
 
@@ -148,6 +185,13 @@ services:
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
       JwtSettings__ExpirationInMinutes: "60"
+      Keycloak__Authority: "http://keycloak:8080"
+      Keycloak__Realm: "cryptojackpot"
+      Keycloak__ClientId: "cryptojackpot-backend"
+      Keycloak__ClientSecret: "cryptojackpot-backend-secret-change-in-production"
+      Keycloak__Audience: "account"
+      Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__ValidateAudience: "false"
       Kafka__BootstrapServers: "redpanda:9092"
       DigitalOcean__Endpoint: "http://localhost:9000"
       DigitalOcean__BucketName: "local-bucket"
@@ -159,6 +203,8 @@ services:
       pgbouncer:
         condition: service_healthy
       redpanda:
+        condition: service_healthy
+      keycloak:
         condition: service_healthy
 
   lottery-api:
@@ -175,6 +221,11 @@ services:
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
       JwtSettings__ExpirationInMinutes: "60"
+      Keycloak__Authority: "http://keycloak:8080"
+      Keycloak__Realm: "cryptojackpot"
+      Keycloak__ClientId: "cryptojackpot-backend"
+      Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__ValidateAudience: "false"
       Kafka__BootstrapServers: "redpanda:9092"
     ports:
       - "5002:80"
@@ -199,6 +250,11 @@ services:
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
       JwtSettings__ExpirationInMinutes: "60"
+      Keycloak__Authority: "http://keycloak:8080"
+      Keycloak__Realm: "cryptojackpot"
+      Keycloak__ClientId: "cryptojackpot-backend"
+      Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__ValidateAudience: "false"
       Kafka__BootstrapServers: "redpanda:9092"
     ports:
       - "5003:80"
@@ -221,6 +277,11 @@ services:
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
       JwtSettings__ExpirationInMinutes: "60"
+      Keycloak__Authority: "http://keycloak:8080"
+      Keycloak__Realm: "cryptojackpot"
+      Keycloak__ClientId: "cryptojackpot-backend"
+      Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__ValidateAudience: "false"
       Kafka__BootstrapServers: "redpanda:9092"
     ports:
       - "5004:80"
@@ -243,6 +304,11 @@ services:
       JwtSettings__Issuer: "CryptoJackpotIdentity"
       JwtSettings__Audience: "CryptoJackpotApp"
       JwtSettings__ExpirationInMinutes: "60"
+      Keycloak__Authority: "http://keycloak:8080"
+      Keycloak__Realm: "cryptojackpot"
+      Keycloak__ClientId: "cryptojackpot-backend"
+      Keycloak__RequireHttpsMetadata: "false"
+      Keycloak__ValidateAudience: "false"
       Kafka__BootstrapServers: "redpanda:9092"
     ports:
       - "5005:80"

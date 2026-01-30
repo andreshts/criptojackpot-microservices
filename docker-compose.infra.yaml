@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./infrastructure/k8s/databases/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+      - ./infrastructure/k8s/prod/databases/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     ports:
       - "5433:5432"
     healthcheck:
@@ -118,6 +118,48 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # ============================================
+  # KEYCLOAK - Identity Provider (OIDC/OAuth2)
+  # ============================================
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: cryptojackpot-keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      # Admin credentials
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # Database configuration (uses shared PostgreSQL)
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/cryptojackpot_keycloak_db
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: postgres
+      # Health and metrics
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      # Hostname configuration for development
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      # Features
+      KC_FEATURES: token-exchange,admin-fine-grained-authz
+    volumes:
+      - ./infrastructure/docker/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    ports:
+      - "8180:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e 'GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n' >&3;if [ $? -eq 0 ]; then echo 'Healthcheck Successful';exit 0;else echo 'Healthcheck Failed';exit 1;fi;"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
 volumes:
   postgres_data:

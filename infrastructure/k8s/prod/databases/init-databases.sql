@@ -19,6 +19,9 @@ CREATE DATABASE cryptojackpot_winner_db;
 -- Base de datos para Notification (logs de notificaciones)
 CREATE DATABASE cryptojackpot_notification_db;
 
+-- Base de datos para Keycloak (Identity Provider - OIDC/OAuth2)
+CREATE DATABASE cryptojackpot_keycloak_db;
+
 -- Crear usuario específico para la aplicación (opcional pero recomendado)
 -- CREATE USER cryptojackpot_app WITH ENCRYPTED PASSWORD 'your_secure_password';
 

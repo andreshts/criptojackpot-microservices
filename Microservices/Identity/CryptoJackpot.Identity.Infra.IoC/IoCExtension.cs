@@ -102,34 +102,47 @@ public static class IoCExtension
     {
         services.Configure<JwtConfig>(configuration.GetSection("JwtSettings"));
         services.Configure<DigitalOceanSettings>(configuration.GetSection("DigitalOcean"));
+        services.Configure<KeycloakSettings>(configuration.GetSection("Keycloak"));
     }
 
     private static void AddAuthentication(IServiceCollection services, IConfiguration configuration)
     {
-        var jwtSettings = configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"];
+        var keycloakSection = configuration.GetSection("Keycloak");
+        var useKeycloak = keycloakSection.Exists() && !string.IsNullOrEmpty(keycloakSection["Authority"]);
 
-        if (string.IsNullOrEmpty(secretKey))
-            throw new InvalidOperationException("JWT SecretKey is not configured");
+        if (useKeycloak)
+        {
+            // Use Keycloak OIDC authentication
+            services.AddKeycloakAuthentication(configuration);
+        }
+        else
+        {
+            // Fallback to legacy JWT authentication (for backward compatibility)
+            var jwtSettings = configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"];
 
-        services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
+            if (string.IsNullOrEmpty(secretKey))
+                throw new InvalidOperationException("JWT SecretKey is not configured");
+
+            services.AddAuthentication(options =>
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-                };
-            });
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidAudience = jwtSettings["Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                    };
+                });
+        }
     }
 
     private static void AddDatabase(IServiceCollection services, IConfiguration configuration)
@@ -267,6 +280,9 @@ public static class IoCExtension
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IIdentityEventPublisher, IdentityEventPublisher>();
         services.AddScoped<IStorageService, DigitalOceanStorageService>();
+        
+        // Keycloak Admin Service for user management
+        services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
