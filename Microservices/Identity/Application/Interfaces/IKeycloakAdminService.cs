@@ -11,14 +11,24 @@ public interface IKeycloakAdminService
     /// Creates a new user in Keycloak.
     /// </summary>
     /// <param name="email">The user's email address.</param>
+    /// <param name="password">The user's password.</param>
     /// <param name="firstName">The user's first name.</param>
     /// <param name="lastName">The user's last name.</param>
-    /// <param name="password">The user's password (optional, will require password reset if not provided).</param>
     /// <param name="emailVerified">Whether the email is verified.</param>
-    /// <param name="attributes">Additional user attributes.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The Keycloak user ID.</returns>
-    Task<string> CreateUserAsync(
+    /// <returns>The Keycloak user ID, or null if creation failed.</returns>
+    Task<string?> CreateUserAsync(
+        string email,
+        string password,
+        string firstName,
+        string lastName,
+        bool emailVerified = false,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a new user in Keycloak with additional attributes.
+    /// </summary>
+    Task<string?> CreateUserAsync(
         string email,
         string firstName,
         string lastName,
@@ -72,7 +82,14 @@ public interface IKeycloakAdminService
     /// <summary>
     /// Sends a password reset email to the user.
     /// </summary>
-    Task SendPasswordResetEmailAsync(string keycloakUserId, CancellationToken cancellationToken = default);
+    /// <returns>True if the email was sent successfully.</returns>
+    Task<bool> SendPasswordResetEmailAsync(string keycloakUserId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resets a user's password in Keycloak.
+    /// </summary>
+    /// <returns>True if the password was reset successfully.</returns>
+    Task<bool> ResetPasswordAsync(string keycloakUserId, string newPassword, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Enables or disables a user.

@@ -1,4 +1,3 @@
-using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
@@ -8,22 +7,24 @@ using Microsoft.Extensions.Logging;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
+/// <summary>
+/// Handles password reset requests by triggering Keycloak's password reset email.
+/// </summary>
 public class RequestPasswordResetCommandHandler : IRequestHandler<RequestPasswordResetCommand, Result<string>>
 {
+    private const string PasswordResetSuccessMessage = "If the email exists, a password reset link has been sent";
+    
     private readonly IUserRepository _userRepository;
-    private readonly IIdentityEventPublisher _eventPublisher;
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IKeycloakAdminService _keycloakAdminService;
     private readonly ILogger<RequestPasswordResetCommandHandler> _logger;
 
     public RequestPasswordResetCommandHandler(
         IUserRepository userRepository,
-        IIdentityEventPublisher eventPublisher,
-        IUnitOfWork unitOfWork,
+        IKeycloakAdminService keycloakAdminService,
         ILogger<RequestPasswordResetCommandHandler> logger)
     {
         _userRepository = userRepository;
-        _eventPublisher = eventPublisher;
-        _unitOfWork = unitOfWork;
+        _keycloakAdminService = keycloakAdminService;
         _logger = logger;
     }
 
@@ -31,33 +32,37 @@ public class RequestPasswordResetCommandHandler : IRequestHandler<RequestPasswor
     {
         var user = await _userRepository.GetByEmailAsync(request.Email);
         if (user is null)
-            return Result.Fail<string>(new NotFoundError("User not found"));
+        {
+            // Don't reveal if user exists - security best practice
+            _logger.LogWarning("Password reset requested for non-existent email {Email}", request.Email);
+            return Result.Ok(PasswordResetSuccessMessage);
+        }
 
-        var securityCode = new Random().Next(100000, 999999).ToString();
+        if (string.IsNullOrEmpty(user.KeycloakId))
+        {
+            _logger.LogWarning("Password reset requested for user without KeycloakId: {Email}", request.Email);
+            return Result.Ok(PasswordResetSuccessMessage);
+        }
 
         try
         {
-            // Begin transaction
-            await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-            user.SecurityCode = securityCode;
-            user.PasswordResetCodeExpiration = DateTime.UtcNow.AddMinutes(15);
-            await _userRepository.UpdateAsync(user);
-
-            // Publish event - saved to Outbox in same transaction
-            await _eventPublisher.PublishPasswordResetRequestedAsync(user, securityCode);
-
-            // Commit - both update and outbox message committed atomically
-            await _unitOfWork.CommitTransactionAsync(cancellationToken);
+            // Trigger Keycloak to send password reset email
+            var success = await _keycloakAdminService.SendPasswordResetEmailAsync(user.KeycloakId, cancellationToken);
+            
+            if (!success)
+            {
+                _logger.LogError("Failed to send password reset email via Keycloak for {Email}", request.Email);
+                // Still return success message to avoid user enumeration
+            }
 
             _logger.LogInformation("Password reset requested for {Email}", request.Email);
-            return Result.Ok("Password reset email sent");
+            return Result.Ok(PasswordResetSuccessMessage);
         }
         catch (Exception ex)
         {
-            await _unitOfWork.RollbackTransactionAsync(cancellationToken);
             _logger.LogError(ex, "Failed to process password reset for {Email}", request.Email);
-            return Result.Fail<string>(new InternalServerError("Failed to process password reset"));
+            // Still return success message to avoid user enumeration
+            return Result.Ok(PasswordResetSuccessMessage);
         }
     }
 }

@@ -44,7 +44,18 @@ public class KeycloakAdminService : IKeycloakAdminService
     private string AdminUrl => _settings.GetAdminUrl();
     private string TokenUrl => _settings.GetTokenUrl();
 
-    public async Task<string> CreateUserAsync(
+    public async Task<string?> CreateUserAsync(
+        string email,
+        string password,
+        string firstName,
+        string lastName,
+        bool emailVerified = false,
+        CancellationToken cancellationToken = default)
+    {
+        return await CreateUserAsync(email, firstName, lastName, password, emailVerified, null, cancellationToken);
+    }
+
+    public async Task<string?> CreateUserAsync(
         string email,
         string firstName,
         string lastName,
@@ -53,52 +64,70 @@ public class KeycloakAdminService : IKeycloakAdminService
         Dictionary<string, List<string>>? attributes = null,
         CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var userRepresentation = new
+        try
         {
-            email,
-            username = email,
-            firstName,
-            lastName,
-            emailVerified,
-            enabled = true,
-            attributes = attributes ?? new Dictionary<string, List<string>>(),
-            credentials = password != null ? new[]
+            await EnsureAdminTokenAsync(cancellationToken);
+
+            var userRepresentation = new
             {
-                new
+                email,
+                username = email,
+                firstName,
+                lastName,
+                emailVerified,
+                enabled = true,
+                attributes = attributes ?? new Dictionary<string, List<string>>(),
+                credentials = password != null ? new[]
                 {
-                    type = "password",
-                    value = password,
-                    temporary = false
-                }
-            } : null,
-            requiredActions = password == null ? new[] { "UPDATE_PASSWORD" } : Array.Empty<string>()
-        };
+                    new
+                    {
+                        type = "password",
+                        value = password,
+                        temporary = false
+                    }
+                } : null,
+                requiredActions = password == null ? new[] { "UPDATE_PASSWORD" } : Array.Empty<string>()
+            };
 
-        var url = $"{AdminUrl}/users";
-        var request = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = JsonContent.Create(userRepresentation, options: _jsonOptions)
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
+            var url = $"{AdminUrl}/users";
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(userRepresentation, options: _jsonOptions)
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
 
-        if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
-        {
-            throw new InvalidOperationException($"User with email {email} already exists in Keycloak");
+            if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+            {
+                _logger.LogWarning("User with email {Email} already exists in Keycloak", email);
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to create user {Email} in Keycloak: {StatusCode}", email, response.StatusCode);
+                return null;
+            }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            var keycloakUserId = locationHeader?.Split('/').LastOrDefault();
+            
+            if (string.IsNullOrEmpty(keycloakUserId))
+            {
+                _logger.LogError("Failed to get Keycloak user ID from response for {Email}", email);
+                return null;
+            }
+
+            _logger.LogInformation("Created user {Email} in Keycloak with ID {KeycloakUserId}", email, keycloakUserId);
+
+            return keycloakUserId;
         }
-
-        response.EnsureSuccessStatusCode();
-
-        var locationHeader = response.Headers.Location?.ToString();
-        var keycloakUserId = locationHeader?.Split('/').LastOrDefault()
-            ?? throw new InvalidOperationException("Failed to get Keycloak user ID from response");
-
-        _logger.LogInformation("Created user {Email} in Keycloak with ID {KeycloakUserId}", email, keycloakUserId);
-
-        return keycloakUserId;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating user {Email} in Keycloak", email);
+            return null;
+        }
     }
 
     public async Task UpdateUserAsync(
@@ -252,21 +281,73 @@ public class KeycloakAdminService : IKeycloakAdminService
         _logger.LogInformation("Sent verification email to user {KeycloakUserId}", keycloakUserId);
     }
 
-    public async Task SendPasswordResetEmailAsync(string keycloakUserId, CancellationToken cancellationToken = default)
+    public async Task<bool> SendPasswordResetEmailAsync(string keycloakUserId, CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}/execute-actions-email";
-        var request = new HttpRequestMessage(HttpMethod.Put, url)
+        try
         {
-            Content = JsonContent.Create(new[] { "UPDATE_PASSWORD" })
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
+            await EnsureAdminTokenAsync(cancellationToken);
 
-        var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+            var url = $"{AdminUrl}/users/{keycloakUserId}/execute-actions-email";
+            var request = new HttpRequestMessage(HttpMethod.Put, url)
+            {
+                Content = JsonContent.Create(new[] { "UPDATE_PASSWORD" })
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
-        _logger.LogInformation("Sent password reset email to user {KeycloakUserId}", keycloakUserId);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to send password reset email to user {KeycloakUserId}: {StatusCode}", keycloakUserId, response.StatusCode);
+                return false;
+            }
+
+            _logger.LogInformation("Sent password reset email to user {KeycloakUserId}", keycloakUserId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending password reset email to user {KeycloakUserId}", keycloakUserId);
+            return false;
+        }
+    }
+
+    public async Task<bool> ResetPasswordAsync(string keycloakUserId, string newPassword, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await EnsureAdminTokenAsync(cancellationToken);
+
+            var url = $"{AdminUrl}/users/{keycloakUserId}/reset-password";
+            var passwordCredential = new
+            {
+                type = "password",
+                value = newPassword,
+                temporary = false
+            };
+            
+            var request = new HttpRequestMessage(HttpMethod.Put, url)
+            {
+                Content = JsonContent.Create(passwordCredential, options: _jsonOptions)
+            };
+            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
+
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to reset password for user {KeycloakUserId}: {StatusCode}", keycloakUserId, response.StatusCode);
+                return false;
+            }
+
+            _logger.LogInformation("Reset password for user {KeycloakUserId}", keycloakUserId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resetting password for user {KeycloakUserId}", keycloakUserId);
+            return false;
+        }
     }
 
     public async Task SetUserEnabledAsync(string keycloakUserId, bool enabled, CancellationToken cancellationToken = default)

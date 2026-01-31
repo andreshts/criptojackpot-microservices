@@ -12,16 +12,16 @@ namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IKeycloakAdminService _keycloakAdminService;
     private readonly IMapper _mapper;
 
     public UpdateUserCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
+        IKeycloakAdminService keycloakAdminService,
         IMapper mapper)
     {
         _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
+        _keycloakAdminService = keycloakAdminService;
         _mapper = mapper;
     }
 
@@ -35,8 +35,15 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
         user.LastName = request.LastName;
         user.Phone = request.Phone;
 
-        if (!string.IsNullOrWhiteSpace(request.Password))
-            user.Password = _passwordHasher.Hash(request.Password);
+        // Update user info in Keycloak if linked
+        if (!string.IsNullOrEmpty(user.KeycloakId))
+        {
+            await _keycloakAdminService.UpdateUserAsync(
+                user.KeycloakId,
+                firstName: request.Name,
+                lastName: request.LastName,
+                cancellationToken: cancellationToken);
+        }
 
         var updatedUser = await _userRepository.UpdateAsync(user);
         return Result.Ok(_mapper.Map<UserDto>(updatedUser));

@@ -28,7 +28,7 @@ public class IdentityEventPublisher : IIdentityEventPublisher
                 Email = user.Email,
                 Name = user.Name,
                 LastName = user.LastName,
-                ConfirmationToken = user.SecurityCode!
+                ConfirmationToken = user.EmailVerificationToken!
             });
             _logger.LogInformation("UserRegisteredEvent published for user {UserId}", user.Id);
         }

@@ -2,22 +2,30 @@ using AutoMapper;
 using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.DTOs;
+using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using FluentResults;
 using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
+/// <summary>
+/// Regenerates the email verification token and resends the verification email
+/// via the Notification Service.
+/// </summary>
 public class GenerateNewSecurityCodeCommandHandler : IRequestHandler<GenerateNewSecurityCodeCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
+    private readonly IIdentityEventPublisher _eventPublisher;
     private readonly IMapper _mapper;
 
     public GenerateNewSecurityCodeCommandHandler(
         IUserRepository userRepository,
+        IIdentityEventPublisher eventPublisher,
         IMapper mapper)
     {
         _userRepository = userRepository;
+        _eventPublisher = eventPublisher;
         _mapper = mapper;
     }
 
@@ -27,10 +35,17 @@ public class GenerateNewSecurityCodeCommandHandler : IRequestHandler<GenerateNew
         if (user is null)
             return Result.Fail<UserDto>(new NotFoundError("User not found"));
 
-        user.SecurityCode = Guid.NewGuid().ToString();
-        var updatedUser = await _userRepository.UpdateAsync(user);
+        if (user.Status)
+            return Result.Fail<UserDto>(new BadRequestError("Email already verified"));
 
-        return Result.Ok(_mapper.Map<UserDto>(updatedUser));
+        // Generate new verification token
+        user.GenerateEmailVerificationToken();
+        await _userRepository.UpdateAsync(user);
+
+        // Publish event to send new verification email via Notification Service
+        await _eventPublisher.PublishUserRegisteredAsync(user);
+
+        return Result.Ok(_mapper.Map<UserDto>(user));
     }
 }
 

@@ -9,43 +9,61 @@ using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
-public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, Result<UserDto>>
+public class AuthenticateCommandHandler : IRequestHandler<AuthenticateCommand, Result<AuthResponseDto>>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IJwtTokenService _jwtTokenService;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IKeycloakAdminService _keycloakAdminService;
     private readonly IIdentityEventPublisher _eventPublisher;
     private readonly IMapper _mapper;
 
     public AuthenticateCommandHandler(
         IUserRepository userRepository,
-        IJwtTokenService jwtTokenService,
-        IPasswordHasher passwordHasher,
+        IKeycloakAdminService keycloakAdminService,
         IIdentityEventPublisher eventPublisher,
         IMapper mapper)
     {
         _userRepository = userRepository;
-        _jwtTokenService = jwtTokenService;
-        _passwordHasher = passwordHasher;
+        _keycloakAdminService = keycloakAdminService;
         _eventPublisher = eventPublisher;
         _mapper = mapper;
     }
 
-    public async Task<Result<UserDto>> Handle(AuthenticateCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AuthResponseDto>> Handle(AuthenticateCommand request, CancellationToken cancellationToken)
     {
+        // Authenticate with Keycloak first
+        var tokenResponse = await _keycloakAdminService.GetTokenAsync(request.Email, request.Password, cancellationToken);
+        
+        if (tokenResponse == null)
+            return Result.Fail<AuthResponseDto>(new UnauthorizedError("Invalid Credentials"));
+
+        // Get user from local database for additional info
         var user = await _userRepository.GetByEmailAsync(request.Email);
 
-        if (user == null || !_passwordHasher.Verify(user.Password, request.Password))
-            return Result.Fail<UserDto>(new UnauthorizedError("Invalid Credentials"));
+        if (user == null)
+            return Result.Fail<AuthResponseDto>(new UnauthorizedError("User not found"));
 
         if (!user.Status)
-            return Result.Fail<UserDto>(new ForbiddenError("User Not Verified"));
+            return Result.Fail<AuthResponseDto>(new ForbiddenError("User Not Verified"));
 
-        var userDto = _mapper.Map<UserDto>(user);
-        userDto.Token = _jwtTokenService.GenerateToken(user.Id.ToString());
+        var authResponse = new AuthResponseDto
+        {
+            UserGuid = user.UserGuid,
+            Name = user.Name,
+            LastName = user.LastName,
+            Email = user.Email,
+            Phone = user.Phone,
+            ImagePath = user.ImagePath,
+            Status = user.Status,
+            Role = user.Role != null ? _mapper.Map<RoleDto>(user.Role) : null,
+            AccessToken = tokenResponse.AccessToken,
+            RefreshToken = tokenResponse.RefreshToken,
+            ExpiresIn = tokenResponse.ExpiresIn,
+            RefreshExpiresIn = tokenResponse.RefreshExpiresIn,
+            TokenType = tokenResponse.TokenType
+        };
 
         await _eventPublisher.PublishUserLoggedInAsync(user);
 
-        return Result.Ok(userDto);
+        return Result.Ok(authResponse);
     }
 }

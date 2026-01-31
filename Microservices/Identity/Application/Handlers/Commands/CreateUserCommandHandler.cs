@@ -16,7 +16,7 @@ namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IKeycloakAdminService _keycloakAdminService;
     private readonly IIdentityEventPublisher _eventPublisher;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMediator _mediator;
@@ -25,7 +25,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
 
     public CreateUserCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
+        IKeycloakAdminService keycloakAdminService,
         IIdentityEventPublisher eventPublisher,
         IUnitOfWork unitOfWork,
         IMediator mediator,
@@ -33,7 +33,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         IMapper mapper)
     {
         _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
+        _keycloakAdminService = keycloakAdminService;
         _eventPublisher = eventPublisher;
         _unitOfWork = unitOfWork;
         _mediator = mediator;
@@ -50,7 +50,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         User? referrer = null;
         if (!string.IsNullOrEmpty(request.ReferralCode))
         {
-            referrer = await _userRepository.GetBySecurityCodeAsync(request.ReferralCode);
+            referrer = await _userRepository.GetByReferralCodeAsync(request.ReferralCode);
             if (referrer is null)
                 return Result.Fail<UserDto>(new BadRequestError("Invalid referral code"));
         }
@@ -59,10 +59,25 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         {
             await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
+            // Create user in Keycloak first
+            var keycloakId = await _keycloakAdminService.CreateUserAsync(
+                request.Email,
+                request.Password,
+                request.Name,
+                request.LastName,
+                emailVerified: false,
+                cancellationToken);
+
+            if (string.IsNullOrEmpty(keycloakId))
+            {
+                await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return Result.Fail<UserDto>(new InternalServerError("Failed to create user in authentication service"));
+            }
+
             var user = _mapper.Map<User>(request);
-            user.Password = _passwordHasher.Hash(request.Password);
-            user.SecurityCode = Guid.NewGuid().ToString();
-            user.Status = false;
+            user.KeycloakId = keycloakId;
+            user.Status = false; // Will be activated after email verification
+            user.GenerateEmailVerificationToken(); // Generate token for Notification Service
             
             // Ensure UserGuid is generated 
             if (user.UserGuid == Guid.Empty)
@@ -70,7 +85,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             
             var createdUser = await _userRepository.CreateAsync(user);
 
-            // Publish domain event for referral processing (decoupled)
+            // Publish domain event for referral processing 
             await _mediator.Publish(new UserCreatedDomainEvent(createdUser, referrer, request.ReferralCode), cancellationToken);
 
             // Publish integration event to Kafka for Notification service
@@ -78,7 +93,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
 
             await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-            _logger.LogInformation("User {UserId} created successfully", createdUser.Id);
+            _logger.LogInformation("User {UserId} created successfully with KeycloakId {KeycloakId}", createdUser.Id, keycloakId);
             return ResultExtensions.Created(_mapper.Map<UserDto>(createdUser));
         }
         catch (Exception ex)

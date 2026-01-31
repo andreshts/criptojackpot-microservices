@@ -9,19 +9,24 @@ using MediatR;
 
 namespace CryptoJackpot.Identity.Application.Handlers.Commands;
 
+/// <summary>
+/// Handles password reset. With Keycloak integration, this is typically handled
+/// directly by Keycloak's forgot password flow. This handler is kept for 
+/// backward compatibility or custom flows.
+/// </summary>
 public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPasswordWithCodeCommand, Result<UserDto>>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
+    private readonly IKeycloakAdminService _keycloakAdminService;
     private readonly IMapper _mapper;
 
     public ResetPasswordWithCodeCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
+        IKeycloakAdminService keycloakAdminService,
         IMapper mapper)
     {
         _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
+        _keycloakAdminService = keycloakAdminService;
         _mapper = mapper;
     }
 
@@ -31,23 +36,18 @@ public class ResetPasswordWithCodeCommandHandler : IRequestHandler<ResetPassword
         if (user is null)
             return Result.Fail<UserDto>(new NotFoundError("User not found"));
 
-        if (string.IsNullOrEmpty(user.SecurityCode) ||
-            user.SecurityCode != request.SecurityCode ||
-            user.PasswordResetCodeExpiration == null ||
-            user.PasswordResetCodeExpiration < DateTime.UtcNow)
-        {
-            return Result.Fail<UserDto>(new BadRequestError("Invalid or expired security code"));
-        }
+        if (string.IsNullOrEmpty(user.KeycloakId))
+            return Result.Fail<UserDto>(new BadRequestError("User not linked to authentication service"));
 
         if (request.NewPassword != request.ConfirmPassword)
             return Result.Fail<UserDto>(new BadRequestError("Passwords do not match"));
 
-        user.Password = _passwordHasher.Hash(request.NewPassword);
-        user.SecurityCode = null;
-        user.PasswordResetCodeExpiration = null;
+        // Reset password in Keycloak
+        var success = await _keycloakAdminService.ResetPasswordAsync(user.KeycloakId, request.NewPassword, cancellationToken);
+        if (!success)
+            return Result.Fail<UserDto>(new InternalServerError("Failed to reset password"));
 
-        var updatedUser = await _userRepository.UpdateAsync(user);
-        return Result.Ok(_mapper.Map<UserDto>(updatedUser));
+        return Result.Ok(_mapper.Map<UserDto>(user));
     }
 }
 

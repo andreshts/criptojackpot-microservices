@@ -19,13 +19,13 @@ public class IdentityMappingProfile : Profile
         // CreateUserCommand -> User mapping
         CreateMap<CreateUserCommand, User>()
             .ForMember(dest => dest.UserGuid, opt => opt.MapFrom(_ => Guid.NewGuid()))
-            .ForMember(dest => dest.Password, opt => opt.Ignore())
-            .ForMember(dest => dest.SecurityCode, opt => opt.Ignore())
+            .ForMember(dest => dest.KeycloakId, opt => opt.Ignore())
+            .ForMember(dest => dest.EmailVerificationToken, opt => opt.Ignore())
+            .ForMember(dest => dest.EmailVerificationTokenExpiry, opt => opt.Ignore())
             .ForMember(dest => dest.Role, opt => opt.Ignore())
             .ForMember(dest => dest.Country, opt => opt.Ignore())
             .ForMember(dest => dest.Referrals, opt => opt.Ignore())
             .ForMember(dest => dest.ReferredBy, opt => opt.Ignore())
-            .ForMember(dest => dest.PasswordResetCodeExpiration, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
         
