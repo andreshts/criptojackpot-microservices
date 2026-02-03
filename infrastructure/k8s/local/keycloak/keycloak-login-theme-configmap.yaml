@@ -243,6 +243,7 @@ data:
     doSubmit=Submit
     doCancel=Cancel
     invalidUserMessage=Invalid email or password
+    missingUsernameMessage=Please enter your email.
     identity-provider-login-label=Or continue with
 
   # ===========================================================================
@@ -275,6 +276,7 @@ data:
     doSubmit=Enviar
     doCancel=Cancelar
     invalidUserMessage=Correo o contraseña inválidos
+    missingUsernameMessage=Por favor indica tu correo electrónico.
     identity-provider-login-label=O continuar con
 
   # ===========================================================================

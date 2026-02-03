@@ -19,7 +19,10 @@ spec:
     spec:
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:23.0
+          # Verificar últimas versiones: https://www.keycloak.org/downloads
+          # Última actualización: Febrero 2026
+          image: quay.io/keycloak/keycloak:26.5.2
+          imagePullPolicy: Always
           args:
             - start-dev
             - --import-realm
@@ -101,10 +104,19 @@ spec:
             limits:
               memory: "1Gi"
               cpu: "1000m"
+          # Security hardening
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
           readinessProbe:
             httpGet:
               path: /health/ready
-              port: 8080
+              port: 9000
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
@@ -112,7 +124,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health/live
-              port: 8080
+              port: 9000
             initialDelaySeconds: 120
             periodSeconds: 30
             timeoutSeconds: 5
@@ -120,7 +132,7 @@ spec:
           startupProbe:
             httpGet:
               path: /health/started
-              port: 8080
+              port: 9000
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
