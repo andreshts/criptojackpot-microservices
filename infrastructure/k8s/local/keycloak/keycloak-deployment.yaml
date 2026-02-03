@@ -66,6 +66,9 @@ spec:
             - name: login-theme-verify-email
               mountPath: /opt/keycloak/themes/cryptojackpot/login/login-verify-email.ftl
               subPath: login-verify-email.ftl
+            - name: login-theme-template
+              mountPath: /opt/keycloak/themes/cryptojackpot/login/template.ftl
+              subPath: template.ftl
             # Email theme templates
             - name: email-theme-properties
               mountPath: /opt/keycloak/themes/cryptojackpot/email/theme.properties
@@ -196,6 +199,12 @@ spec:
             items:
               - key: login-verify-email.ftl
                 path: login-verify-email.ftl
+        - name: login-theme-template
+          configMap:
+            name: keycloak-login-theme
+            items:
+              - key: template.ftl
+                path: template.ftl
         # Email theme volumes from ConfigMap
         - name: email-theme-properties
           configMap:
