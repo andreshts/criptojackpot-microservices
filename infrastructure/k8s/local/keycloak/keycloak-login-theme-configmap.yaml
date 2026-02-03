@@ -5,7 +5,7 @@
 # 
 # ESTRUCTURA:
 # - theme.properties: Configuración base del tema
-# - login.css: Estilos CSS (basados en el frontend React)
+# - login.css: Estilos CSS 
 # - messages_en.properties: Traducciones en inglés
 # - messages_es.properties: Traducciones en español
 # - *.ftl: Templates FreeMarker para cada página
@@ -35,13 +35,13 @@ data:
     styles=css/login.css
     
   # ===========================================================================
-  # CSS STYLES - Basado en el frontend React de CryptoJackpot
+  # CSS STYLES 
   # ===========================================================================
   login.css: |
     /* ===== CryptoJackpot Theme ===== */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     
-    /* ----- CSS Variables (Editar aquí los colores) ----- */
+    /* ----- CSS Variables ----- */
     :root {
       --body-font: 'Inter', sans-serif;
       --transition: all 0.5s ease-in-out;
@@ -75,17 +75,77 @@ data:
     /* ----- Hide Keycloak defaults ----- */
     .login-pf-page .login-pf-brand, #kc-locale, .login-pf-page .login-pf-footer, .pf-c-background-image { display: none !important; }
 
-    /* ----- Page Container ----- */
-    .login-pf-page { background-color: #000000 !important; min-height: 100vh !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-    .login-pf-page .card-pf { background-color: transparent !important; border: none !important; box-shadow: none !important; max-width: 400px !important; padding: 40px 15px !important; margin: 0 auto !important; }
+    /* ----- Page Container with Background Image ----- */
+    .login-pf-page { 
+      background-color: #000000 !important; 
+      min-height: 100vh !important; 
+      display: flex !important; 
+      align-items: center !important; 
+      justify-content: flex-start !important;
+      position: relative !important;
+      overflow: hidden !important;
+    }
+    .login-pf-page::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 60%;
+      height: 100%;
+      background-image: url('https://cryptojackpot.sfo3.cdn.digitaloceanspaces.com/resources/back-register.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: right center;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .login-pf-page .card-pf { 
+      background-color: transparent !important; 
+      border: none !important; 
+      box-shadow: none !important; 
+      max-width: 400px !important; 
+      padding: 40px 15px !important; 
+      margin: 0 !important;
+      margin-left: 10% !important;
+      position: relative !important;
+      z-index: 1 !important;
+    }
 
-    /* ----- Logo (Cambiar URL aquí) ----- */
-    #kc-header-wrapper { font-size: 0 !important; text-align: center !important; margin-bottom: 40px !important; }
-    #kc-header-wrapper::before { content: ''; display: block; width: 200px; height: 60px; margin: 0 auto 20px; background-image: url('https://your-cdn.com/logo.png'); background-size: contain; background-repeat: no-repeat; background-position: center; }
-    #kc-header-wrapper::after { content: 'CriptoJackpot'; font-size: 28px !important; font-weight: 800 !important; color: var(--p1) !important; display: block; text-align: center; }
+    /* ----- Logo centrado encima del formulario ----- */
+    #kc-header { 
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      text-align: center !important; 
+      margin: 0 !important;
+      padding: 0 !important;
+      z-index: 0 !important;
+      display: none !important;
+    }
+    #kc-header-wrapper { 
+      display: none !important;
+    }
+    #kc-header-wrapper::before, #kc-header-wrapper::after { 
+      display: none !important; 
+    }
+    
+    /* Logo dentro del card */
+    .login-pf-page .card-pf::before {
+      content: '';
+      display: block;
+      width: 320px;
+      height: 100px;
+      margin: 0 auto 20px auto;
+      background-image: url('https://cryptojackpot.sfo3.cdn.digitaloceanspaces.com/resources/cryptojackpot-logo.png');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
 
     /* ----- Page Title ----- */
-    #kc-page-title { color: var(--n3) !important; font-size: 32px !important; font-weight: 700 !important; text-align: left !important; margin-bottom: 12px !important; }
+    #kc-page-title { color: var(--n3) !important; font-size: 32px !important; font-weight: 700 !important; text-align: left !important; margin-bottom: 8px !important; margin-top: 0 !important; }
 
     /* ----- Form Elements ----- */
     .login-pf-page .form-group { margin-bottom: 16px !important; }
@@ -139,7 +199,19 @@ data:
     #kc-social-providers h4 { color: var(--n3) !important; text-align: center !important; font-size: 14px !important; margin-bottom: 16px !important; }
 
     /* ----- Responsive ----- */
-    @media (max-width: 480px) { .login-pf-page .card-pf { padding: 20px 15px !important; } #kc-page-title, #kc-header-wrapper::after { font-size: 24px !important; } }
+    @media (max-width: 1299px) { 
+      .login-pf-page::after { width: 50%; } 
+      .login-pf-page .card-pf { margin-left: 5% !important; }
+    }
+    @media (max-width: 991px) { 
+      .login-pf-page::after { display: none !important; } 
+      .login-pf-page { justify-content: center !important; }
+      .login-pf-page .card-pf { margin-left: 0 !important; margin: 0 auto !important; }
+    }
+    @media (max-width: 480px) { 
+      .login-pf-page .card-pf { padding: 20px 15px !important; } 
+      #kc-page-title { font-size: 24px !important; } 
+    }
 
   # ===========================================================================
   # MESSAGES - English
