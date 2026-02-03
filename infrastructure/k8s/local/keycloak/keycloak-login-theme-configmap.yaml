@@ -103,8 +103,8 @@ data:
       background-color: transparent !important; 
       border: none !important; 
       box-shadow: none !important; 
-      max-width: 400px !important; 
-      padding: 40px 15px !important; 
+      max-width: 380px !important; 
+      padding: 24px 12px !important; 
       margin: 0 !important;
       margin-left: 10% !important;
       position: relative !important;
@@ -137,7 +137,7 @@ data:
       display: block;
       width: 320px;
       height: 100px;
-      margin: 0 auto 20px auto;
+      margin: 0 auto 16px auto;
       background-image: url('https://cryptojackpot.sfo3.cdn.digitaloceanspaces.com/resources/cryptojackpot-logo.png');
       background-size: contain;
       background-repeat: no-repeat;
@@ -145,15 +145,15 @@ data:
     }
 
     /* ----- Page Title ----- */
-    #kc-page-title { color: var(--n3) !important; font-size: 32px !important; font-weight: 700 !important; text-align: left !important; margin-bottom: 8px !important; margin-top: 0 !important; }
+    #kc-page-title { color: var(--n3) !important; font-size: 28px !important; font-weight: 700 !important; text-align: left !important; margin-bottom: 4px !important; margin-top: 0 !important; }
 
     /* ----- Form Elements ----- */
-    .login-pf-page .form-group { margin-bottom: 16px !important; }
-    .login-pf-page label { color: var(--n3) !important; font-size: 14px !important; margin-bottom: 8px !important; display: block !important; }
+    .login-pf-page .form-group { margin-bottom: 12px !important; }
+    .login-pf-page label { color: var(--n3) !important; font-size: 13px !important; margin-bottom: 4px !important; display: block !important; font-weight: 500 !important; }
     .login-pf-page input[type="text"], .login-pf-page input[type="password"], .login-pf-page input[type="email"] {
       color: white !important; background-color: #000000 !important; border: 1px solid var(--nw4) !important;
-      border-radius: 12px !important; padding: 14px 18px !important; width: 100% !important;
-      font-size: 16px !important; box-sizing: border-box !important; transition: var(--transition) !important;
+      border-radius: 10px !important; padding: 12px 14px !important; width: 100% !important;
+      font-size: 14px !important; box-sizing: border-box !important; transition: var(--transition) !important;
     }
     .login-pf-page input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
     .login-pf-page input:focus { border-color: var(--s1) !important; outline: none !important; }
@@ -161,42 +161,42 @@ data:
     /* ----- Buttons ----- */
     .login-pf-page .btn-primary, .login-pf-page #kc-login, .login-pf-page input[type="submit"] {
       display: inline-flex !important; align-items: center !important; justify-content: center !important;
-      padding: 16px 24px !important; font-weight: 600 !important; border-radius: 12px !important;
-      border: none !important; width: 100% !important; font-size: 16px !important;
-      background: var(--s1) !important; color: var(--n0) !important; cursor: pointer !important; margin-top: 16px !important;
+      padding: 12px 20px !important; font-weight: 600 !important; border-radius: 10px !important;
+      border: none !important; width: 100% !important; font-size: 14px !important;
+      background: var(--s1) !important; color: var(--n0) !important; cursor: pointer !important; margin-top: 12px !important;
     }
     .login-pf-page .btn-primary:hover, .login-pf-page #kc-login:hover, .login-pf-page input[type="submit"]:hover { background: #4a3fd4 !important; }
-    .login-pf-page .btn-default { background: transparent !important; border: 1px solid var(--nw4) !important; border-radius: 12px !important; color: var(--n3) !important; padding: 12px 20px !important; }
+    .login-pf-page .btn-default { background: transparent !important; border: 1px solid var(--nw4) !important; border-radius: 10px !important; color: var(--n3) !important; padding: 10px 16px !important; }
 
     /* ----- Links ----- */
-    #kc-form-options { text-align: right !important; margin-bottom: 16px !important; }
-    #kc-form-options a { color: var(--s1) !important; font-size: 14px !important; }
-    #kc-registration { text-align: left !important; margin-bottom: 40px !important; }
-    #kc-registration span { color: var(--n3) !important; }
+    #kc-form-options { text-align: right !important; margin-bottom: 8px !important; }
+    #kc-form-options a { color: var(--s1) !important; font-size: 13px !important; }
+    #kc-registration { text-align: left !important; margin-bottom: 20px !important; }
+    #kc-registration span { color: var(--n3) !important; font-size: 14px !important; }
     #kc-registration a { color: var(--s1) !important; font-weight: 600 !important; }
 
     /* ----- Alerts ----- */
-    .login-pf-page .alert { padding: 12px 16px !important; border-radius: 8px !important; margin-bottom: 16px !important; font-size: 14px !important; }
+    .login-pf-page .alert { padding: 10px 12px !important; border-radius: 8px !important; margin-bottom: 12px !important; font-size: 13px !important; }
     .login-pf-page .alert-error { background-color: rgba(254, 68, 69, 0.1) !important; border: 1px solid var(--act1) !important; color: var(--act1) !important; }
     .login-pf-page .alert-success { background-color: rgba(174, 254, 58, 0.1) !important; border: 1px solid var(--p1) !important; color: #155724 !important; }
     .login-pf-page .alert-warning { background-color: rgba(254, 201, 47, 0.1) !important; border: 1px solid var(--act3) !important; color: #856404 !important; }
     .login-pf-page .alert-info { background-color: rgba(85, 74, 255, 0.1) !important; border: 1px solid var(--s1) !important; color: var(--s1) !important; }
-    .pf-c-form__helper-text.pf-m-error { color: var(--act1) !important; font-size: 12px !important; margin-top: 4px !important; }
+    .pf-c-form__helper-text.pf-m-error { color: var(--act1) !important; font-size: 11px !important; margin-top: 2px !important; }
 
     /* ----- Checkbox ----- */
-    .login-pf-page input[type="checkbox"] { accent-color: var(--s1) !important; width: 18px !important; height: 18px !important; }
+    .login-pf-page input[type="checkbox"] { accent-color: var(--s1) !important; width: 16px !important; height: 16px !important; }
 
     /* ----- Social Login ----- */
-    #kc-social-providers { margin-top: 24px !important; }
-    .social-divider { display: flex; align-items: center; text-align: center; margin: 24px 0 16px; }
+    #kc-social-providers { margin-top: 16px !important; }
+    .social-divider { display: flex; align-items: center; text-align: center; margin: 16px 0 12px; }
     .social-divider::before, .social-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--nw4); }
-    .social-divider span { color: var(--n3); padding: 0 16px; font-size: 14px; }
+    .social-divider span { color: var(--n3); padding: 0 12px; font-size: 12px; }
     .social-links { list-style: none; padding: 0; margin: 0; }
-    .social-links li { margin-bottom: 10px; }
-    .social-link { background: transparent !important; border: 1px solid var(--nw4) !important; border-radius: 12px !important; color: var(--n3) !important; padding: 14px 20px !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 12px !important; font-weight: 600 !important; transition: var(--transition) !important; }
+    .social-links li { margin-bottom: 8px; }
+    .social-link { background: transparent !important; border: 1px solid var(--nw4) !important; border-radius: 10px !important; color: var(--n3) !important; padding: 10px 16px !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 10px !important; font-weight: 600 !important; font-size: 13px !important; transition: var(--transition) !important; }
     .social-link:hover { border-color: var(--s1) !important; color: var(--s1) !important; background: rgba(85, 74, 255, 0.05) !important; }
     .social-link svg { flex-shrink: 0; }
-    #kc-social-providers h4 { color: var(--n3) !important; text-align: center !important; font-size: 14px !important; margin-bottom: 16px !important; }
+    #kc-social-providers h4 { color: var(--n3) !important; text-align: center !important; font-size: 12px !important; margin-bottom: 12px !important; }
 
     /* ----- Responsive ----- */
     @media (max-width: 1299px) { 
@@ -209,8 +209,9 @@ data:
       .login-pf-page .card-pf { margin-left: 0 !important; margin: 0 auto !important; }
     }
     @media (max-width: 480px) { 
-      .login-pf-page .card-pf { padding: 20px 15px !important; } 
-      #kc-page-title { font-size: 24px !important; } 
+      .login-pf-page .card-pf { padding: 16px 12px !important; max-width: 100% !important; } 
+      #kc-page-title { font-size: 22px !important; }
+      .login-pf-page .card-pf::before { width: 280px; height: 85px; margin-bottom: 12px; }
     }
 
   # ===========================================================================
