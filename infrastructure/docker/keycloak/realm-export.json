@@ -111,6 +111,76 @@
             "claim.name": "roles",
             "jsonType.label": "String"
           }
+        },
+        {
+          "name": "phone-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "phone",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "phone",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "country-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "country",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "country",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "statePlace-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "statePlace",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "statePlace",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "city-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "city",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "city",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "address-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "address",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "address",
+            "jsonType.label": "String"
+          }
         }
       ]
     },
@@ -172,6 +242,76 @@
             "id.token.claim": "true",
             "access.token.claim": "true",
             "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "phone-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "phone",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "phone",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "country-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "country",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "country",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "statePlace-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "statePlace",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "statePlace",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "city-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "city",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "city",
+            "jsonType.label": "String"
+          }
+        },
+        {
+          "name": "address-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "userinfo.token.claim": "true",
+            "user.attribute": "address",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "address",
             "jsonType.label": "String"
           }
         }
@@ -296,5 +436,141 @@
   "registrationFlow": "registration",
   "directGrantFlow": "direct grant",
   "resetCredentialsFlow": "reset credentials",
-  "clientAuthenticationFlow": "clients"
+  "clientAuthenticationFlow": "clients",
+  "attributes": {
+    "userProfileEnabled": "true"
+  },
+  "userProfile": {
+    "attributes": [
+      {
+        "name": "username",
+        "displayName": "${username}",
+        "validations": {
+          "length": {"min": 3, "max": 255},
+          "username-prohibited-characters": {},
+          "up-username-not-idn-homograph": {}
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin"]
+        }
+      },
+      {
+        "name": "email",
+        "displayName": "${email}",
+        "validations": {
+          "email": {},
+          "length": {"max": 255}
+        },
+        "required": {
+          "roles": ["user"]
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "firstName",
+        "displayName": "${firstName}",
+        "validations": {
+          "length": {"max": 255},
+          "person-name-prohibited-characters": {}
+        },
+        "required": {
+          "roles": ["user"]
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "lastName",
+        "displayName": "${lastName}",
+        "validations": {
+          "length": {"max": 255},
+          "person-name-prohibited-characters": {}
+        },
+        "required": {
+          "roles": ["user"]
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "phone",
+        "displayName": "${phoneLabel}",
+        "validations": {
+          "length": {"max": 50}
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "country",
+        "displayName": "${countryLabel}",
+        "validations": {
+          "length": {"max": 10}
+        },
+        "required": {
+          "roles": ["user"]
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "statePlace",
+        "displayName": "${statePlaceLabel}",
+        "validations": {
+          "length": {"max": 100}
+        },
+        "required": {
+          "roles": ["user"]
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "city",
+        "displayName": "${cityLabel}",
+        "validations": {
+          "length": {"max": 100}
+        },
+        "required": {
+          "roles": ["user"]
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      },
+      {
+        "name": "address",
+        "displayName": "${addressLabel}",
+        "validations": {
+          "length": {"max": 200}
+        },
+        "permissions": {
+          "view": ["admin", "user"],
+          "edit": ["admin", "user"]
+        }
+      }
+    ],
+    "groups": [
+      {
+        "name": "user-metadata",
+        "displayHeader": "User Metadata",
+        "displayDescription": "Additional user information"
+      }
+    ]
+  }
 }

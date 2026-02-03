@@ -150,13 +150,20 @@ data:
     /* ----- Form Elements ----- */
     .login-pf-page .form-group { margin-bottom: 12px !important; }
     .login-pf-page label { color: var(--n3) !important; font-size: 13px !important; margin-bottom: 4px !important; display: block !important; font-weight: 500 !important; }
-    .login-pf-page input[type="text"], .login-pf-page input[type="password"], .login-pf-page input[type="email"] {
+    .login-pf-page input[type="text"], .login-pf-page input[type="password"], .login-pf-page input[type="email"], .login-pf-page input[type="tel"], .login-pf-page select {
       color: white !important; background-color: #000000 !important; border: 1px solid var(--nw4) !important;
       border-radius: 10px !important; padding: 12px 14px !important; width: 100% !important;
       font-size: 14px !important; box-sizing: border-box !important; transition: var(--transition) !important;
     }
+    .login-pf-page select { appearance: none !important; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23dadada' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important; background-repeat: no-repeat !important; background-position: right 14px center !important; padding-right: 40px !important; cursor: pointer !important; }
+    .login-pf-page select option { background-color: #1a1a1a !important; color: white !important; }
     .login-pf-page input::placeholder { color: rgba(255, 255, 255, 0.5) !important; }
-    .login-pf-page input:focus { border-color: var(--s1) !important; outline: none !important; }
+    .login-pf-page input:focus, .login-pf-page select:focus { border-color: var(--s1) !important; outline: none !important; }
+    
+    /* ----- Form Row (2 columns) ----- */
+    .form-row { display: flex !important; gap: 12px !important; }
+    .form-row .form-group { flex: 1 !important; }
+    @media (max-width: 480px) { .form-row { flex-direction: column !important; gap: 0 !important; } }
 
     /* ----- Buttons ----- */
     .login-pf-page .btn-primary, .login-pf-page #kc-login, .login-pf-page input[type="submit"] {
@@ -232,6 +239,13 @@ data:
     firstNameLabel=First Name
     lastNameLabel=Last Name
     passwordConfirmLabel=Confirm Password
+    phoneLabel=Phone Number
+    countryLabel=Country
+    statePlaceLabel=State / Province
+    cityLabel=City
+    addressLabel=Address
+    identificationLabel=ID / Passport Number
+    selectCountry=Select a country
     emailForgotTitle=Reset Password
     emailInstruction=Enter your email and we'll send you a link to reset your password.
     backToLogin=Back to Sign In
@@ -265,6 +279,13 @@ data:
     firstNameLabel=Nombre
     lastNameLabel=Apellido
     passwordConfirmLabel=Confirmar Contraseña
+    phoneLabel=Número de Teléfono
+    countryLabel=País
+    statePlaceLabel=Estado / Provincia
+    cityLabel=Ciudad
+    addressLabel=Dirección
+    identificationLabel=Número de Identificación
+    selectCountry=Selecciona un país
     emailForgotTitle=Restablecer Contraseña
     emailInstruction=Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
     backToLogin=Volver a Iniciar Sesión
@@ -292,6 +313,9 @@ data:
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="robots" content="noindex, nofollow">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <#-- Content Security Policy to allow API calls via Ingress -->
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://cryptojackpot.local https://api.cryptojackpot.com https://*.cryptojackpot.com;">
         
         <#-- Favicon personalizado desde CDN -->
         <link rel="icon" href="https://cryptojackpot.sfo3.cdn.digitaloceanspaces.com/resources/favicon.ico">
@@ -428,18 +452,114 @@ data:
   # ===========================================================================
   register.ftl: |
     <#import "template.ftl" as layout>
-    <@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','password','password-confirm'); section>
+    <@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','password','password-confirm','user.attributes.phone','user.attributes.country','user.attributes.statePlace','user.attributes.city'); section>
         <#if section = "header">${msg("registerTitle")}
         <#elseif section = "form">
-            <div style="margin-bottom:40px"><span style="color:var(--n3)">${msg("loginLinkTitle")} <a href="${url.loginUrl}" style="color:var(--s1);font-weight:600">${msg("doLogIn")}</a></span></div>
+            <div style="margin-bottom:20px"><span style="color:var(--n3);font-size:14px">${msg("loginLinkTitle")} <a href="${url.loginUrl}" style="color:var(--s1);font-weight:600">${msg("doLogIn")}</a></span></div>
             <form id="kc-register-form" action="${url.registrationAction}" method="post">
-                <div class="form-group"><label>${msg("firstNameLabel")} *</label><input id="firstName" name="firstName" value="${(register.formData.firstName!'')}" placeholder="${msg("firstNameLabel")}"/><#if messagesPerField.existsError('firstName')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('firstName'))?no_esc}</span></#if></div>
-                <div class="form-group"><label>${msg("lastNameLabel")} *</label><input id="lastName" name="lastName" value="${(register.formData.lastName!'')}" placeholder="${msg("lastNameLabel")}"/><#if messagesPerField.existsError('lastName')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('lastName'))?no_esc}</span></#if></div>
+                <#-- Row: First Name & Last Name -->
+                <div class="form-row">
+                    <div class="form-group"><label>${msg("firstNameLabel")} *</label><input type="text" id="firstName" name="firstName" value="${(register.formData.firstName!'')}" placeholder="${msg("firstNameLabel")}"/><#if messagesPerField.existsError('firstName')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('firstName'))?no_esc}</span></#if></div>
+                    <div class="form-group"><label>${msg("lastNameLabel")} *</label><input type="text" id="lastName" name="lastName" value="${(register.formData.lastName!'')}" placeholder="${msg("lastNameLabel")}"/><#if messagesPerField.existsError('lastName')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('lastName'))?no_esc}</span></#if></div>
+                </div>
+                
+                <#-- Email -->
                 <div class="form-group"><label>${msg("emailLabel")} *</label><input type="email" id="email" name="email" value="${(register.formData.email!'')}" placeholder="${msg("emailLabel")}"/><#if messagesPerField.existsError('email')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('email'))?no_esc}</span></#if></div>
-                <div class="form-group"><label>${msg("passwordLabel")} *</label><input type="password" id="password" name="password" placeholder="${msg("passwordLabel")}"/><#if messagesPerField.existsError('password')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password'))?no_esc}</span></#if></div>
-                <div class="form-group"><label>${msg("passwordConfirmLabel")} *</label><input type="password" id="password-confirm" name="password-confirm" placeholder="${msg("passwordConfirmLabel")}"/><#if messagesPerField.existsError('password-confirm')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span></#if></div>
+                
+                <#-- Row: Phone & Country -->
+                <div class="form-row">
+                    <div class="form-group"><label>${msg("phoneLabel")}</label><input type="tel" id="user.attributes.phone" name="user.attributes.phone" value="${(register.formData['user.attributes.phone']!'')}" placeholder="${msg("phoneLabel")}"/><#if messagesPerField.existsError('user.attributes.phone')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('user.attributes.phone'))?no_esc}</span></#if></div>
+                    <div class="form-group"><label>${msg("countryLabel")} *</label>
+                        <select id="user.attributes.country" name="user.attributes.country" required>
+                            <option value="">${msg("selectCountry")}</option>
+                        </select>
+                        <#if messagesPerField.existsError('user.attributes.country')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('user.attributes.country'))?no_esc}</span></#if>
+                    </div>
+                </div>
+                
+                <#-- Row: State & City -->
+                <div class="form-row">
+                    <div class="form-group"><label>${msg("statePlaceLabel")} *</label><input type="text" id="user.attributes.statePlace" name="user.attributes.statePlace" value="${(register.formData['user.attributes.statePlace']!'')}" placeholder="${msg("statePlaceLabel")}" required/><#if messagesPerField.existsError('user.attributes.statePlace')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('user.attributes.statePlace'))?no_esc}</span></#if></div>
+                    <div class="form-group"><label>${msg("cityLabel")} *</label><input type="text" id="user.attributes.city" name="user.attributes.city" value="${(register.formData['user.attributes.city']!'')}" placeholder="${msg("cityLabel")}" required/><#if messagesPerField.existsError('user.attributes.city')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('user.attributes.city'))?no_esc}</span></#if></div>
+                </div>
+                
+                <#-- Address (optional) -->
+                <div class="form-group"><label>${msg("addressLabel")}</label><input type="text" id="user.attributes.address" name="user.attributes.address" value="${(register.formData['user.attributes.address']!'')}" placeholder="${msg("addressLabel")}"/></div>
+                
+                <#-- Row: Password & Confirm Password -->
+                <div class="form-row">
+                    <div class="form-group"><label>${msg("passwordLabel")} *</label><input type="password" id="password" name="password" placeholder="${msg("passwordLabel")}"/><#if messagesPerField.existsError('password')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password'))?no_esc}</span></#if></div>
+                    <div class="form-group"><label>${msg("passwordConfirmLabel")} *</label><input type="password" id="password-confirm" name="password-confirm" placeholder="${msg("passwordConfirmLabel")}"/><#if messagesPerField.existsError('password-confirm')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span></#if></div>
+                </div>
+                
                 <div id="kc-form-buttons"><input type="submit" value="${msg("doRegister")}"/></div>
             </form>
+            
+            <#-- Script to load countries from Identity API via Ingress -->
+            <script>
+                (function() {
+                    var countrySelect = document.getElementById('user.attributes.country');
+                    var savedValue = '${(register.formData['user.attributes.country']!'')}';
+                    var loadingOption = countrySelect.querySelector('option');
+                    
+                    // Determine API URL based on Keycloak hostname
+                    // Keycloak runs at: auth.cryptojackpot.local (local) or auth.cryptojackpot.com (prod)
+                    // API runs at: cryptojackpot.local (local) or api.cryptojackpot.com (prod)
+                    var hostname = window.location.hostname;
+                    var protocol = window.location.protocol;
+                    var apiBaseUrl;
+                    
+                    if (hostname.includes('auth.cryptojackpot.local') || hostname === 'localhost') {
+                        // Local K8s: Keycloak at auth.cryptojackpot.local, API at cryptojackpot.local
+                        apiBaseUrl = 'http://cryptojackpot.local';
+                    } else if (hostname.includes('auth.')) {
+                        // Production: auth.cryptojackpot.com -> api.cryptojackpot.com
+                        apiBaseUrl = protocol + '//' + hostname.replace('auth.', 'api.');
+                    } else {
+                        // Fallback: same domain structure
+                        apiBaseUrl = protocol + '//' + hostname.replace('keycloak.', '');
+                    }
+                    
+                    var apiUrl = apiBaseUrl + '/api/v1/countries';
+                    
+                    loadingOption.textContent = 'Loading...';
+                    
+                    fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        },
+                        mode: 'cors'
+                    })
+                    .then(function(response) {
+                        if (!response.ok) throw new Error('HTTP ' + response.status);
+                        return response.json();
+                    })
+                    .then(function(result) {
+                        // Clear loading option
+                        countrySelect.innerHTML = '<option value="">${msg("selectCountry")}</option>';
+                        
+                        // API returns { success: true, data: [...] } or just [...]
+                        var countries = result.data || result;
+                        
+                        if (Array.isArray(countries)) {
+                            countries.forEach(function(country) {
+                                var option = document.createElement('option');
+                                option.value = country.id.toString();
+                                option.textContent = country.name;
+                                if (savedValue === country.id.toString()) {
+                                    option.selected = true;
+                                }
+                                countrySelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('Failed to load countries:', error.message, 'URL:', apiUrl);
+                        loadingOption.textContent = '${msg("selectCountry")}';
+                    });
+                })();
+            </script>
         </#if>
     </@layout.registrationLayout>
 
