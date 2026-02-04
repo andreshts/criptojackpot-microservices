@@ -1,0 +1,16 @@
+# PgBouncer Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgbouncer
+  namespace: cryptojackpot
+  labels:
+    app: pgbouncer
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6432
+      targetPort: 6432
+      name: pgbouncer
+  selector:
+    app: pgbouncer

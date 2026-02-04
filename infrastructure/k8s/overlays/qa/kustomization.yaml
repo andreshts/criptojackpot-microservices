@@ -10,6 +10,7 @@ resources:
   - secrets
   - ingress
   - keycloak
+  - pgbouncer
 
 # QA uses managed services (no local infrastructure)
 # - DigitalOcean Managed PostgreSQL

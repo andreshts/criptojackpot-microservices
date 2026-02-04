@@ -55,7 +55,12 @@ manifests:
 
 # Default deploy
 deploy:
-  kubectl: {}
+  kubectl:
+    defaultNamespace: cryptojackpot
+    flags:
+      apply:
+        - --server-side
+        - --force-conflicts
 
 # Profiles for different environments
 profiles:
@@ -109,12 +114,7 @@ profiles:
         resourceName: postgres
         namespace: cryptojackpot
         port: 5432
-        localPort: 5433
-      - resourceType: service
-        resourceName: pgbouncer
-        namespace: cryptojackpot
-        port: 6432
-        localPort: 6432
+        localPort: 5432
       - resourceType: service
         resourceName: redis
         namespace: cryptojackpot
@@ -236,7 +236,12 @@ profiles:
         paths:
           - infrastructure/k8s/overlays/qa
     deploy:
-      kubectl: {}
+      kubectl:
+        defaultNamespace: cryptojackpot
+        flags:
+          apply:
+            - --server-side
+            - --force-conflicts
 
   # ============================================
   # PRODUCTION Environment
@@ -253,4 +258,9 @@ profiles:
         paths:
           - infrastructure/k8s/overlays/prod
     deploy:
-      kubectl: {}
+      kubectl:
+        defaultNamespace: cryptojackpot
+        flags:
+          apply:
+            - --server-side
+            - --force-conflicts

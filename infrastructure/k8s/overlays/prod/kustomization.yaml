@@ -10,6 +10,7 @@ resources:
   - secrets
   - ingress
   - keycloak
+  - pgbouncer
 
 # PROD uses managed services:
 # - DigitalOcean Managed PostgreSQL

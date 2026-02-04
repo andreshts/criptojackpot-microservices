@@ -27,7 +27,7 @@ patches:
         value:
           - name: wait-for-postgres
             image: busybox:1.36
-            command: ["sh", "-c", "until nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL is ready!'"]
+            command: ["sh", "-c", "echo 'Waiting for DNS and PostgreSQL...'; sleep 5; until nslookup postgres.cryptojackpot.svc.cluster.local > /dev/null 2>&1 && nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 3; done; echo 'PostgreSQL is ready!'"]
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
@@ -54,7 +54,7 @@ patches:
         value:
           - name: wait-for-postgres
             image: busybox:1.36
-            command: ["sh", "-c", "until nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL is ready!'"]
+            command: ["sh", "-c", "echo 'Waiting for DNS and PostgreSQL...'; sleep 5; until nslookup postgres.cryptojackpot.svc.cluster.local > /dev/null 2>&1 && nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 3; done; echo 'PostgreSQL is ready!'"]
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
@@ -81,7 +81,7 @@ patches:
         value:
           - name: wait-for-postgres
             image: busybox:1.36
-            command: ["sh", "-c", "until nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL is ready!'"]
+            command: ["sh", "-c", "echo 'Waiting for DNS and PostgreSQL...'; sleep 5; until nslookup postgres.cryptojackpot.svc.cluster.local > /dev/null 2>&1 && nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 3; done; echo 'PostgreSQL is ready!'"]
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
@@ -108,7 +108,7 @@ patches:
         value:
           - name: wait-for-postgres
             image: busybox:1.36
-            command: ["sh", "-c", "until nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL is ready!'"]
+            command: ["sh", "-c", "echo 'Waiting for DNS and PostgreSQL...'; sleep 5; until nslookup postgres.cryptojackpot.svc.cluster.local > /dev/null 2>&1 && nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 3; done; echo 'PostgreSQL is ready!'"]
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
@@ -135,7 +135,7 @@ patches:
         value:
           - name: wait-for-postgres
             image: busybox:1.36
-            command: ["sh", "-c", "until nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL is ready!'"]
+            command: ["sh", "-c", "echo 'Waiting for DNS and PostgreSQL...'; sleep 5; until nslookup postgres.cryptojackpot.svc.cluster.local > /dev/null 2>&1 && nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 3; done; echo 'PostgreSQL is ready!'"]
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent
@@ -162,7 +162,7 @@ patches:
         value:
           - name: wait-for-postgres
             image: busybox:1.36
-            command: ["sh", "-c", "until nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done; echo 'PostgreSQL is ready!'"]
+            command: ["sh", "-c", "echo 'Waiting for DNS and PostgreSQL...'; sleep 5; until nslookup postgres.cryptojackpot.svc.cluster.local > /dev/null 2>&1 && nc -z postgres.cryptojackpot.svc.cluster.local 5432; do echo 'Waiting for PostgreSQL...'; sleep 3; done; echo 'PostgreSQL is ready!'"]
       - op: add
         path: /spec/template/spec/containers/0/imagePullPolicy
         value: IfNotPresent

@@ -1,0 +1,22 @@
+# PgBouncer Kustomization for PROD
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../../base/infrastructure/pgbouncer
+
+patches:
+  # Production: 2 replicas for high availability
+  - target:
+      kind: Deployment
+      name: pgbouncer
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+      - op: replace
+        path: /spec/template/spec/containers/0/env/6/value
+        value: "600"
+      - op: replace
+        path: /spec/template/spec/containers/0/env/7/value
+        value: "40"
