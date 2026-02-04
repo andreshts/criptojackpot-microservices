@@ -6,6 +6,7 @@ using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application;
 using CryptoJackpot.Identity.Application.Configuration;
 using CryptoJackpot.Identity.Application.Consumers;
+using CryptoJackpot.Identity.Application.Http;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Application.Services;
 using CryptoJackpot.Identity.Data;
@@ -281,8 +282,19 @@ public static class IoCExtension
         services.AddScoped<IIdentityEventPublisher, IdentityEventPublisher>();
         services.AddScoped<IStorageService, DigitalOceanStorageService>();
         
-        // Keycloak Admin Service for user management
-        services.AddHttpClient<IKeycloakAdminService, KeycloakAdminService>();
+        // Register the DelegatingHandler for Keycloak admin token management
+        services.AddTransient<KeycloakAdminTokenHandler>();
+        
+        // Keycloak User Service (requires admin token)
+        services.AddHttpClient<IKeycloakUserService, KeycloakUserService>()
+            .AddHttpMessageHandler<KeycloakAdminTokenHandler>();
+        
+        // Keycloak Role Service (requires admin token)
+        services.AddHttpClient<IKeycloakRoleService, KeycloakRoleService>()
+            .AddHttpMessageHandler<KeycloakAdminTokenHandler>();
+        
+        // Keycloak Token Service (does NOT require admin token - uses ROPC flow)
+        services.AddHttpClient<IKeycloakTokenService, KeycloakTokenService>();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)

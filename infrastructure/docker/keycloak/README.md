@@ -134,7 +134,11 @@ public class MyController : ControllerBase
 | `infrastructure/k8s/local/keycloak/` | Local Kubernetes manifests |
 | `infrastructure/k8s/prod/keycloak/` | Production Kubernetes manifests |
 | `Infra.IoC/KeycloakAuthenticationExtensions.cs` | Shared auth config |
-| `Identity/Application/Services/KeycloakAdminService.cs` | Admin API integration |
+| `Identity/Application/Services/KeycloakUserService.cs` | User CRUD operations |
+| `Identity/Application/Services/KeycloakRoleService.cs` | Role management |
+| `Identity/Application/Services/KeycloakTokenService.cs` | Token operations (login, refresh) |
+| `Identity/Application/Http/KeycloakAdminTokenHandler.cs` | Admin token management (DelegatingHandler) |
+| `Identity/Application/Http/KeycloakEndpoints.cs` | API endpoint constants |
 
 ## Troubleshooting
 

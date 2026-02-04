@@ -1,8 +1,8 @@
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using CryptoJackpot.Identity.Application.Configuration;
+using CryptoJackpot.Identity.Application.Http;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Application.Models;
 using Microsoft.Extensions.Logging;
@@ -11,24 +11,20 @@ using Microsoft.Extensions.Options;
 namespace CryptoJackpot.Identity.Application.Services;
 
 /// <summary>
-/// Implementation of IKeycloakAdminService that communicates with Keycloak Admin REST API.
+/// Implementation of IKeycloakUserService for user CRUD operations.
+/// Token management is handled by KeycloakAdminTokenHandler.
 /// </summary>
-public class KeycloakAdminService : IKeycloakAdminService
+public class KeycloakUserService : IKeycloakUserService
 {
-    private const string BearerScheme = "Bearer";
-    
     private readonly HttpClient _httpClient;
     private readonly KeycloakSettings _settings;
-    private readonly ILogger<KeycloakAdminService> _logger;
+    private readonly ILogger<KeycloakUserService> _logger;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    private string? _adminToken;
-    private DateTime _tokenExpiry = DateTime.MinValue;
-
-    public KeycloakAdminService(
+    public KeycloakUserService(
         HttpClient httpClient,
         IOptions<KeycloakSettings> settings,
-        ILogger<KeycloakAdminService> logger)
+        ILogger<KeycloakUserService> logger)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
@@ -42,7 +38,6 @@ public class KeycloakAdminService : IKeycloakAdminService
     }
 
     private string AdminUrl => _settings.GetAdminUrl();
-    private string TokenUrl => _settings.GetTokenUrl();
 
     public async Task<string?> CreateUserAsync(
         string email,
@@ -66,8 +61,6 @@ public class KeycloakAdminService : IKeycloakAdminService
     {
         try
         {
-            await EnsureAdminTokenAsync(cancellationToken);
-
             var userRepresentation = new
             {
                 email,
@@ -79,22 +72,16 @@ public class KeycloakAdminService : IKeycloakAdminService
                 attributes = attributes ?? new Dictionary<string, List<string>>(),
                 credentials = password != null ? new[]
                 {
-                    new
-                    {
-                        type = "password",
-                        value = password,
-                        temporary = false
-                    }
+                    new { type = "password", value = password, temporary = false }
                 } : null,
                 requiredActions = password == null ? new[] { "UPDATE_PASSWORD" } : Array.Empty<string>()
             };
 
-            var url = $"{AdminUrl}/users";
+            var url = $"{AdminUrl}{KeycloakEndpoints.Users.Base}";
             var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = JsonContent.Create(userRepresentation, options: _jsonOptions)
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
 
@@ -112,7 +99,7 @@ public class KeycloakAdminService : IKeycloakAdminService
 
             var locationHeader = response.Headers.Location?.ToString();
             var keycloakUserId = locationHeader?.Split('/').LastOrDefault();
-            
+
             if (string.IsNullOrEmpty(keycloakUserId))
             {
                 _logger.LogError("Failed to get Keycloak user ID from response for {Email}", email);
@@ -120,7 +107,6 @@ public class KeycloakAdminService : IKeycloakAdminService
             }
 
             _logger.LogInformation("Created user {Email} in Keycloak with ID {KeycloakUserId}", email, keycloakUserId);
-
             return keycloakUserId;
         }
         catch (Exception ex)
@@ -139,8 +125,6 @@ public class KeycloakAdminService : IKeycloakAdminService
         Dictionary<string, List<string>>? attributes = null,
         CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
         var updates = new Dictionary<string, object>();
         if (firstName != null) updates["firstName"] = firstName;
         if (lastName != null) updates["lastName"] = lastName;
@@ -148,12 +132,11 @@ public class KeycloakAdminService : IKeycloakAdminService
         if (enabled.HasValue) updates["enabled"] = enabled.Value;
         if (attributes != null) updates["attributes"] = attributes;
 
-        var url = $"{AdminUrl}/users/{keycloakUserId}";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.ById(keycloakUserId)}";
         var request = new HttpRequestMessage(HttpMethod.Put, url)
         {
             Content = JsonContent.Create(updates, options: _jsonOptions)
         };
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -163,11 +146,8 @@ public class KeycloakAdminService : IKeycloakAdminService
 
     public async Task DeleteUserAsync(string keycloakUserId, CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.ById(keycloakUserId)}";
         var request = new HttpRequestMessage(HttpMethod.Delete, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -177,11 +157,8 @@ public class KeycloakAdminService : IKeycloakAdminService
 
     public async Task<KeycloakUserDto?> GetUserByIdAsync(string keycloakUserId, CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.ById(keycloakUserId)}";
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
 
@@ -189,18 +166,13 @@ public class KeycloakAdminService : IKeycloakAdminService
             return null;
 
         response.EnsureSuccessStatusCode();
-
         return await response.Content.ReadFromJsonAsync<KeycloakUserDto>(_jsonOptions, cancellationToken);
     }
 
     public async Task<KeycloakUserDto?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var escapedEmail = Uri.EscapeDataString(email);
-        var url = $"{AdminUrl}/users?email={escapedEmail}&exact=true";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.ByEmail(email)}";
         var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -209,71 +181,10 @@ public class KeycloakAdminService : IKeycloakAdminService
         return users?.FirstOrDefault();
     }
 
-    public async Task AssignRoleAsync(string keycloakUserId, string roleName, CancellationToken cancellationToken = default)
-    {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var roleUrl = $"{AdminUrl}/roles/{roleName}";
-        var roleRequest = new HttpRequestMessage(HttpMethod.Get, roleUrl);
-        roleRequest.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
-
-        var roleResponse = await _httpClient.SendAsync(roleRequest, cancellationToken);
-        if (!roleResponse.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("Role {RoleName} not found in Keycloak", roleName);
-            return;
-        }
-
-        var role = await roleResponse.Content.ReadFromJsonAsync<KeycloakRole>(_jsonOptions, cancellationToken);
-        if (role == null) return;
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}/role-mappings/realm";
-        var request = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = JsonContent.Create(new[] { role }, options: _jsonOptions)
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
-
-        var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        _logger.LogInformation("Assigned role {RoleName} to user {KeycloakUserId}", roleName, keycloakUserId);
-    }
-
-    public async Task RemoveRoleAsync(string keycloakUserId, string roleName, CancellationToken cancellationToken = default)
-    {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var roleUrl = $"{AdminUrl}/roles/{roleName}";
-        var roleRequest = new HttpRequestMessage(HttpMethod.Get, roleUrl);
-        roleRequest.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
-
-        var roleResponse = await _httpClient.SendAsync(roleRequest, cancellationToken);
-        if (!roleResponse.IsSuccessStatusCode) return;
-
-        var role = await roleResponse.Content.ReadFromJsonAsync<KeycloakRole>(_jsonOptions, cancellationToken);
-        if (role == null) return;
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}/role-mappings/realm";
-        var request = new HttpRequestMessage(HttpMethod.Delete, url)
-        {
-            Content = JsonContent.Create(new[] { role }, options: _jsonOptions)
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
-
-        var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        _logger.LogInformation("Removed role {RoleName} from user {KeycloakUserId}", roleName, keycloakUserId);
-    }
-
     public async Task SendVerificationEmailAsync(string keycloakUserId, CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}/send-verify-email";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.SendVerifyEmail(keycloakUserId)}";
         var request = new HttpRequestMessage(HttpMethod.Put, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -285,17 +196,14 @@ public class KeycloakAdminService : IKeycloakAdminService
     {
         try
         {
-            await EnsureAdminTokenAsync(cancellationToken);
-
-            var url = $"{AdminUrl}/users/{keycloakUserId}/execute-actions-email";
+            var url = $"{AdminUrl}{KeycloakEndpoints.Users.ExecuteActionsEmail(keycloakUserId)}";
             var request = new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = JsonContent.Create(new[] { "UPDATE_PASSWORD" })
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Failed to send password reset email to user {KeycloakUserId}: {StatusCode}", keycloakUserId, response.StatusCode);
@@ -316,24 +224,21 @@ public class KeycloakAdminService : IKeycloakAdminService
     {
         try
         {
-            await EnsureAdminTokenAsync(cancellationToken);
-
-            var url = $"{AdminUrl}/users/{keycloakUserId}/reset-password";
+            var url = $"{AdminUrl}{KeycloakEndpoints.Users.ResetPassword(keycloakUserId)}";
             var passwordCredential = new
             {
                 type = "password",
                 value = newPassword,
                 temporary = false
             };
-            
+
             var request = new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = JsonContent.Create(passwordCredential, options: _jsonOptions)
             };
-            request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
             var response = await _httpClient.SendAsync(request, cancellationToken);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Failed to reset password for user {KeycloakUserId}: {StatusCode}", keycloakUserId, response.StatusCode);
@@ -355,107 +260,14 @@ public class KeycloakAdminService : IKeycloakAdminService
         await UpdateUserAsync(keycloakUserId, enabled: enabled, cancellationToken: cancellationToken);
     }
 
-    public async Task<KeycloakTokenResponse?> GetTokenAsync(string email, string password, CancellationToken cancellationToken = default)
-    {
-        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"] = "password",
-            ["client_id"] = _settings.ClientId,
-            ["client_secret"] = _settings.ClientSecret ?? "",
-            ["username"] = email,
-            ["password"] = password,
-            ["scope"] = "openid email profile"
-        });
-
-        var response = await _httpClient.PostAsync(new Uri(TokenUrl), tokenRequest, cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("Failed to get token for user {Email}: {StatusCode}", email, response.StatusCode);
-            return null;
-        }
-
-        var tokenResponse = await response.Content.ReadFromJsonAsync<KeycloakTokenResponseInternal>(_jsonOptions, cancellationToken);
-        if (tokenResponse == null) return null;
-
-        return new KeycloakTokenResponse
-        {
-            AccessToken = tokenResponse.AccessToken,
-            RefreshToken = tokenResponse.RefreshToken,
-            ExpiresIn = tokenResponse.ExpiresIn,
-            RefreshExpiresIn = tokenResponse.RefreshExpiresIn,
-            TokenType = tokenResponse.TokenType ?? BearerScheme,
-            IdToken = tokenResponse.IdToken
-        };
-    }
-
-    public async Task<KeycloakTokenResponse?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
-    {
-        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"] = "refresh_token",
-            ["client_id"] = _settings.ClientId,
-            ["client_secret"] = _settings.ClientSecret ?? "",
-            ["refresh_token"] = refreshToken
-        });
-
-        var response = await _httpClient.PostAsync(new Uri(TokenUrl), tokenRequest, cancellationToken);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("Failed to refresh token: {StatusCode}", response.StatusCode);
-            return null;
-        }
-
-        var tokenResponse = await response.Content.ReadFromJsonAsync<KeycloakTokenResponseInternal>(_jsonOptions, cancellationToken);
-        if (tokenResponse == null) return null;
-
-        return new KeycloakTokenResponse
-        {
-            AccessToken = tokenResponse.AccessToken,
-            RefreshToken = tokenResponse.RefreshToken,
-            ExpiresIn = tokenResponse.ExpiresIn,
-            RefreshExpiresIn = tokenResponse.RefreshExpiresIn,
-            TokenType = tokenResponse.TokenType ?? BearerScheme,
-            IdToken = tokenResponse.IdToken
-        };
-    }
-
     public async Task LogoutAsync(string keycloakUserId, CancellationToken cancellationToken = default)
     {
-        await EnsureAdminTokenAsync(cancellationToken);
-
-        var url = $"{AdminUrl}/users/{keycloakUserId}/logout";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.Logout(keycloakUserId)}";
         var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue(BearerScheme, _adminToken);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
         _logger.LogInformation("Logged out user {KeycloakUserId} from all sessions", keycloakUserId);
-    }
-
-    private async Task EnsureAdminTokenAsync(CancellationToken cancellationToken)
-    {
-        if (_adminToken != null && DateTime.UtcNow < _tokenExpiry.AddMinutes(-1))
-            return;
-
-        var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"] = "client_credentials",
-            ["client_id"] = _settings.ClientId,
-            ["client_secret"] = _settings.ClientSecret ?? ""
-        });
-
-        var response = await _httpClient.PostAsync(new Uri(TokenUrl), tokenRequest, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var tokenResponse = await response.Content.ReadFromJsonAsync<KeycloakTokenResponseInternal>(_jsonOptions, cancellationToken);
-        
-        _adminToken = tokenResponse?.AccessToken 
-            ?? throw new InvalidOperationException("Failed to obtain admin token from Keycloak");
-        _tokenExpiry = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn);
-
-        _logger.LogDebug("Obtained new admin token, expires at {Expiry}", _tokenExpiry);
     }
 }
