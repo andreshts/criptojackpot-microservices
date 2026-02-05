@@ -16,8 +16,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseCors();
+app.UseHttpsRedirection();
 app.UseAuthorization();
 
 // Health check endpoint for Kubernetes liveness/readiness probes
