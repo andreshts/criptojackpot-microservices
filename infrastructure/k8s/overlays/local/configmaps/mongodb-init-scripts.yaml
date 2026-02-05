@@ -7,6 +7,7 @@ metadata:
 data:
   01-init-audit-db.js: |
     // Create audit database and collections
+    // Note: Indexes are created by the application to ensure consistency
     db = db.getSiblingDB('cryptojackpot_audit');
     
     // Create audit_logs collection with schema validation
@@ -14,28 +15,19 @@ data:
       validator: {
         $jsonSchema: {
           bsonType: 'object',
-          required: ['timestamp', 'action', 'service'],
+          required: ['timestamp', 'eventType', 'source'],
           properties: {
             timestamp: { bsonType: 'date' },
-            action: { bsonType: 'string' },
-            service: { bsonType: 'string' },
-            userId: { bsonType: 'string' },
-            details: { bsonType: 'object' }
+            eventType: { bsonType: 'string' },
+            source: { bsonType: 'string' },
+            userId: { bsonType: ['string', 'null'] },
+            correlationId: { bsonType: ['string', 'null'] },
+            resourceType: { bsonType: ['string', 'null'] },
+            resourceId: { bsonType: ['string', 'null'] },
+            data: { bsonType: 'object' }
           }
         }
       }
     });
     
-    // Create indexes for common queries
-    db.audit_logs.createIndex({ timestamp: -1 });
-    db.audit_logs.createIndex({ service: 1, timestamp: -1 });
-    db.audit_logs.createIndex({ userId: 1, timestamp: -1 });
-    db.audit_logs.createIndex({ action: 1, timestamp: -1 });
-    
-    // Create TTL index for automatic cleanup (365 days)
-    db.audit_logs.createIndex(
-      { timestamp: 1 },
-      { expireAfterSeconds: 31536000 }
-    );
-    
-    print('Audit database initialized successfully');
+    print('Audit database initialized successfully - indexes will be created by the application');

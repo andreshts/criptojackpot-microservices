@@ -2,7 +2,7 @@
 # Supports multiple environments using Kustomize overlays
 # 
 # Usage:
-#   skaffold dev                    # Local development with hot-reload
+#   skaffold dev --cleanup=false    # Local development with hot-reload
 #   skaffold debug                  # Debug with remote debugging
 #   skaffold run -p qa              # Deploy to QA
 #   skaffold run -p prod            # Deploy to Production
