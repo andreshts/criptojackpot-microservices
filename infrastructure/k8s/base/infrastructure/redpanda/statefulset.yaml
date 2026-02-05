@@ -43,7 +43,7 @@ spec:
             - --schema-registry-addr
             - internal://0.0.0.0:8081
             - --set
-            - redpanda.auto_create_topics_enabled=true
+            - auto_create_topics_enabled=true
           ports:
             - containerPort: 9092
               name: kafka
