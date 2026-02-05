@@ -79,11 +79,17 @@ spec:
           args:
             - start-dev
             - --import-realm
+          env:
+            # Trust all SMTP SSL certificates (for development with proxy/antivirus SSL interception)
+            - name: JAVA_TOOL_OPTIONS
+              value: "-Dmail.smtp.ssl.trust=* -Dmail.smtp.ssl.checkserveridentity=false"
           envFrom:
             - configMapRef:
                 name: keycloak-config
             - secretRef:
                 name: keycloak-secrets
+            - secretRef:
+                name: brevo-secrets
           ports:
             - name: http
               containerPort: 8080

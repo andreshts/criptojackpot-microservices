@@ -33,4 +33,10 @@ patches:
           readOnlyRootFilesystem: false
           capabilities:
             drop: ["ALL"]
+      # LOCAL: Add Java options to trust SMTP certificates (fixes Kaspersky/proxy SSL interception)
+      - op: add
+        path: /spec/template/spec/containers/0/env
+        value:
+          - name: JAVA_TOOL_OPTIONS
+            value: "-Dmail.smtp.ssl.trust=* -Dmail.smtp.ssl.checkserveridentity=false -Djavax.net.ssl.trustAll=true"
 

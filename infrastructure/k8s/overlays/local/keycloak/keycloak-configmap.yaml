@@ -22,3 +22,5 @@ data:
   KC_FEATURES: "token-exchange,admin-fine-grained-authz"
   # Log level for development
   KC_LOG_LEVEL: "INFO"
+  # Java options for SMTP - disable strict SSL verification (DEV ONLY)
+  JAVA_OPTS_APPEND: "-Dmail.smtp.ssl.trust=* -Dmail.smtp.starttls.enable=true -Dmail.smtp.ssl.checkserveridentity=false"
