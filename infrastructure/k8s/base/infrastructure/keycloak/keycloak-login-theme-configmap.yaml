@@ -341,6 +341,10 @@ data:
     invalidUserMessage=Invalid email or password
     missingUsernameMessage=Please enter your email.
     identity-provider-login-label=Or continue with
+    emailSendErrorMessage=Your account was created successfully! However, we couldn''t send the verification email. Please try again later or contact support.
+    errorTitle=Oops!
+    emailErrorInfo=Don''t worry, your registration is complete. You can request a new verification email from your account settings.
+    backToApplication=Go to Application
 
   # ===========================================================================
   # MESSAGES - Spanish
@@ -381,6 +385,10 @@ data:
     invalidUserMessage=Correo o contraseña inválidos
     missingUsernameMessage=Por favor indica tu correo electrónico.
     identity-provider-login-label=O continuar con
+    emailSendErrorMessage=¡Tu cuenta fue creada exitosamente! Sin embargo, no pudimos enviar el correo de verificación. Por favor intenta más tarde o contacta a soporte.
+    errorTitle=¡Ups!
+    emailErrorInfo=No te preocupes, tu registro está completo. Puedes solicitar un nuevo correo de verificación desde la configuración de tu cuenta.
+    backToApplication=Ir a la Aplicación
 
   # ===========================================================================
   # TEMPLATE BASE - Con favicon personalizado
@@ -717,3 +725,39 @@ data:
             </div>
         </#if>
     </@layout.registrationLayout>
+
+  # ===========================================================================
+  # TEMPLATE - Error Page (Custom friendly error messages)
+  # ===========================================================================
+  error.ftl: |
+    <#import "template.ftl" as layout>
+    <@layout.registrationLayout displayMessage=false; section>
+        <#if section = "header">
+            ${msg("errorTitle")}
+        <#elseif section = "form">
+            <div style="text-align:center;padding:30px 0">
+                <#-- Check if this is an email error (registration was successful but email failed) -->
+                <#if message?has_content && message.summary?contains("email")>
+                    <#-- Success icon for email errors (registration was successful) -->
+                    <div style="width:80px;height:80px;margin:0 auto 24px;background:rgba(174,254,58,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(174,254,58,1)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <h3 style="color:var(--p1);font-size:20px;margin-bottom:16px;font-weight:700">¡Registro Exitoso!</h3>
+                    <p style="color:var(--n3);font-size:15px;line-height:1.6;margin-bottom:12px">${msg("emailSendErrorMessage")}</p>
+                    <p style="color:var(--n3);font-size:13px;line-height:1.5;margin-bottom:24px;opacity:0.8">${msg("emailErrorInfo")}</p>
+                <#else>
+                    <#-- Warning icon for other errors -->
+                    <div style="width:80px;height:80px;margin:0 auto 24px;background:rgba(254,201,47,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(254,201,47,1)" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <p style="color:var(--n3);font-size:15px;line-height:1.6;margin-bottom:24px">
+                        <#if message?has_content>${kcSanitize(message.summary)?no_esc}</#if>
+                    </p>
+                </#if>
+                <#if client?? && client.baseUrl?has_content>
+                    <a href="${client.baseUrl}" style="display:inline-block;background:var(--s1);color:white;padding:12px 24px;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none">${msg("backToApplication")}</a>
+                </#if>
+            </div>
+        </#if>
+    </@layout.registrationLayout>
+
