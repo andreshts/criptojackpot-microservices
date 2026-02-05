@@ -193,6 +193,13 @@ data:
     /* ----- Checkbox ----- */
     .login-pf-page input[type="checkbox"] { accent-color: var(--s1) !important; width: 16px !important; height: 16px !important; }
 
+    /* ----- Password Toggle ----- */
+    .password-wrapper { position: relative !important; display: flex !important; align-items: center !important; }
+    .password-wrapper input { padding-right: 44px !important; }
+    .password-toggle { position: absolute !important; right: 12px !important; top: 50% !important; transform: translateY(-50%) !important; background: transparent !important; border: none !important; cursor: pointer !important; padding: 4px !important; display: flex !important; align-items: center !important; justify-content: center !important; color: var(--n3) !important; transition: var(--transition) !important; }
+    .password-toggle:hover { color: var(--s1) !important; }
+    .password-toggle svg { width: 20px !important; height: 20px !important; }
+
     /* ----- Social Login ----- */
     #kc-social-providers { margin-top: 16px !important; }
     .social-divider { display: flex; align-items: center; text-align: center; margin: 16px 0 12px; }
@@ -451,6 +458,22 @@ data:
                 </div>
             </div>
         </div>
+        <script>
+            function togglePassword(inputId, btn) {
+                var input = document.getElementById(inputId);
+                var eyeIcon = btn.querySelector('.eye-icon');
+                var eyeOffIcon = btn.querySelector('.eye-off-icon');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    eyeIcon.style.display = 'none';
+                    eyeOffIcon.style.display = 'block';
+                } else {
+                    input.type = 'password';
+                    eyeIcon.style.display = 'block';
+                    eyeOffIcon.style.display = 'none';
+                }
+            }
+        </script>
     </body>
     </html>
     </#macro>
@@ -478,7 +501,13 @@ data:
                         </div>
                         <div class="form-group">
                             <label for="password">${msg("passwordLabel")}</label>
-                            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="${msg("passwordLabel")}"/>
+                            <div class="password-wrapper">
+                                <input id="password" name="password" type="password" autocomplete="current-password" placeholder="${msg("passwordLabel")}"/>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Toggle password visibility">
+                                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                    <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                </button>
+                            </div>
                         </div>
                         
                         <#-- Link de recuperar contraseña -->
@@ -562,8 +591,8 @@ data:
                 
                 <#-- Row: Password & Confirm Password -->
                 <div class="form-row">
-                    <div class="form-group"><label>${msg("passwordLabel")} *</label><input type="password" id="password" name="password" placeholder="${msg("passwordLabel")}"/><#if messagesPerField.existsError('password')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password'))?no_esc}</span></#if></div>
-                    <div class="form-group"><label>${msg("passwordConfirmLabel")} *</label><input type="password" id="password-confirm" name="password-confirm" placeholder="${msg("passwordConfirmLabel")}"/><#if messagesPerField.existsError('password-confirm')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span></#if></div>
+                    <div class="form-group"><label>${msg("passwordLabel")} *</label><div class="password-wrapper"><input type="password" id="password" name="password" placeholder="${msg("passwordLabel")}"/><button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Toggle password visibility"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div><#if messagesPerField.existsError('password')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password'))?no_esc}</span></#if></div>
+                    <div class="form-group"><label>${msg("passwordConfirmLabel")} *</label><div class="password-wrapper"><input type="password" id="password-confirm" name="password-confirm" placeholder="${msg("passwordConfirmLabel")}"/><button type="button" class="password-toggle" onclick="togglePassword('password-confirm', this)" aria-label="Toggle password visibility"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div><#if messagesPerField.existsError('password-confirm')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span></#if></div>
                 </div>
                 
                 <div id="kc-form-buttons"><input type="submit" value="${msg("doRegister")}"/></div>
@@ -664,8 +693,8 @@ data:
         <#elseif section = "form">
             <form action="${url.loginAction}" method="post">
                 <input type="hidden" name="username" value="${username}"/>
-                <div class="form-group"><label>${msg("passwordNew")} *</label><input type="password" id="password-new" name="password-new" autofocus placeholder="${msg("passwordNew")}"/><#if messagesPerField.existsError('password')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password'))?no_esc}</span></#if></div>
-                <div class="form-group"><label>${msg("passwordNewConfirm")} *</label><input type="password" id="password-confirm" name="password-confirm" placeholder="${msg("passwordNewConfirm")}"/><#if messagesPerField.existsError('password-confirm')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span></#if></div>
+                <div class="form-group"><label>${msg("passwordNew")} *</label><div class="password-wrapper"><input type="password" id="password-new" name="password-new" autofocus placeholder="${msg("passwordNew")}"/><button type="button" class="password-toggle" onclick="togglePassword('password-new', this)" aria-label="Toggle password visibility"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div><#if messagesPerField.existsError('password')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password'))?no_esc}</span></#if></div>
+                <div class="form-group"><label>${msg("passwordNewConfirm")} *</label><div class="password-wrapper"><input type="password" id="password-confirm" name="password-confirm" placeholder="${msg("passwordNewConfirm")}"/><button type="button" class="password-toggle" onclick="togglePassword('password-confirm', this)" aria-label="Toggle password visibility"><svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button></div><#if messagesPerField.existsError('password-confirm')><span class="pf-c-form__helper-text pf-m-error">${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}</span></#if></div>
                 <div id="kc-form-buttons"><input type="submit" value="${msg("doSubmit")}"/><#if isAppInitiatedAction??><button class="btn-default" type="submit" name="cancel-aia" value="true" style="margin-top:10px">${msg("doCancel")}</button></#if></div>
             </form>
         </#if>
