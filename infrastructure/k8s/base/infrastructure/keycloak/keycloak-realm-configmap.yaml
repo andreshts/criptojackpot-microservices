@@ -66,6 +66,14 @@ data:
       },
       "clients": [
         {
+          "clientId": "account-console",
+          "name": "Account Console",
+          "enabled": false,
+          "publicClient": true,
+          "standardFlowEnabled": true,
+          "protocol": "openid-connect"
+        },
+        {
           "clientId": "cryptojackpot-backend",
           "name": "CryptoJackpot Backend API",
           "description": "Backend API client for microservices",

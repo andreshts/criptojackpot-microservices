@@ -329,7 +329,6 @@ data:
     selectCountry=Select a country
     emailForgotTitle=Reset Password
     emailInstruction=Enter your email and we'll send you a link to reset your password.
-    backToLogin=Back to Sign In
     updatePasswordTitle=Create New Password
     passwordNew=New Password
     passwordNewConfirm=Confirm New Password
@@ -345,6 +344,8 @@ data:
     errorTitle=Oops!
     emailErrorInfo=Don''t worry, your registration is complete. You can request a new verification email from your account settings.
     backToApplication=Go to Application
+    backToLogin=Go to Login
+    proceedWithAction=Continue
 
   # ===========================================================================
   # MESSAGES - Spanish
@@ -389,6 +390,7 @@ data:
     errorTitle=¡Ups!
     emailErrorInfo=No te preocupes, tu registro está completo. Puedes solicitar un nuevo correo de verificación desde la configuración de tu cuenta.
     backToApplication=Ir a la Aplicación
+    proceedWithAction=Continuar
 
   # ===========================================================================
   # TEMPLATE BASE - Con favicon personalizado
@@ -761,3 +763,32 @@ data:
         </#if>
     </@layout.registrationLayout>
 
+  # ===========================================================================
+  # TEMPLATE - Info Page (Email verified, action completed, etc.)
+  # ===========================================================================
+  info.ftl: |
+    <#import "template.ftl" as layout>
+    <@layout.registrationLayout displayMessage=false; section>
+        <#if section = "header">
+            <#if messageHeader??>
+                ${messageHeader}
+            <#else>
+                ${message.summary}
+            </#if>
+        <#elseif section = "form">
+            <div style="text-align:center;padding:40px 0">
+                <div style="width:80px;height:80px;margin:0 auto 24px;background:rgba(174,254,58,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(174,254,58,1)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <p style="color:var(--n3);font-size:16px;line-height:1.6;margin-bottom:24px">${message.summary}</p>
+                <#if skipLink??>
+                <#else>
+                    <#if actionUri?has_content>
+                        <a href="${actionUri}" style="display:inline-block;background:var(--s1);color:white;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none">${kcSanitize(msg("proceedWithAction"))?no_esc}</a>
+                    <#else>
+                        <a href="${url.loginUrl}" style="display:inline-block;background:var(--s1);color:white;padding:14px 32px;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none">${kcSanitize(msg("backToLogin"))?no_esc}</a>
+                    </#if>
+                </#if>
+            </div>
+        </#if>
+    </@layout.registrationLayout>

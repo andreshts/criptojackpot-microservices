@@ -43,6 +43,7 @@ spec:
               cp /login-theme-src/login-update-password.ftl /themes/cryptojackpot/login/
               cp /login-theme-src/login-verify-email.ftl /themes/cryptojackpot/login/
               cp /login-theme-src/error.ftl /themes/cryptojackpot/login/
+              cp /login-theme-src/info.ftl /themes/cryptojackpot/login/
               cp /login-theme-src/template.ftl /themes/cryptojackpot/login/
               
               # Create email theme directory structure
