@@ -183,9 +183,10 @@ public class KeycloakUserService : IKeycloakUserService
 
     public async Task SendVerificationEmailAsync(string keycloakUserId, CancellationToken cancellationToken = default)
     {
-        var url = $"{AdminUrl}{KeycloakEndpoints.Users.SendVerifyEmail(keycloakUserId)}";
+        var url = $"{AdminUrl}{KeycloakEndpoints.Users.SendVerifyEmail(keycloakUserId)}"
+                  + "?client_id=cryptojackpot-frontend";
+    
         var request = new HttpRequestMessage(HttpMethod.Put, url);
-
         var response = await _httpClient.SendAsync(request, cancellationToken);
         response.EnsureSuccessStatusCode();
 
