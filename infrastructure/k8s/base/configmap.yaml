@@ -8,3 +8,11 @@ data:
   ASPNETCORE_URLS: "http://+:80"
   Logging__LogLevel__Default: "Information"
   Logging__LogLevel__Microsoft.AspNetCore: "Warning"
+  # Keycloak OIDC - shared across all microservices
+  # Authority uses internal K8s service name; issuer is auto-discovered from OIDC metadata
+  Keycloak__Authority: "http://keycloak:8080"
+  Keycloak__Realm: "cryptojackpot"
+  Keycloak__ClientId: "cryptojackpot-backend"
+  Keycloak__Audience: "account"
+  Keycloak__RequireHttpsMetadata: "false"
+  Keycloak__ValidateAudience: "false"

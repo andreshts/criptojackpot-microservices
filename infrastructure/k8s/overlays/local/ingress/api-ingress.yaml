@@ -6,7 +6,7 @@ metadata:
   namespace: cryptojackpot
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-origin: "http://localhost:3000, http://localhost:8080, http://localhost:30180, http://cryptojackpot.local, http://auth.cryptojackpot.local:30180, http://auth.cryptojackpot.local"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "http://localhost:3000, http://localhost:8080, http://localhost:30180, http://cryptojackpot.local, http://cryptojackpot.local:3000, http://auth.cryptojackpot.local:30180, http://auth.cryptojackpot.local"
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-signalr-user-agent,Accept,Origin"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"

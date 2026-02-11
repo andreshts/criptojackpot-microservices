@@ -1,9 +1,11 @@
+using System.Security.Claims;
 using Asp.Versioning;
 using AutoMapper;
 using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.Queries;
 using CryptoJackpot.Identity.Application.Requests;
+using CryptoJackpot.Infra.IoC;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +25,42 @@ public class UserController : ControllerBase
     {
         _mediator = mediator;
         _mapper = mapper;
+    }
+
+    [HttpGet("me")]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        // Fast path: user_id claim is present (user already synced with backend DB)
+        var userId = User.GetUserId();
+        if (userId is not null)
+        {
+            var query = new GetUserByIdQuery { UserId = userId.Value };
+            var result = await _mediator.Send(query);
+            return result.ToActionResult();
+        }
+
+        // Slow path: user_id missing (self-registered via Keycloak, not yet in backend DB).
+        // Use the Keycloak subject (sub) to find or auto-provision the user.
+        var keycloakId = User.GetKeycloakSubject();
+        var email = User.GetEmail();
+
+        if (string.IsNullOrEmpty(keycloakId) || string.IsNullOrEmpty(email))
+            return Unauthorized();
+
+        var syncQuery = new SyncCurrentUserQuery
+        {
+            KeycloakId = keycloakId,
+            Email = email,
+            FirstName = User.FindFirst(ClaimTypes.GivenName)?.Value
+                        ?? User.FindFirst("given_name")?.Value,
+            LastName = User.FindFirst(ClaimTypes.Surname)?.Value
+                       ?? User.FindFirst("family_name")?.Value,
+            EmailVerified = bool.TryParse(
+                User.FindFirst("email_verified")?.Value, out var ev) && ev,
+        };
+
+        var syncResult = await _mediator.Send(syncQuery);
+        return syncResult.ToActionResult();
     }
 
     [HttpGet("{userId:long}")]

@@ -51,22 +51,24 @@ public static class KeycloakAuthenticationExtensions
 
             options.TokenValidationParameters = new TokenValidationParameters
             {
+                // Issuer is auto-discovered from the OIDC metadata at {Authority}/.well-known/openid-configuration.
+                // This allows the Authority URL (e.g., internal K8s service http://keycloak:8080) to differ
+                // from the token issuer (e.g., external hostname http://auth.cryptojackpot.local:30180).
                 ValidateIssuer = true,
-                ValidIssuer = keycloakSettings.GetRealmUrl(),
-                
+
                 ValidateAudience = keycloakSettings.ValidateAudience,
                 ValidAudience = keycloakSettings.Audience ?? keycloakSettings.ClientId,
-                
+
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                
+
                 // Keycloak uses RS256 by default, keys are fetched from JWKS endpoint
                 // The middleware automatically fetches keys from {authority}/.well-known/openid-configuration
-                
+
                 // Map the 'sub' claim to ClaimTypes.NameIdentifier
                 NameClaimType = ClaimTypes.NameIdentifier,
                 RoleClaimType = RolesClaimType,
-                
+
                 // Clock skew tolerance (default is 5 minutes)
                 ClockSkew = TimeSpan.FromMinutes(1)
             };
