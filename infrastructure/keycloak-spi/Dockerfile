@@ -12,7 +12,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Build optimized Keycloak with the SPI
-FROM quay.io/keycloak/keycloak:26.0.0 AS keycloak-builder
+FROM quay.io/keycloak/keycloak:26.5.2 AS keycloak-builder
 
 # Copy the SPI JAR from Maven build stage
 COPY --from=maven-builder /build/target/keycloak-kafka-event-listener-1.0.0.jar /opt/keycloak/providers/
@@ -21,7 +21,7 @@ COPY --from=maven-builder /build/target/keycloak-kafka-event-listener-1.0.0.jar 
 RUN /opt/keycloak/bin/kc.sh build
 
 # Stage 3: Final image
-FROM quay.io/keycloak/keycloak:26.0.0
+FROM quay.io/keycloak/keycloak:26.5.2
 
 # Copy the built providers from builder stage
 COPY --from=keycloak-builder /opt/keycloak/providers/ /opt/keycloak/providers/

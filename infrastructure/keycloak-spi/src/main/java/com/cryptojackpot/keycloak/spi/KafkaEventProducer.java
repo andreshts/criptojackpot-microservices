@@ -10,6 +10,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.jboss.logging.Logger;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -63,12 +64,19 @@ public class KafkaEventProducer {
 
     public void publishUserCreatedEvent(KeycloakUserCreatedEvent event) {
         try {
-            String json = objectMapper.writeValueAsString(event);
+            // Wrap the event in MassTransit envelope format
+            MassTransitEnvelope envelope = new MassTransitEnvelope(event);
+            String json = objectMapper.writeValueAsString(envelope);
+            
             ProducerRecord<String, String> record = new ProducerRecord<>(
-                topicUserCreated, 
-                event.getKeycloakId(), 
+                topicUserCreated,
+                event.getKeycloakId(),
                 json
             );
+
+            // MassTransit requires Content-Type header to select the correct deserializer
+            record.headers().add("Content-Type",
+                "application/vnd.masstransit+json".getBytes(StandardCharsets.UTF_8));
 
             producer.send(record, (metadata, exception) -> {
                 if (exception != null) {

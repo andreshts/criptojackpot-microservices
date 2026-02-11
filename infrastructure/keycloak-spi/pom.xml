@@ -16,7 +16,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <keycloak.version>26.0.0</keycloak.version>
+        <keycloak.version>26.5.2</keycloak.version>
         <kafka.version>3.6.1</kafka.version>
         <jackson.version>2.16.1</jackson.version>
     </properties>

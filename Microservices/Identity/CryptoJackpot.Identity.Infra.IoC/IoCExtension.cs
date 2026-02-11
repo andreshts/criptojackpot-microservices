@@ -330,6 +330,7 @@ public static class IoCExtension
                     });
                 
                 // Keycloak user created - auto-provision users from Keycloak registration
+                // Keycloak SPI publishes messages in MassTransit envelope format
                 kafka.TopicEndpoint<KeycloakUserCreatedEvent>(
                     KafkaTopics.KeycloakUserCreated,
                     KafkaTopics.IdentityGroup,

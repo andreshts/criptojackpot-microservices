@@ -101,28 +101,10 @@ spec:
               readOnly: true
             - name: realm-processed
               mountPath: /realm-processed
-        # Init Container: Setup Kafka Event Listener SPI
-        # Note: In production, use a custom Keycloak image with the SPI pre-built
-        # This init container is a placeholder for development environments
-        - name: setup-spi
-          image: busybox:1.36
-          command:
-            - sh
-            - -c
-            - |
-              echo "Setting up Keycloak SPI providers directory..."
-              # Create providers directory (SPI JARs are mounted here)
-              mkdir -p /providers
-              # In development, the JAR is mounted via volume or copied manually
-              # In production, use a custom Keycloak image with the JAR pre-built
-              echo "SPI setup complete. JAR should be mounted via overlay or custom image."
-          volumeMounts:
-            - name: keycloak-spi
-              mountPath: /providers
       containers:
         - name: keycloak
           image: cryptojackpot/keycloak:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           args:
             - start-dev
             - --import-realm
@@ -155,9 +137,6 @@ spec:
             - name: themes-volume
               mountPath: /opt/keycloak/themes/cryptojackpot
               subPath: cryptojackpot
-            - name: keycloak-spi
-              mountPath: /opt/keycloak/providers
-              readOnly: true
           readinessProbe:
             httpGet:
               path: /health/ready
@@ -195,6 +174,4 @@ spec:
           configMap:
             name: keycloak-email-themes
         - name: themes-volume
-          emptyDir: {}
-        - name: keycloak-spi
           emptyDir: {}

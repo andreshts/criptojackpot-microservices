@@ -8,31 +8,32 @@ import java.util.UUID;
 /**
  * Event published to Kafka when a user is created in Keycloak.
  * Matches the C# KeycloakUserCreatedEvent structure.
+ * Uses PascalCase for JSON properties to match C# naming conventions.
  */
 public class KeycloakUserCreatedEvent {
 
-    @JsonProperty("timestamp")
+    @JsonProperty("Timestamp")
     private Instant timestamp;
 
-    @JsonProperty("correlationId")
+    @JsonProperty("CorrelationId")
     private String correlationId;
 
-    @JsonProperty("keycloakId")
+    @JsonProperty("KeycloakId")
     private String keycloakId;
 
-    @JsonProperty("email")
+    @JsonProperty("Email")
     private String email;
 
-    @JsonProperty("firstName")
+    @JsonProperty("FirstName")
     private String firstName;
 
-    @JsonProperty("lastName")
+    @JsonProperty("LastName")
     private String lastName;
 
-    @JsonProperty("emailVerified")
+    @JsonProperty("EmailVerified")
     private boolean emailVerified;
 
-    @JsonProperty("attributes")
+    @JsonProperty("Attributes")
     private Map<String, String> attributes;
 
     public KeycloakUserCreatedEvent() {
