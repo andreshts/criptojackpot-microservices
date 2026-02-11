@@ -121,7 +121,7 @@ spec:
               mountPath: /providers
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak:26.5.2
+          image: cryptojackpot/keycloak:latest
           imagePullPolicy: Always
           args:
             - start-dev

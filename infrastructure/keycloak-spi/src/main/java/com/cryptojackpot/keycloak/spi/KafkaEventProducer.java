@@ -87,7 +87,7 @@ public class KafkaEventProducer {
     public void close() {
         if (producer != null) {
             try {
-                producer.close(5, TimeUnit.SECONDS);
+                producer.close(java.time.Duration.ofSeconds(5));
                 LOG.info("Kafka producer closed");
             } catch (Exception e) {
                 LOG.warn("Error closing Kafka producer", e);
