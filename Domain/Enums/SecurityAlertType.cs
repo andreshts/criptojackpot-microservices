@@ -38,6 +38,11 @@ public enum SecurityAlertType
     /// <summary>
     /// 2FA was enabled.
     /// </summary>
-    TwoFactorEnabled = 7
+    TwoFactorEnabled = 7,
+    
+    /// <summary>
+    /// All sessions were revoked (logout from all devices).
+    /// </summary>
+    AllSessionsRevoked = 8
 }
 

@@ -273,4 +273,38 @@ public class AuthController : ControllerBase
             data = loginResult.User
         });
     }
+
+    /// <summary>
+    /// Logout from all devices by revoking all refresh tokens.
+    /// Use when user suspects account compromise.
+    /// </summary>
+    [HttpPost("logout-all")]
+    [Authorize]
+    public async Task<IActionResult> LogoutAllDevices([FromBody] LogoutAllDevicesRequest? request)
+    {
+        var userGuid = User.GetUserGuid();
+        if (userGuid is null)
+            return Unauthorized();
+
+        var command = new LogoutAllDevicesCommand
+        {
+            UserGuid = userGuid.Value,
+            Reason = request?.Reason
+        };
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsFailed)
+            return result.ToActionResult();
+
+        // Clear cookies on current device
+        Response.ClearAuthCookies(_cookieConfig);
+
+        return Ok(new
+        {
+            success = true,
+            message = $"Successfully logged out from {result.Value} device(s).",
+            revokedSessions = result.Value
+        });
+    }
 }
