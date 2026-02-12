@@ -43,6 +43,12 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    public async Task<User?> GetByGoogleIdAsync(string googleId)
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.GoogleId == googleId);
+    }
 
     public async Task<User?> GetByReferralCodeAsync(string referralCode)
     {

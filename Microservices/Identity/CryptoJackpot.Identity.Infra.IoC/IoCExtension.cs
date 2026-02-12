@@ -301,6 +301,7 @@ public static class IoCExtension
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IRecoveryCodeService, RecoveryCodeService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IGoogleLoginService, GoogleLoginService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<ITokenRotationService, TokenRotationService>();
         services.AddScoped<ICodeVerificationService, CodeVerificationService>();

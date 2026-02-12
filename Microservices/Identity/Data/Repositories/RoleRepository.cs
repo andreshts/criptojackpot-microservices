@@ -6,6 +6,8 @@ namespace CryptoJackpot.Identity.Data.Repositories;
 
 public class RoleRepository : IRoleRepository
 {
+    private const string DefaultRoleName = "User";
+    
     private readonly IdentityDbContext _context;
     
     public RoleRepository(IdentityDbContext context)
@@ -15,4 +17,10 @@ public class RoleRepository : IRoleRepository
 
     public Task<List<Role>> GetAllRoles()
         => _context.Roles.AsNoTracking().ToListAsync();
+
+    public Task<Role?> GetByNameAsync(string name)
+        => _context.Roles.FirstOrDefaultAsync(r => r.Name == name);
+
+    public Task<Role?> GetDefaultRoleAsync()
+        => GetByNameAsync(DefaultRoleName);
 }

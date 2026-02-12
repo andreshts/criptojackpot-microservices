@@ -209,4 +209,68 @@ public class AuthController : ControllerBase
             data = loginResult.User
         });
     }
+
+    /// <summary>
+    /// Authenticate or register user via Google OAuth.
+    /// Handles existing users, account linking, and new registrations.
+    /// </summary>
+    [HttpPost("google")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
+    {
+        var command = new GoogleLoginCommand
+        {
+            IdToken = request.IdToken,
+            AccessToken = request.AccessToken,
+            RefreshToken = request.RefreshToken,
+            ExpiresIn = request.ExpiresIn,
+            IpAddress = Request.GetClientIpAddress(),
+            DeviceInfo = Request.GetUserAgent(),
+            RememberMe = request.RememberMe
+        };
+
+        var result = await _mediator.Send(command);
+
+        if (result.IsFailed)
+        {
+            var error = result.Errors.FirstOrDefault();
+            if (error is LockedError lockedError)
+            {
+                Response.Headers.Append("Retry-After", lockedError.RetryAfterSeconds.ToString());
+            }
+            return result.ToActionResult();
+        }
+
+        var loginResult = result.Value;
+
+        // If 2FA is required
+        if (loginResult.RequiresTwoFactor)
+        {
+            Response.SetAccessTokenCookie(
+                loginResult.AccessToken,
+                _cookieConfig,
+                5); // 5 minutes for 2FA challenge
+
+            return Ok(new
+            {
+                success = true,
+                requiresTwoFactor = true,
+                data = loginResult.User
+            });
+        }
+
+        // Set HttpOnly cookies
+        Response.SetAuthCookies(
+            loginResult.AccessToken,
+            loginResult.RefreshToken,
+            _cookieConfig,
+            _jwtConfig.ExpirationInMinutes,
+            request.RememberMe);
+
+        return Ok(new
+        {
+            success = true,
+            data = loginResult.User
+        });
+    }
 }
