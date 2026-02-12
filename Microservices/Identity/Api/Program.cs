@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Single point of DI configuration
 builder.Services.AddIdentityServices(builder.Configuration);
 
+
 // Health Checks for Kubernetes probes
 builder.Services.AddHealthChecks();
 

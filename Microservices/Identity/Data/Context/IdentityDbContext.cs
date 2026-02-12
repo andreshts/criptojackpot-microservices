@@ -16,6 +16,8 @@ public class IdentityDbContext : DbContext
     public DbSet<Permission> Permissions { get; set; } = null!;
     public DbSet<RolePermission> RolePermissions { get; set; } = null!;
     public DbSet<UserReferral> UserReferrals { get; set; } = null!;
+    public DbSet<UserRefreshToken> UserRefreshTokens { get; set; } = null!;
+    public DbSet<UserRecoveryCode> UserRecoveryCodes { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

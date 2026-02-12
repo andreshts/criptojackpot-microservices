@@ -17,6 +17,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microservices", "Microservices", "{8A367DDA-5161-A942-4F09-60E4726C9306}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Identity", "Identity", "{81D30253-D957-530F-3512-F8F4B88CAE26}"
+	ProjectSection(SolutionItems) = preProject
+		Microservices\Identity\ARCHITECTURE.md = Microservices\Identity\ARCHITECTURE.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{17598D3E-4CAD-E305-DED6-1FF1F949F4A2}"
 EndProject

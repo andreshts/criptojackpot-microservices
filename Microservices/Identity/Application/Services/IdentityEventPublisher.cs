@@ -1,4 +1,5 @@
 using CryptoJackpot.Domain.Core.Bus;
+using CryptoJackpot.Domain.Core.Enums;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Identity.Application.Interfaces;
 using CryptoJackpot.Identity.Domain.Models;
@@ -7,8 +8,7 @@ using Microsoft.Extensions.Logging;
 namespace CryptoJackpot.Identity.Application.Services;
 
 /// <summary>
-/// Publishes identity-related events to the event bus.
-/// Note: Email verification and password reset emails are now handled by Keycloak.
+/// Publishes identity-related events to the event bus (Kafka via MassTransit).
 /// </summary>
 public class IdentityEventPublisher : IIdentityEventPublisher
 {
@@ -52,6 +52,71 @@ public class IdentityEventPublisher : IIdentityEventPublisher
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish UserLoggedInEvent for user {UserId}", user.Id);
+        }
+    }
+
+    public async Task PublishUserRegisteredAsync(User user, string confirmationToken)
+    {
+        try
+        {
+            await _eventBus.Publish(new UserRegisteredEvent
+            {
+                UserId = user.Id,
+                UserGuid = user.UserGuid,
+                Email = user.Email,
+                Name = user.Name,
+                LastName = user.LastName,
+                ConfirmationToken = confirmationToken
+            });
+            _logger.LogInformation("UserRegisteredEvent published for user {UserId}", user.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish UserRegisteredEvent for user {UserId}", user.Id);
+        }
+    }
+
+    public async Task PublishUserLockedOutAsync(User user, int lockoutMinutes, string? ipAddress, string? userAgent)
+    {
+        try
+        {
+            await _eventBus.Publish(new UserLockedOutEvent
+            {
+                UserGuid = user.UserGuid,
+                Email = user.Email,
+                Name = user.Name,
+                FailedAttempts = user.FailedLoginAttempts,
+                LockoutMinutes = lockoutMinutes,
+                IpAddress = ipAddress,
+                UserAgent = userAgent
+            });
+            _logger.LogInformation("UserLockedOutEvent published for user {UserId}", user.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish UserLockedOutEvent for user {UserId}", user.Id);
+        }
+    }
+
+    public async Task PublishSecurityAlertAsync(User user, SecurityAlertType alertType, string description, string? ipAddress, string? userAgent)
+    {
+        try
+        {
+            await _eventBus.Publish(new SecurityAlertEvent
+            {
+                UserGuid = user.UserGuid,
+                Email = user.Email,
+                Name = user.Name,
+                AlertType = alertType,
+                Description = description,
+                IpAddress = ipAddress,
+                UserAgent = userAgent
+            });
+            _logger.LogInformation("SecurityAlertEvent ({AlertType}) published for user {UserId}", alertType, user.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish SecurityAlertEvent for user {UserId}", user.Id);
         }
     }
 }

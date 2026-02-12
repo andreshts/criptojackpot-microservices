@@ -100,8 +100,11 @@ public static class IoCExtension
 
     private static void AddConfiguration(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<JwtConfig>(configuration.GetSection("JwtSettings"));
+        services.Configure<JwtConfig>(configuration.GetSection(JwtConfig.SectionName));
         services.Configure<DigitalOceanSettings>(configuration.GetSection("DigitalOcean"));
+        services.Configure<GoogleAuthConfig>(configuration.GetSection(GoogleAuthConfig.SectionName));
+        services.Configure<TwoFactorConfig>(configuration.GetSection(TwoFactorConfig.SectionName));
+        services.Configure<CookieConfig>(configuration.GetSection(CookieConfig.SectionName));
     }
 
     private static void AddAuthentication(IServiceCollection services, IConfiguration configuration)
@@ -245,6 +248,8 @@ public static class IoCExtension
         services.AddScoped<ICountryRepository, CountryRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IUserReferralRepository, UserReferralRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IRecoveryCodeRepository, RecoveryCodeRepository>();
     }
 
     private static void AddApplicationServices(IServiceCollection services)
@@ -268,6 +273,12 @@ public static class IoCExtension
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IIdentityEventPublisher, IdentityEventPublisher>();
         services.AddScoped<IStorageService, DigitalOceanStorageService>();
+        
+        // Authentication Services 
+        services.AddScoped<ITotpService, TotpService>();
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IRecoveryCodeService, RecoveryCodeService>();
+        services.AddScoped<IGoogleAuthService, GoogleAuthService>();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
@@ -284,6 +295,8 @@ public static class IoCExtension
                 rider.AddProducer<ReferralCreatedEvent>(KafkaTopics.ReferralCreated);
                 rider.AddProducer<UserLoggedInEvent>(KafkaTopics.UserLoggedIn);
                 rider.AddProducer<GetUsersForMarketingResponseEvent>(KafkaTopics.GetUsersForMarketingResponse);
+                rider.AddProducer<UserLockedOutEvent>(KafkaTopics.UserLockedOut);
+                rider.AddProducer<SecurityAlertEvent>(KafkaTopics.SecurityAlert);
                 
                 // Register consumers
                 rider.AddConsumer<GetUsersForMarketingConsumer>();
