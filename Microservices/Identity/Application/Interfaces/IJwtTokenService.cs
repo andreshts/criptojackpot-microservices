@@ -8,21 +8,23 @@ public interface IJwtTokenService
     /// <summary>
     /// Generates an access token (short-lived JWT) for the user.
     /// </summary>
-    /// <param name="user">User entity with role</param>
-    /// <returns>JWT access token</returns>
     string GenerateAccessToken(User user);
 
     /// <summary>
-    /// Legacy method for backward compatibility.
+    /// Generates a restricted challenge token for 2FA verification.
+    /// This token has "purpose": "2fa_challenge" claim and NO role claims.
+    /// It cannot be used to access protected endpoints.
     /// </summary>
-    [Obsolete("Use GenerateAccessToken(User user) instead")]
-    string GenerateToken(string userId);
+    string GenerateTwoFactorChallengeToken(User user, int expiresInMinutes = 5);
 
+    /// <summary>
+    /// Validates a 2FA challenge token and returns the user GUID if valid.
+    /// </summary>
+    Guid? ValidateTwoFactorChallengeToken(string token);
+    
     /// <summary>
     /// Validates a JWT and extracts the claims principal.
     /// </summary>
-    /// <param name="token">JWT token string</param>
-    /// <returns>ClaimsPrincipal if valid, null otherwise</returns>
     ClaimsPrincipal? ValidateToken(string token);
 
     /// <summary>

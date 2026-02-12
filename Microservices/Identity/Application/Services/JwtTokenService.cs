@@ -47,8 +47,8 @@ public class JwtTokenService : IJwtTokenService
             
             // Custom claims
             new("name", $"{user.Name} {user.LastName}"),
-            new("role", user.Role?.Name ?? "User"),
-            new(ClaimTypes.Role, user.Role?.Name ?? "User"),
+            new("role", user.Role.Name),
+            new(ClaimTypes.Role, user.Role.Name),
             new("email_verified", user.EmailVerified.ToString().ToLowerInvariant()),
         };
 
@@ -69,30 +69,46 @@ public class JwtTokenService : IJwtTokenService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    [Obsolete("Use GenerateAccessToken(User user) instead")]
-    public string GenerateToken(string userId)
+    public string GenerateTwoFactorChallengeToken(User user, int expiresInMinutes = 5)
     {
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        // Minimal claims - NO role, NO permissions
+        // Only what's needed to identify the user for 2FA verification
+        var claims = new List<Claim>
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.UserGuid.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new("purpose", "2fa_challenge"), // Restricted scope - NOT a full access token
         };
 
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes),
+            expires: DateTime.UtcNow.AddMinutes(expiresInMinutes),
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public Guid? ValidateTwoFactorChallengeToken(string token)
+    {
+        var principal = ValidateToken(token);
+        if (principal is null)
+            return null;
+
+        // Verify this is a 2FA challenge token, not a regular access token
+        var purposeClaim = principal.FindFirst("purpose");
+        if (purposeClaim?.Value != "2fa_challenge")
+            return null;
+
+        return GetUserGuidFromClaims(principal);
+    }
+    
     public ClaimsPrincipal? ValidateToken(string token)
     {
         if (string.IsNullOrWhiteSpace(token))

@@ -32,6 +32,11 @@ public interface IAuthenticationService
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Revokes a refresh token by its raw value (for logout).
+    /// </summary>
+    Task<bool> RevokeRefreshTokenAsync(string rawToken, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets the lockout duration in minutes based on failed attempts.
     /// </summary>
     int GetLockoutMinutes(int failedAttempts);

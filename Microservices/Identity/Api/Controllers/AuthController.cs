@@ -95,12 +95,17 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Logout user by clearing auth cookies.
+    /// Logout user by revoking refresh token and clearing cookies.
     /// </summary>
     [HttpPost("logout")]
     [Authorize]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout()
     {
+        var refreshToken = Request.GetRefreshToken(_cookieConfig);
+        
+        var command = new LogoutCommand { RefreshToken = refreshToken };
+        await _mediator.Send(command);
+
         Response.ClearAuthCookies(_cookieConfig);
         return NoContent();
     }

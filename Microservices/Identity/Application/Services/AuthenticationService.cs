@@ -82,23 +82,24 @@ public class AuthenticationService : IAuthenticationService
         };
     }
 
-    public async Task<LoginResultDto> HandleTwoFactorLoginAsync(
+    public Task<LoginResultDto> HandleTwoFactorLoginAsync(
         User user,
         CancellationToken cancellationToken)
     {
-        var challengeToken = _jwtTokenService.GenerateAccessToken(user);
-
-        user.RegisterSuccessfulLogin();
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return new LoginResultDto
+        // Generate a challenge token with restricted scope (not a full access token)
+        var challengeToken = _jwtTokenService.GenerateTwoFactorChallengeToken(user);
+        
+        // The login is not complete until 2FA is verified.
+        // FailedLoginAttempts must remain to prevent brute force on 2FA.
+        
+        return Task.FromResult(new LoginResultDto
         {
             AccessToken = challengeToken,
             RefreshToken = string.Empty,
             ExpiresInMinutes = 5,
             RequiresTwoFactor = true,
             User = _mapper.Map<AuthResponseDto>(user)
-        };
+        });
     }
 
     public int GetLockoutMinutes(int failedAttempts) => failedAttempts switch
@@ -107,4 +108,18 @@ public class AuthenticationService : IAuthenticationService
         >= 5 => 5,
         _ => 1
     };
+
+    public async Task<bool> RevokeRefreshTokenAsync(string rawToken, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(rawToken))
+            return false;
+
+        var token = await _refreshTokenService.ValidateAndGetTokenAsync(rawToken);
+        if (token is null)
+            return false;
+
+        token.Revoke("logout");
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 }
