@@ -73,5 +73,65 @@ public static class ResultResponseExtensions
             _ => new OkObjectResult(new { success = true, data = result.Value })
         };
     }
+
+    /// <summary>
+    /// Converts a non-generic Result to IActionResult.
+    /// Used for commands that don't return a value.
+    /// </summary>
+    public static IActionResult ToActionResult(this Result result)
+    {
+        if (result.IsFailed)
+        {
+            var error = result.Errors.FirstOrDefault();
+            
+            var statusCode = error switch
+            {
+                ApplicationError appError => appError.StatusCode,
+                _ => StatusCodes.Status500InternalServerError
+            };
+
+            // Handle validation errors with detailed field errors
+            if (error is ValidationError validationError)
+            {
+                return new ObjectResult(new
+                {
+                    success = false,
+                    message = error.Message,
+                    errors = validationError.Errors
+                })
+                {
+                    StatusCode = statusCode
+                };
+            }
+
+            // Handle locked errors with Retry-After header
+            if (error is LockedError lockedError)
+            {
+                return new ObjectResult(new
+                {
+                    success = false,
+                    message = error.Message,
+                    retryAfterSeconds = lockedError.RetryAfterSeconds
+                })
+                {
+                    StatusCode = statusCode
+                };
+            }
+
+            return new ObjectResult(new { success = false, message = error?.Message ?? "An error occurred" })
+            {
+                StatusCode = statusCode
+            };
+        }
+
+        // Check for typed successes
+        var success = result.Successes.FirstOrDefault();
+        
+        return success switch
+        {
+            NoContentSuccess => new NoContentResult(),
+            _ => new OkObjectResult(new { success = true })
+        };
+    }
 }
 

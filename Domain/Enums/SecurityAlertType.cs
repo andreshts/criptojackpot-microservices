@@ -33,6 +33,11 @@ public enum SecurityAlertType
     /// <summary>
     /// Recovery code was used.
     /// </summary>
-    RecoveryCodeUsed = 6
+    RecoveryCodeUsed = 6,
+    
+    /// <summary>
+    /// 2FA was enabled.
+    /// </summary>
+    TwoFactorEnabled = 7
 }
 

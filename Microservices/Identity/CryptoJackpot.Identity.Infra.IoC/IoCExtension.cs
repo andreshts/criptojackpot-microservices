@@ -305,6 +305,7 @@ public static class IoCExtension
         services.AddScoped<ITokenRotationService, TokenRotationService>();
         services.AddScoped<ICodeVerificationService, CodeVerificationService>();
         services.AddScoped<ITwoFactorVerificationService, TwoFactorVerificationService>();
+        services.AddScoped<ITwoFactorSetupService, TwoFactorSetupService>();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
