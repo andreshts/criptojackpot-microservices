@@ -3,6 +3,7 @@ namespace CryptoJackpot.Notification.Application.Constants;
 public static class TemplateNames
 {
     public const string ConfirmEmail = "ConfirmEmailTemplate";
+    public const string WelcomeEmail = "WelcomeEmailTemplate";
     public const string PasswordReset = "PasswordResetTemplate";
     public const string ReferralNotification = "ReferralNotificationTemplate";
     public const string LotteryMarketing = "LotteryMarketingTemplate";

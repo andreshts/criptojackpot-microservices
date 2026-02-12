@@ -154,7 +154,7 @@ public class GoogleLoginService : IGoogleLoginService
 
         _logger.LogInformation("New user registered via Google: {UserId}", user.Id);
 
-        await _eventPublisher.PublishUserRegisteredAsync(user, string.Empty);
+        await _eventPublisher.PublishExternalUserRegisteredAsync(user);
 
         return await _authenticationService.CompleteLoginAsync(
             user, context.DeviceInfo, context.IpAddress, context.RememberMe, cancellationToken);

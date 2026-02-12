@@ -66,13 +66,38 @@ public class IdentityEventPublisher : IIdentityEventPublisher
                 Email = user.Email,
                 Name = user.Name,
                 LastName = user.LastName,
-                ConfirmationToken = confirmationToken
+                ConfirmationToken = confirmationToken,
+                IsExternalRegistration = false,
+                EmailVerified = user.EmailVerified
             });
             _logger.LogInformation("UserRegisteredEvent published for user {UserId}", user.Id);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to publish UserRegisteredEvent for user {UserId}", user.Id);
+        }
+    }
+
+    public async Task PublishExternalUserRegisteredAsync(User user)
+    {
+        try
+        {
+            await _eventBus.Publish(new UserRegisteredEvent
+            {
+                UserId = user.Id,
+                UserGuid = user.UserGuid,
+                Email = user.Email,
+                Name = user.Name,
+                LastName = user.LastName,
+                ConfirmationToken = null, // No token needed - email verified by provider
+                IsExternalRegistration = true,
+                EmailVerified = user.EmailVerified
+            });
+            _logger.LogInformation("UserRegisteredEvent (external) published for user {UserId}", user.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish UserRegisteredEvent (external) for user {UserId}", user.Id);
         }
     }
 

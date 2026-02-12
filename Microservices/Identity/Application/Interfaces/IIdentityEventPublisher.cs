@@ -10,7 +10,17 @@ public interface IIdentityEventPublisher
 {
     Task PublishReferralCreatedAsync(User referrer, User referred, string referralCode);
     Task PublishUserLoggedInAsync(User user);
+    
+    /// <summary>
+    /// Publishes user registered event for local registration (requires email verification).
+    /// </summary>
     Task PublishUserRegisteredAsync(User user, string confirmationToken);
+    
+    /// <summary>
+    /// Publishes user registered event for external registration (Google OAuth - email pre-verified).
+    /// </summary>
+    Task PublishExternalUserRegisteredAsync(User user);
+    
     Task PublishUserLockedOutAsync(User user, int lockoutMinutes, string? ipAddress, string? userAgent);
     Task PublishSecurityAlertAsync(User user, SecurityAlertType alertType, string description, string? ipAddress, string? userAgent);
     

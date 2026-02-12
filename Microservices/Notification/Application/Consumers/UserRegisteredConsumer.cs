@@ -22,13 +22,32 @@ public class UserRegisteredConsumer : IConsumer<UserRegisteredEvent>
         var message = context.Message;
         _logger.LogInformation("Received UserRegisteredEvent for user {UserId}", message.UserId);
 
+        // Skip email verification for external registrations (Google OAuth)
+        // or if email is already verified
+        if (message.IsExternalRegistration || message.EmailVerified)
+        {
+            _logger.LogInformation(
+                "Skipping email verification for user {UserId} - External: {IsExternal}, Verified: {Verified}",
+                message.UserId, message.IsExternalRegistration, message.EmailVerified);
+            
+            // Optionally send a welcome email instead
+            await _mediator.Send(new SendWelcomeEmailCommand
+            {
+                UserId = message.UserId,
+                Email = message.Email,
+                Name = message.Name,
+                LastName = message.LastName
+            });
+            return;
+        }
+
         await _mediator.Send(new SendEmailConfirmationCommand
         {
             UserId = message.UserId,
             Email = message.Email,
             Name = message.Name,
             LastName = message.LastName,
-            Token = message.ConfirmationToken
+            Token = message.ConfirmationToken!
         });
     }
 }
