@@ -39,6 +39,21 @@ public static class ResultResponseExtensions
                 };
             }
 
+            // Handle locked errors with Retry-After header
+            if (error is LockedError lockedError)
+            {
+                var objectResult = new ObjectResult(new
+                {
+                    success = false,
+                    message = error.Message,
+                    retryAfterSeconds = lockedError.RetryAfterSeconds
+                })
+                {
+                    StatusCode = statusCode
+                };
+                return objectResult;
+            }
+
             return new ObjectResult(new { success = false, message = error?.Message ?? "An error occurred" })
             {
                 StatusCode = statusCode

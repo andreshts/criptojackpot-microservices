@@ -279,6 +279,7 @@ public static class IoCExtension
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IRecoveryCodeService, RecoveryCodeService>();
         services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
     }
 
     private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration)
