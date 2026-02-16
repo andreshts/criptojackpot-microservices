@@ -5,6 +5,7 @@ using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Order;
 using CryptoJackpot.Infra.IoC;
+using CryptoJackpot.Infra.IoC.Extensions;
 using CryptoJackpot.Order.Application;
 using CryptoJackpot.Order.Application.Configuration;
 using CryptoJackpot.Order.Application.Consumers;
@@ -331,7 +332,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<NumbersReservedConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
             });
     }

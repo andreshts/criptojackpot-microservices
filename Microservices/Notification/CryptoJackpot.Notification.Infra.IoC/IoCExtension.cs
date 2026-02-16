@@ -4,6 +4,7 @@ using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Lottery;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Notification;
 using CryptoJackpot.Infra.IoC;
+using CryptoJackpot.Infra.IoC.Extensions;
 using CryptoJackpot.Notification.Application;
 using CryptoJackpot.Notification.Application.Configuration;
 using CryptoJackpot.Notification.Application.Consumers;
@@ -221,7 +222,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<UserRegisteredConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
 
                 kafka.TopicEndpoint<PasswordResetRequestedEvent>(
@@ -230,7 +231,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<PasswordResetRequestedConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
 
                 kafka.TopicEndpoint<ReferralCreatedEvent>(
@@ -239,7 +240,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<ReferralCreatedConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
 
                 kafka.TopicEndpoint<LotteryCreatedEvent>(
@@ -248,7 +249,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<LotteryMarketingConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
 
                 // Marketing users response - Saga pattern response from Identity service
@@ -258,7 +259,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<MarketingUsersResponseConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
 
                 // Marketing email distribution topic - multiple consumers can process in parallel
@@ -268,7 +269,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<SendMarketingEmailConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                         // Checkpoint every message for reliable processing
                         e.CheckpointInterval = TimeSpan.FromSeconds(1);
                         // Enable concurrent message processing for higher throughput

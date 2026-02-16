@@ -15,6 +15,7 @@ using CryptoJackpot.Identity.Data.Repositories;
 using CryptoJackpot.Identity.Data.Services;
 using CryptoJackpot.Identity.Domain.Interfaces;
 using CryptoJackpot.Infra.IoC;
+using CryptoJackpot.Infra.IoC.Extensions;
 using FluentValidation;
 using MassTransit;
 using MediatR;
@@ -362,7 +363,7 @@ public static class IoCExtension
                     e =>
                     {
                         e.ConfigureConsumer<GetUsersForMarketingConsumer>(context);
-                        e.AutoOffsetReset = Confluent.Kafka.AutoOffsetReset.Earliest;
+                        e.ConfigureTopicDefaults(configuration);
                     });
             });
     }

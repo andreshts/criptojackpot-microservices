@@ -11,6 +11,7 @@ using CryptoJackpot.Domain.Core.Bus;
 using CryptoJackpot.Domain.Core.Constants;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Audit;
 using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
+using CryptoJackpot.Infra.IoC.Extensions;
 using FluentValidation;
 using MassTransit;
 using MediatR;
@@ -260,6 +261,7 @@ public static class IoCExtension
                         e =>
                         {
                             e.ConfigureConsumer<AuditLogEventConsumer>(context);
+                            e.ConfigureTopicDefaults(configuration);
                         });
 
                     // Subscribe to user login events for auditing
@@ -269,6 +271,7 @@ public static class IoCExtension
                         e =>
                         {
                             e.ConfigureConsumer<UserLoggedInEventConsumer>(context);
+                            e.ConfigureTopicDefaults(configuration);
                         });
                 });
             });
