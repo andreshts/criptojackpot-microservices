@@ -6,10 +6,8 @@ namespace: cryptojackpot
 
 resources:
   - ../../base
-  - ../../base/infrastructure/keycloak
   - secrets
   - ingress
-  - keycloak
   - pgbouncer
 
 # PROD uses managed services:

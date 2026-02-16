@@ -237,11 +237,6 @@ configMapGenerator:
       - Cors__AllowedOrigins__1=http://cryptojackpot.local
       - Cors__AllowedOrigins__2=http://auth.cryptojackpot.local:30180
       - Cors__AllowedOrigins__3=http://localhost:30180
-      - Keycloak__Authority=http://keycloak.cryptojackpot.svc.cluster.local:8080
-      - Keycloak__Realm=cryptojackpot
-      - Keycloak__ClientId=cryptojackpot-backend
-      - Keycloak__RequireHttpsMetadata=false
-      - Keycloak__ValidateAudience=false
 
 generatorOptions:
   disableNameSuffixHash: true
