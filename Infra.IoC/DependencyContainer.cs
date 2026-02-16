@@ -108,7 +108,6 @@ public static class DependencyContainer
     /// <summary>
     /// Registers shared infrastructure with Kafka.
     /// </summary>
-    /// <typeparam name="TDbContext">The DbContext type for the microservice.</typeparam>
     /// <param name="services">The service collection used to register dependencies.</param>
     /// <param name="configuration">The application configuration instance.</param>
     /// <param name="configureRider">Optional delegate to configure Kafka rider (for producers/consumers).</param>
