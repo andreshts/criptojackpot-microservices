@@ -35,20 +35,44 @@ COPY ["Microservices/Notification/Domain/CryptoJackpot.Notification.Domain.cspro
 COPY ["Microservices/Notification/Data/CryptoJackpot.Notification.Data.csproj", "Microservices/Notification/Data/"]
 COPY ["Microservices/Notification/Application/CryptoJackpot.Notification.Application.csproj", "Microservices/Notification/Application/"]
 
-# Restore dependencies
-RUN dotnet restore "Tools/CryptoJackpot.Migrator/CryptoJackpot.Migrator.csproj"
+# Restore dependencies con cache mount
+RUN --mount=type=cache,id=nuget-migrator,target=/root/.nuget/packages \
+    dotnet restore "Tools/CryptoJackpot.Migrator/CryptoJackpot.Migrator.csproj"
 
-# Copy all source code
-COPY . .
+# Copy source code (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Tools/CryptoJackpot.Migrator/ Tools/CryptoJackpot.Migrator/
+COPY Microservices/Identity/Domain/ Microservices/Identity/Domain/
+COPY Microservices/Identity/Data/ Microservices/Identity/Data/
+COPY Microservices/Identity/Application/ Microservices/Identity/Application/
+COPY Microservices/Lottery/Domain/ Microservices/Lottery/Domain/
+COPY Microservices/Lottery/Data/ Microservices/Lottery/Data/
+COPY Microservices/Lottery/Application/ Microservices/Lottery/Application/
+COPY Microservices/Order/Domain/ Microservices/Order/Domain/
+COPY Microservices/Order/Data/ Microservices/Order/Data/
+COPY Microservices/Order/Application/ Microservices/Order/Application/
+COPY Microservices/Wallet/Domain/ Microservices/Wallet/Domain/
+COPY Microservices/Wallet/Data/ Microservices/Wallet/Data/
+COPY Microservices/Wallet/Application/ Microservices/Wallet/Application/
+COPY Microservices/Winner/Domain/ Microservices/Winner/Domain/
+COPY Microservices/Winner/Data/ Microservices/Winner/Data/
+COPY Microservices/Winner/Application/ Microservices/Winner/Application/
+COPY Microservices/Notification/Domain/ Microservices/Notification/Domain/
+COPY Microservices/Notification/Data/ Microservices/Notification/Data/
+COPY Microservices/Notification/Application/ Microservices/Notification/Application/
 
 # Build
 WORKDIR "/src/Tools/CryptoJackpot.Migrator"
-RUN dotnet build "CryptoJackpot.Migrator.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN --mount=type=cache,id=nuget-migrator,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Migrator.csproj" -c $BUILD_CONFIGURATION -o /app/build --no-restore
 
 # Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "CryptoJackpot.Migrator.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-migrator,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Migrator.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
 # Runtime stage - minimal image for running migrations
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final

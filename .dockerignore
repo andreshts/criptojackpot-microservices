@@ -1,16 +1,95 @@
-# Ignorar archivos de build y dependencias
+# ===========================================
+# .dockerignore optimizado para builds rápidos
+# ===========================================
+
+# Git
+**/.git
+**/.gitignore
+**/.gitattributes
+
+# IDE y editores
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.suo
+**/*.user
+**/*.userosscache
+**/*.sln.docstates
+
+# Build outputs - .NET
 **/bin/
 **/obj/
-**/.vs/
-**/.idea/
+**/out/
+**/publish/
+**/TestResults/
 
-# Archivos de configuración local
+# NuGet (se restaura en el build)
+**/.nuget/
+**/packages/
+
+# Node.js (si hay frontend)
+**/node_modules/
+**/npm-debug.log
+**/yarn-error.log
+
+# Infrastructure (no necesario para builds de apps)
+infrastructure/
+terraform/
+**/*.tf
+**/*.tfvars
+**/*.tfstate*
+
+# Kubernetes manifests
+**/k8s/
+**/*.yaml
+!**/Directory.Build.props
+!**/*.csproj
+
+# Docker configs (no se necesitan dentro del contexto)
+**/docker-compose*.yml
+**/docker-compose*.yaml
+**/.docker/
+
+# Documentación
+**/*.md
+**/docs/
+**/LICENSE
+**/README*
+
+# Tests coverage
+**/coverage/
+**/coverlet.xml
+**/*.coverage
+
+# Archivos de configuración local/desarrollo
 **/appsettings.Development.json
 **/appsettings.Local.json
-**/*.user
+**/launchSettings.json
 
 # Secretos y certificados
-*.pfx
-*.pem
-*.key
+**/*.pfx
+**/*.pem
+**/*.key
+**/.env
+**/.env.*
 
+# Logs
+**/logs/
+**/*.log
+
+# Temp files
+**/tmp/
+**/temp/
+**/*.tmp
+**/*.temp
+**/*.swp
+
+# OS files
+**/.DS_Store
+**/Thumbs.db
+
+# Scripts de deploy (no necesarios en imagen)
+deploy-*.ps1
+deploy-*.sh
+skaffold.yaml
+CLAUDE.md

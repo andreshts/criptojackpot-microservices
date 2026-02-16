@@ -16,20 +16,27 @@ COPY ["Infra.IoC/CryptoJackpot.Infra.IoC.csproj", "Infra.IoC/"]
 COPY ["Microservices/Identity/Domain/CryptoJackpot.Identity.Domain.csproj", "Microservices/Identity/Domain/"]
 COPY ["Microservices/Identity/Data/CryptoJackpot.Identity.Data.csproj", "Microservices/Identity/Data/"]
 COPY ["Microservices/Identity/Application/CryptoJackpot.Identity.Application.csproj", "Microservices/Identity/Application/"]
+COPY ["Microservices/Identity/CryptoJackpot.Identity.Infra.IoC/CryptoJackpot.Identity.Infra.IoC.csproj", "Microservices/Identity/CryptoJackpot.Identity.Infra.IoC/"]
 COPY ["Microservices/Identity/Api/CryptoJackpot.Identity.Api.csproj", "Microservices/Identity/Api/"]
 
-# Restaurar dependencias
-RUN dotnet restore "Microservices/Identity/Api/CryptoJackpot.Identity.Api.csproj"
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-identity,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Identity/Api/CryptoJackpot.Identity.Api.csproj"
 
 # Copiar código fuente
-COPY . .
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Identity/ Microservices/Identity/
 
-# Build
+# Build con cache mount
 WORKDIR "/src/Microservices/Identity/Api"
-RUN dotnet build "CryptoJackpot.Identity.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-identity,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Identity.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Identity.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-identity,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Identity.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app

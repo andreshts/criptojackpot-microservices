@@ -15,16 +15,26 @@ COPY ["Infra.IoC/CryptoJackpot.Infra.IoC.csproj", "Infra.IoC/"]
 COPY ["Microservices/Order/Domain/CryptoJackpot.Order.Domain.csproj", "Microservices/Order/Domain/"]
 COPY ["Microservices/Order/Data/CryptoJackpot.Order.Data.csproj", "Microservices/Order/Data/"]
 COPY ["Microservices/Order/Application/CryptoJackpot.Order.Application.csproj", "Microservices/Order/Application/"]
+COPY ["Microservices/Order/CryptoJackpot.Order.Infra.IoC/CryptoJackpot.Order.Infra.IoC.csproj", "Microservices/Order/CryptoJackpot.Order.Infra.IoC/"]
 COPY ["Microservices/Order/Api/CryptoJackpot.Order.Api.csproj", "Microservices/Order/Api/"]
 
-RUN dotnet restore "Microservices/Order/Api/CryptoJackpot.Order.Api.csproj"
-COPY . .
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-order,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Order/Api/CryptoJackpot.Order.Api.csproj"
+
+# Copiar código fuente (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Order/ Microservices/Order/
 
 WORKDIR "/src/Microservices/Order/Api"
-RUN dotnet build "CryptoJackpot.Order.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-order,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Order.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Order.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-order,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Order.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app

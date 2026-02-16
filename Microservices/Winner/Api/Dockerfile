@@ -17,14 +17,23 @@ COPY ["Microservices/Winner/Data/CryptoJackpot.Winner.Data.csproj", "Microservic
 COPY ["Microservices/Winner/Application/CryptoJackpot.Winner.Application.csproj", "Microservices/Winner/Application/"]
 COPY ["Microservices/Winner/Api/CryptoJackpot.Winner.Api.csproj", "Microservices/Winner/Api/"]
 
-RUN dotnet restore "Microservices/Winner/Api/CryptoJackpot.Winner.Api.csproj"
-COPY . .
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-winner,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Winner/Api/CryptoJackpot.Winner.Api.csproj"
+
+# Copiar código fuente (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Winner/ Microservices/Winner/
 
 WORKDIR "/src/Microservices/Winner/Api"
-RUN dotnet build "CryptoJackpot.Winner.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-winner,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Winner.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Winner.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-winner,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Winner.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app

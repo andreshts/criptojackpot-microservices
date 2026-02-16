@@ -15,16 +15,26 @@ COPY ["Infra.IoC/CryptoJackpot.Infra.IoC.csproj", "Infra.IoC/"]
 COPY ["Microservices/Notification/Domain/CryptoJackpot.Notification.Domain.csproj", "Microservices/Notification/Domain/"]
 COPY ["Microservices/Notification/Data/CryptoJackpot.Notification.Data.csproj", "Microservices/Notification/Data/"]
 COPY ["Microservices/Notification/Application/CryptoJackpot.Notification.Application.csproj", "Microservices/Notification/Application/"]
+COPY ["Microservices/Notification/CryptoJackpot.Notification.Infra.IoC/CryptoJackpot.Notification.Infra.IoC.csproj", "Microservices/Notification/CryptoJackpot.Notification.Infra.IoC/"]
 COPY ["Microservices/Notification/Api/CryptoJackpot.Notification.Api.csproj", "Microservices/Notification/Api/"]
 
-RUN dotnet restore "Microservices/Notification/Api/CryptoJackpot.Notification.Api.csproj"
-COPY . .
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-notification,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Notification/Api/CryptoJackpot.Notification.Api.csproj"
+
+# Copiar código fuente (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Notification/ Microservices/Notification/
 
 WORKDIR "/src/Microservices/Notification/Api"
-RUN dotnet build "CryptoJackpot.Notification.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-notification,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Notification.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Notification.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-notification,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Notification.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app

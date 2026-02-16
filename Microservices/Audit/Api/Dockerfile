@@ -18,14 +18,23 @@ COPY ["Microservices/Audit/Application/CryptoJackpot.Audit.Application.csproj", 
 COPY ["Microservices/Audit/CryptoJackpot.Audit.Infra.IoC/CryptoJackpot.Audit.Infra.IoC.csproj", "Microservices/Audit/CryptoJackpot.Audit.Infra.IoC/"]
 COPY ["Microservices/Audit/Api/CryptoJackpot.Audit.Api.csproj", "Microservices/Audit/Api/"]
 
-RUN dotnet restore "Microservices/Audit/Api/CryptoJackpot.Audit.Api.csproj"
-COPY . .
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-audit,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Audit/Api/CryptoJackpot.Audit.Api.csproj"
+
+# Copiar código fuente (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Audit/ Microservices/Audit/
 
 WORKDIR "/src/Microservices/Audit/Api"
-RUN dotnet build "CryptoJackpot.Audit.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-audit,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Audit.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Audit.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-audit,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Audit.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app

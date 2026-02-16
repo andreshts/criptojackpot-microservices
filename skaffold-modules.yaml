@@ -1,0 +1,347 @@
+# ===========================================
+# Skaffold Modules - Builds selectivos por servicio
+# ===========================================
+# 
+# Uso:
+#   skaffold dev -f skaffold-modules.yaml -m identity    # Solo Identity
+#   skaffold dev -f skaffold-modules.yaml -m lottery     # Solo Lottery
+#   skaffold dev -f skaffold-modules.yaml -m order       # Solo Order
+#   skaffold dev -f skaffold-modules.yaml -m all         # Todos los servicios
+#
+# Combinaciones:
+#   skaffold dev -f skaffold-modules.yaml -m identity -m lottery  # Múltiples servicios
+#
+
+# ===========================================
+# MÓDULO: Infraestructura base
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: infra
+manifests:
+  kustomize:
+    paths:
+      - infrastructure/k8s/overlays/local
+deploy:
+  kubectl:
+    defaultNamespace: cryptojackpot
+    flags:
+      apply:
+        - --server-side
+        - --force-conflicts
+
+---
+# ===========================================
+# MÓDULO: Migrator
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: migrator
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/migrator
+      context: .
+      docker:
+        dockerfile: Tools/CryptoJackpot.Migrator/Dockerfile
+
+---
+# ===========================================
+# MÓDULO: Identity API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: identity
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/identity-api
+      context: .
+      docker:
+        dockerfile: Microservices/Identity/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Identity/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: identity-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5001
+
+---
+# ===========================================
+# MÓDULO: Lottery API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: lottery
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/lottery-api
+      context: .
+      docker:
+        dockerfile: Microservices/Lottery/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Lottery/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: lottery-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5002
+
+---
+# ===========================================
+# MÓDULO: Order API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: order
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/order-api
+      context: .
+      docker:
+        dockerfile: Microservices/Order/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Order/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: order-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5003
+
+---
+# ===========================================
+# MÓDULO: Wallet API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: wallet
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/wallet-api
+      context: .
+      docker:
+        dockerfile: Microservices/Wallet/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Wallet/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: wallet-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5004
+
+---
+# ===========================================
+# MÓDULO: Winner API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: winner
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/winner-api
+      context: .
+      docker:
+        dockerfile: Microservices/Winner/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Winner/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: winner-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5005
+
+---
+# ===========================================
+# MÓDULO: Notification API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: notification
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/notification-api
+      context: .
+      docker:
+        dockerfile: Microservices/Notification/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Notification/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: notification-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5006
+
+---
+# ===========================================
+# MÓDULO: Audit API
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: audit
+requires:
+  - configs: [infra]
+build:
+  local:
+    push: false
+    useBuildkit: true
+  artifacts:
+    - image: cryptojackpot/audit-api
+      context: .
+      docker:
+        dockerfile: Microservices/Audit/Api/Dockerfile
+      sync:
+        manual:
+          - src: 'Microservices/Audit/**/*.cs'
+            dest: /src
+          - src: 'Domain/**/*.cs'
+            dest: /src
+          - src: 'Infra.Bus/**/*.cs'
+            dest: /src
+          - src: 'Infra.IoC/**/*.cs'
+            dest: /src
+portForward:
+  - resourceType: service
+    resourceName: audit-api
+    namespace: cryptojackpot
+    port: 80
+    localPort: 5007
+
+---
+# ===========================================
+# MÓDULO: Todos los servicios
+# ===========================================
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: all
+requires:
+  - configs: [migrator, identity, lottery, order, wallet, winner, notification, audit]
+build:
+  local:
+    push: false
+    useBuildkit: true
+    concurrency: 4
+portForward:
+  - resourceType: service
+    resourceName: postgres
+    namespace: cryptojackpot
+    port: 5432
+    localPort: 5432
+  - resourceType: service
+    resourceName: redis
+    namespace: cryptojackpot
+    port: 6379
+    localPort: 6379
+  - resourceType: service
+    resourceName: redpanda
+    namespace: cryptojackpot
+    port: 9092
+    localPort: 9092
+  - resourceType: service
+    resourceName: minio
+    namespace: cryptojackpot
+    port: 9001
+    localPort: 9001
+  - resourceType: service
+    resourceName: mongodb
+    namespace: cryptojackpot
+    port: 27017
+    localPort: 27017
+

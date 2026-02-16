@@ -15,16 +15,26 @@ COPY ["Infra.IoC/CryptoJackpot.Infra.IoC.csproj", "Infra.IoC/"]
 COPY ["Microservices/Wallet/Domain/CryptoJackpot.Wallet.Domain.csproj", "Microservices/Wallet/Domain/"]
 COPY ["Microservices/Wallet/Data/CryptoJackpot.Wallet.Data.csproj", "Microservices/Wallet/Data/"]
 COPY ["Microservices/Wallet/Application/CryptoJackpot.Wallet.Application.csproj", "Microservices/Wallet/Application/"]
+COPY ["Microservices/Wallet/CryptoJackpot.Wallet.Infra.IoC/CryptoJackpot.Wallet.Infra.IoC.csproj", "Microservices/Wallet/CryptoJackpot.Wallet.Infra.IoC/"]
 COPY ["Microservices/Wallet/Api/CryptoJackpot.Wallet.Api.csproj", "Microservices/Wallet/Api/"]
 
-RUN dotnet restore "Microservices/Wallet/Api/CryptoJackpot.Wallet.Api.csproj"
-COPY . .
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-wallet,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Wallet/Api/CryptoJackpot.Wallet.Api.csproj"
+
+# Copiar código fuente (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Wallet/ Microservices/Wallet/
 
 WORKDIR "/src/Microservices/Wallet/Api"
-RUN dotnet build "CryptoJackpot.Wallet.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-wallet,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Wallet.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Wallet.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-wallet,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Wallet.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app

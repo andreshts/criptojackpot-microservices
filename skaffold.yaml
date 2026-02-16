@@ -17,6 +17,7 @@ build:
   local:
     push: false
     useBuildkit: true
+    concurrency: 4  # Construye hasta 4 imágenes en paralelo
   artifacts:
     - image: cryptojackpot/migrator
       context: .

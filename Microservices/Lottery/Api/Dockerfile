@@ -16,20 +16,27 @@ COPY ["Infra.IoC/CryptoJackpot.Infra.IoC.csproj", "Infra.IoC/"]
 COPY ["Microservices/Lottery/Domain/CryptoJackpot.Lottery.Domain.csproj", "Microservices/Lottery/Domain/"]
 COPY ["Microservices/Lottery/Data/CryptoJackpot.Lottery.Data.csproj", "Microservices/Lottery/Data/"]
 COPY ["Microservices/Lottery/Application/CryptoJackpot.Lottery.Application.csproj", "Microservices/Lottery/Application/"]
+COPY ["Microservices/Lottery/CryptoJackpot.Lottery.Infra.IoC/CryptoJackpot.Lottery.Infra.IoC.csproj", "Microservices/Lottery/CryptoJackpot.Lottery.Infra.IoC/"]
 COPY ["Microservices/Lottery/Api/CryptoJackpot.Lottery.Api.csproj", "Microservices/Lottery/Api/"]
 
-# Restaurar dependencias
-RUN dotnet restore "Microservices/Lottery/Api/CryptoJackpot.Lottery.Api.csproj"
+# Restaurar dependencias con cache mount
+RUN --mount=type=cache,id=nuget-lottery,target=/root/.nuget/packages \
+    dotnet restore "Microservices/Lottery/Api/CryptoJackpot.Lottery.Api.csproj"
 
-# Copiar código fuente
-COPY . .
+# Copiar código fuente (solo lo necesario)
+COPY Domain/ Domain/
+COPY Infra.Bus/ Infra.Bus/
+COPY Infra.IoC/ Infra.IoC/
+COPY Microservices/Lottery/ Microservices/Lottery/
 
-# Build
+# Build con cache mount
 WORKDIR "/src/Microservices/Lottery/Api"
-RUN dotnet build "CryptoJackpot.Lottery.Api.csproj" -c Release -o /app/build
+RUN --mount=type=cache,id=nuget-lottery,target=/root/.nuget/packages \
+    dotnet build "CryptoJackpot.Lottery.Api.csproj" -c Release -o /app/build --no-restore
 
 FROM build AS publish
-RUN dotnet publish "CryptoJackpot.Lottery.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN --mount=type=cache,id=nuget-lottery,target=/root/.nuget/packages \
+    dotnet publish "CryptoJackpot.Lottery.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false --no-restore
 
 FROM base AS final
 WORKDIR /app
