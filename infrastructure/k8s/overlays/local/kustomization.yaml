@@ -234,9 +234,8 @@ configMapGenerator:
       - KAFKA_BOOTSTRAP_SERVERS=redpanda.cryptojackpot.svc.cluster.local:9092
       - ConnectionStrings__RedisConnection=redis.cryptojackpot.svc.cluster.local:6379
       - Cors__AllowedOrigins__0=http://localhost:3000
-      - Cors__AllowedOrigins__1=http://cryptojackpot.local
-      - Cors__AllowedOrigins__2=http://auth.cryptojackpot.local:30180
-      - Cors__AllowedOrigins__3=http://localhost:30180
+      - Cors__AllowedOrigins__1=http://localhost:8080
+      - Cors__AllowedOrigins__2=http://localhost:30180
 
 generatorOptions:
   disableNameSuffixHash: true
