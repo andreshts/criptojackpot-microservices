@@ -1,5 +1,6 @@
 using CryptoJackpot.Infra.IoC.Extensions;
 using CryptoJackpot.Order.Data.Context;
+using CryptoJackpot.Order.Data.Extensions;
 using CryptoJackpot.Order.Infra.IoC;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -29,5 +30,7 @@ app.MapControllers();
 
 // Apply migrations in development
 await app.ApplyMigrationsAsync<OrderDbContext>();
+
+await app.ProvisionQuartzSchemaAsync<OrderDbContext>();
 
 await app.RunAsync();

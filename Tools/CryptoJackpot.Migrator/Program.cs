@@ -2,6 +2,7 @@ using CryptoJackpot.Identity.Data.Context;
 using CryptoJackpot.Lottery.Data.Context;
 using CryptoJackpot.Notification.Data.Context;
 using CryptoJackpot.Order.Data.Context;
+using CryptoJackpot.Order.Data.Extensions;
 using CryptoJackpot.Wallet.Data.Context;
 using CryptoJackpot.Winner.Data.Context;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,11 @@ try
         await MigrateContextAsync(name, contextFactory, logger);
     }
 
+    // Provision Quartz.NET tables in Order database (required for order timeout scheduling)
+    await ProvisionQuartzTablesAsync(
+        () => scope.ServiceProvider.GetRequiredService<OrderDbContext>(),
+        logger);
+
     logger.LogInformation("=== All migrations completed successfully! ===");
 }
 catch (Exception ex)
@@ -69,12 +75,14 @@ catch (Exception ex)
 
 return exitCode;
 
+// ============================================================================
 // Helper methods
+// ============================================================================
+
 static void RegisterDbContext<TContext>(HostApplicationBuilder builder, string connectionStringKey)
     where TContext : DbContext
 {
-    var connectionString = builder.Configuration[connectionStringKey]
-        ?? builder.Configuration.GetConnectionString(connectionStringKey);
+    var connectionString = builder.Configuration[connectionStringKey] ?? builder.Configuration.GetConnectionString(connectionStringKey);
 
     if (string.IsNullOrEmpty(connectionString))
     {
@@ -159,3 +167,34 @@ static async Task MigrateContextAsync(
     throw new InvalidOperationException($"Failed to migrate {name} after {maxRetries} attempts.");
 }
 
+/// <summary>
+/// Provisions Quartz.NET tables in the Order database.
+/// Uses CREATE TABLE IF NOT EXISTS for idempotency - safe to run multiple times.
+/// These tables are required by Quartz.NET AdoJobStore for persistent job scheduling.
+/// </summary>
+static async Task ProvisionQuartzTablesAsync(
+    Func<DbContext> orderContextFactory,
+    ILogger logger)
+{
+    logger.LogInformation("[Quartz] Provisioning Quartz.NET tables in Order database...");
+
+    try
+    {
+        await using var context = orderContextFactory();
+
+        // All statements use IF NOT EXISTS / ON CONFLICT DO NOTHING
+        // so this is fully idempotent and safe to run on every deployment
+        await context.Database.ExecuteSqlRawAsync(QuartzSchemaExtensions.QuartzPostgresTables);
+
+        logger.LogInformation("[Quartz] Quartz.NET tables provisioned successfully.");
+    }
+    catch (PostgresException ex) when (ex.SqlState == "42P07") // relation already exists
+    {
+        logger.LogInformation("[Quartz] Tables already exist (concurrent creation). Skipping.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "[Quartz] Failed to provision Quartz.NET tables. Order timeout scheduling will not work.");
+        throw;
+    }
+}
