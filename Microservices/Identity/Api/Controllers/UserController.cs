@@ -1,4 +1,5 @@
 using Asp.Versioning;
+using AutoMapper;
 using CryptoJackpot.Domain.Core.Extensions;
 using CryptoJackpot.Identity.Application.Commands;
 using CryptoJackpot.Identity.Application.Queries;
@@ -16,12 +17,24 @@ namespace CryptoJackpot.Identity.Api.Controllers;
 public class UserController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public UserController(IMediator mediator)
+    public UserController(IMediator mediator, IMapper mapper)
     {
         _mediator = mediator;
+        _mapper = mapper;
     }
     
+    [AllowAnonymous]
+    [HttpPost()]
+    public async Task<IActionResult> Register([FromBody] CreateUserRequest request)
+    {
+        var command = _mapper.Map<CreateUserCommand>(request);
+        var result = await _mediator.Send(command);
+        return result.ToActionResult();
+    }
+
+    [Authorize]
     [HttpGet("{userId:long}")]
     public async Task<IActionResult> GetById([FromRoute] long userId)
     {
@@ -42,14 +55,8 @@ public class UserController : ControllerBase
     [HttpPut("{userId:long}")]
     public async Task<IActionResult> Update(long userId, [FromBody] UpdateUserRequest request)
     {
-        var command = new UpdateUserCommand
-        {
-            UserId = userId,
-            Name = request.Name,
-            LastName = request.LastName,
-            Phone = request.Phone
-        };
-
+        var command = _mapper.Map<UpdateUserCommand>(request);
+        command.UserId = userId;
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
@@ -57,14 +64,8 @@ public class UserController : ControllerBase
     [HttpPost("{userId:long}/image/upload-url")]
     public async Task<IActionResult> GenerateUploadUrl(long userId, [FromBody] GenerateUploadUrlRequest request)
     {
-        var command = new GenerateUploadUrlCommand
-        {
-            UserId = userId,
-            FileName = request.FileName,
-            ContentType = request.ContentType,
-            ExpirationMinutes = request.ExpirationMinutes
-        };
-
+        var command = _mapper.Map<GenerateUploadUrlCommand>(request);
+        command.UserId = userId;
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
@@ -72,12 +73,7 @@ public class UserController : ControllerBase
     [HttpPatch("update-image-profile")]
     public async Task<IActionResult> UpdateImage([FromBody] UpdateUserImageRequest request)
     {
-        var command = new UpdateUserImageCommand
-        {
-            UserId = request.UserId,
-            StorageKey = request.StorageKey
-        };
-
+        var command = _mapper.Map<UpdateUserImageCommand>(request);
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
