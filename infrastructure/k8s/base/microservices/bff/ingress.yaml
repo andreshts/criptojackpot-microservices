@@ -1,0 +1,44 @@
+# BFF Gateway Ingress - Single entry point for all API traffic
+# This replaces all the individual microservice ingress rules
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bff-ingress
+  namespace: cryptojackpot
+  labels:
+    app: bff-gateway
+    component: ingress
+  annotations:
+    # WebSocket support for SignalR
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # All API traffic goes through BFF
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: bff-gateway
+                port:
+                  number: 80
+          # SignalR hub
+          - path: /lottery-hub
+            pathType: Prefix
+            backend:
+              service:
+                name: bff-gateway
+                port:
+                  number: 80
+          # Health check
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: bff-gateway
+                port:
+                  number: 80
+

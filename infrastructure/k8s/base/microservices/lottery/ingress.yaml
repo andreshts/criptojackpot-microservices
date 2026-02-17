@@ -1,0 +1,33 @@
+# Ingress for Lottery API routes
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lottery-ingress
+  namespace: cryptojackpot
+  labels:
+    app: lottery-api
+    component: ingress
+  annotations:
+    # WebSocket support for SignalR
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$request_uri"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/v1/lotteries
+            pathType: Prefix
+            backend:
+              service:
+                name: lottery-api
+                port:
+                  number: 80
+          - path: /lottery-hub
+            pathType: Prefix
+            backend:
+              service:
+                name: lottery-api
+                port:
+                  number: 80
+

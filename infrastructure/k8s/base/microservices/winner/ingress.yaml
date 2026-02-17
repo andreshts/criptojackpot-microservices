@@ -1,0 +1,22 @@
+# Ingress for Winner API routes
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: winner-ingress
+  namespace: cryptojackpot
+  labels:
+    app: winner-api
+    component: ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/v1/winners
+            pathType: Prefix
+            backend:
+              service:
+                name: winner-api
+                port:
+                  number: 80
+

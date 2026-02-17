@@ -23,6 +23,10 @@ build:
       context: .
       docker:
         dockerfile: Tools/CryptoJackpot.Migrator/Dockerfile
+    - image: cryptojackpot/bff-gateway
+      context: .
+      docker:
+        dockerfile: Microservices/BFF/Dockerfile
     - image: cryptojackpot/identity-api
       context: .
       docker:
@@ -80,6 +84,11 @@ profiles:
         paths:
           - infrastructure/k8s/overlays/local
     portForward:
+      - resourceType: service
+        resourceName: bff-gateway
+        namespace: cryptojackpot
+        port: 80
+        localPort: 8080
       - resourceType: service
         resourceName: identity-api
         namespace: cryptojackpot

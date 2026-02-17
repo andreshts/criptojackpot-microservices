@@ -1,6 +1,39 @@
-# Kustomization for Production ingress
+# Kustomization for PRODUCTION environment ingress patches
+# Routes are defined in base/microservices/{service}/ingress.yaml
+# This overlay only applies environment-specific configurations (host, TLS, annotations)
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-  - ingress.yaml
+# Patches for all ingress resources in base
+patches:
+  # Common CORS, TLS, rate limiting and proxy settings for PRODUCTION
+  - target:
+      kind: Ingress
+      labelSelector: component=ingress
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          kubernetes.io/ingress.class: nginx
+          cert-manager.io/cluster-issuer: letsencrypt-prod
+          nginx.ingress.kubernetes.io/enable-cors: "true"
+          nginx.ingress.kubernetes.io/cors-allow-origin: "https://cryptojackpot.com, https://www.cryptojackpot.com"
+          nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+          nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-signalr-user-agent,Accept,Origin"
+          nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+          nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+          # Rate limiting for production
+          nginx.ingress.kubernetes.io/limit-rps: "100"
+          nginx.ingress.kubernetes.io/limit-connections: "50"
+      - op: add
+        path: /spec/rules/0/host
+        value: api.cryptojackpot.com
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts:
+              - api.cryptojackpot.com
+            secretName: cryptojackpot-prod-tls

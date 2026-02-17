@@ -221,6 +221,27 @@ patches:
             memory: "512Mi"
             cpu: "500m"
 
+  # BFF Gateway
+  - target:
+      kind: Deployment
+      name: bff-gateway
+    patch: |-
+      - op: add
+        path: /spec/replicas
+        value: 1
+      - op: add
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+
 # ConfigMap for local environment
 configMapGenerator:
   - name: app-config

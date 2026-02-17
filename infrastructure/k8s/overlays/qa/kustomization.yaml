@@ -199,6 +199,37 @@ patches:
             memory: "256Mi"
             cpu: "250m"
 
+  # BFF Gateway
+  - target:
+      kind: Deployment
+      name: bff-gateway
+    patch: |-
+      - op: add
+        path: /spec/replicas
+        value: 2
+      - op: add
+        path: /spec/template/spec/securityContext
+        value:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          fsGroup: 1000
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - op: add
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "125m"
+
 # ConfigMap for QA environment
 configMapGenerator:
   - name: app-config
@@ -218,6 +249,9 @@ generatorOptions:
   disableNameSuffixHash: true
 
 images:
+  - name: cryptojackpot/bff-gateway
+    newName: registry.digitalocean.com/cryptojackpot/bff-gateway
+    newTag: qa
   - name: cryptojackpot/identity-api
     newName: registry.digitalocean.com/cryptojackpot/identity-api
     newTag: qa

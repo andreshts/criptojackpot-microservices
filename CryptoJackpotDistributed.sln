@@ -167,6 +167,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "identity", "identity", "{44
 		infrastructure\k8s\base\microservices\identity\kustomization.yaml = infrastructure\k8s\base\microservices\identity\kustomization.yaml
 		infrastructure\k8s\base\microservices\identity\deployment.yaml = infrastructure\k8s\base\microservices\identity\deployment.yaml
 		infrastructure\k8s\base\microservices\identity\service.yaml = infrastructure\k8s\base\microservices\identity\service.yaml
+		infrastructure\k8s\base\microservices\identity\ingress.yaml = infrastructure\k8s\base\microservices\identity\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lottery", "lottery", "{44444444-4444-4444-4444-444444444444}"
@@ -174,6 +175,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lottery", "lottery", "{4444
 		infrastructure\k8s\base\microservices\lottery\kustomization.yaml = infrastructure\k8s\base\microservices\lottery\kustomization.yaml
 		infrastructure\k8s\base\microservices\lottery\deployment.yaml = infrastructure\k8s\base\microservices\lottery\deployment.yaml
 		infrastructure\k8s\base\microservices\lottery\service.yaml = infrastructure\k8s\base\microservices\lottery\service.yaml
+		infrastructure\k8s\base\microservices\lottery\ingress.yaml = infrastructure\k8s\base\microservices\lottery\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "order", "order", "{44444444-4444-4444-4444-444444444445}"
@@ -181,6 +183,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "order", "order", "{44444444
 		infrastructure\k8s\base\microservices\order\kustomization.yaml = infrastructure\k8s\base\microservices\order\kustomization.yaml
 		infrastructure\k8s\base\microservices\order\deployment.yaml = infrastructure\k8s\base\microservices\order\deployment.yaml
 		infrastructure\k8s\base\microservices\order\service.yaml = infrastructure\k8s\base\microservices\order\service.yaml
+		infrastructure\k8s\base\microservices\order\ingress.yaml = infrastructure\k8s\base\microservices\order\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wallet", "wallet", "{44444444-4444-4444-4444-444444444446}"
@@ -188,6 +191,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wallet", "wallet", "{444444
 		infrastructure\k8s\base\microservices\wallet\kustomization.yaml = infrastructure\k8s\base\microservices\wallet\kustomization.yaml
 		infrastructure\k8s\base\microservices\wallet\deployment.yaml = infrastructure\k8s\base\microservices\wallet\deployment.yaml
 		infrastructure\k8s\base\microservices\wallet\service.yaml = infrastructure\k8s\base\microservices\wallet\service.yaml
+		infrastructure\k8s\base\microservices\wallet\ingress.yaml = infrastructure\k8s\base\microservices\wallet\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "winner", "winner", "{44444444-4444-4444-4444-444444444447}"
@@ -195,6 +199,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "winner", "winner", "{444444
 		infrastructure\k8s\base\microservices\winner\kustomization.yaml = infrastructure\k8s\base\microservices\winner\kustomization.yaml
 		infrastructure\k8s\base\microservices\winner\deployment.yaml = infrastructure\k8s\base\microservices\winner\deployment.yaml
 		infrastructure\k8s\base\microservices\winner\service.yaml = infrastructure\k8s\base\microservices\winner\service.yaml
+		infrastructure\k8s\base\microservices\winner\ingress.yaml = infrastructure\k8s\base\microservices\winner\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notification", "notification", "{44444444-4444-4444-4444-444444444448}"
@@ -202,6 +207,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notification", "notificatio
 		infrastructure\k8s\base\microservices\notification\kustomization.yaml = infrastructure\k8s\base\microservices\notification\kustomization.yaml
 		infrastructure\k8s\base\microservices\notification\deployment.yaml = infrastructure\k8s\base\microservices\notification\deployment.yaml
 		infrastructure\k8s\base\microservices\notification\service.yaml = infrastructure\k8s\base\microservices\notification\service.yaml
+		infrastructure\k8s\base\microservices\notification\ingress.yaml = infrastructure\k8s\base\microservices\notification\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "audit", "audit", "{44444444-4444-4444-4444-444444444449}"
@@ -209,6 +215,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "audit", "audit", "{44444444
 		infrastructure\k8s\base\microservices\audit\kustomization.yaml = infrastructure\k8s\base\microservices\audit\kustomization.yaml
 		infrastructure\k8s\base\microservices\audit\deployment.yaml = infrastructure\k8s\base\microservices\audit\deployment.yaml
 		infrastructure\k8s\base\microservices\audit\service.yaml = infrastructure\k8s\base\microservices\audit\service.yaml
+		infrastructure\k8s\base\microservices\audit\ingress.yaml = infrastructure\k8s\base\microservices\audit\ingress.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{44444444-4444-4444-4444-44444444444A}"
@@ -488,6 +495,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Migrator", "Tools\CryptoJackpot.Migrator\CryptoJackpot.Migrator.csproj", "{5529C06C-8815-4B6D-B7A5-72DD6B9E4F95}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BFF", "BFF", "{77785EDB-F2DF-DA69-1F1A-B213EA48CC0A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.BFF", "Microservices\BFF\CryptoJackpot.BFF.csproj", "{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -955,6 +966,18 @@ Global
 		{5529C06C-8815-4B6D-B7A5-72DD6B9E4F95}.Release|x64.Build.0 = Release|Any CPU
 		{5529C06C-8815-4B6D-B7A5-72DD6B9E4F95}.Release|x86.ActiveCfg = Release|Any CPU
 		{5529C06C-8815-4B6D-B7A5-72DD6B9E4F95}.Release|x86.Build.0 = Release|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Debug|x64.Build.0 = Debug|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Debug|x86.Build.0 = Debug|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Release|x64.ActiveCfg = Release|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Release|x64.Build.0 = Release|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Release|x86.ActiveCfg = Release|Any CPU
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -1086,5 +1109,7 @@ Global
 		{6C4A2A6D-D8D6-9F9D-22C3-A1FE8524D3A8} = {F21F1A8A-B2AE-DC8B-459D-9E38AB30AD9E}
 		{5FBF7E97-9D34-489C-8E77-602888D2FA5D} = {6C4A2A6D-D8D6-9F9D-22C3-A1FE8524D3A8}
 		{5529C06C-8815-4B6D-B7A5-72DD6B9E4F95} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
+		{77785EDB-F2DF-DA69-1F1A-B213EA48CC0A} = {8A367DDA-5161-A942-4F09-60E4726C9306}
+		{5174EDF1-85FD-408A-AA0D-B6DF3BDF3652} = {77785EDB-F2DF-DA69-1F1A-B213EA48CC0A}
 	EndGlobalSection
 EndGlobal

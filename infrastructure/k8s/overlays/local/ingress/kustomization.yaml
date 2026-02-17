@@ -1,6 +1,27 @@
-# Kustomization for local ingress
+# Kustomization for LOCAL environment ingress patches
+# Routes are defined in base/microservices/{service}/ingress.yaml
+# This overlay only applies environment-specific configurations
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-  - api-ingress.yaml
+# Patches for all ingress resources in base
+patches:
+  # Common CORS and proxy settings for LOCAL
+  - target:
+      kind: Ingress
+      labelSelector: component=ingress
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          nginx.ingress.kubernetes.io/enable-cors: "true"
+          nginx.ingress.kubernetes.io/cors-allow-origin: "http://localhost:3000, http://localhost:8080, http://localhost:30180"
+          nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+          nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,x-signalr-user-agent,Accept,Origin"
+          nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+          nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      - op: add
+        path: /spec/rules/0/host
+        value: localhost

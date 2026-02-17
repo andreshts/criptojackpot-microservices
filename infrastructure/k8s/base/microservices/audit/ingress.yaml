@@ -1,0 +1,22 @@
+# Ingress for Audit API routes
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: audit-ingress
+  namespace: cryptojackpot
+  labels:
+    app: audit-api
+    component: ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/v1/audit
+            pathType: Prefix
+            backend:
+              service:
+                name: audit-api
+                port:
+                  number: 80
+
