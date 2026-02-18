@@ -53,12 +53,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         // ─── Relaciones ──────────────────────────────────────────
         builder.HasOne(x => x.Role)
-            .WithMany()
+            .WithMany(r => r.Users)
             .HasForeignKey(x => x.RoleId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(x => x.Country)
-            .WithMany()
+            .WithMany(c => c.Users)
             .HasForeignKey(x => x.CountryId)
             .OnDelete(DeleteBehavior.Restrict);
 
