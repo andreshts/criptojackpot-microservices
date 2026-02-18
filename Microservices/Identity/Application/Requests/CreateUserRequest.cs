@@ -8,7 +8,6 @@ public class CreateUserRequest
     public string Password { get; set; } = null!;
     public string? Identification { get; set; }
     public string? Phone { get; set; }
-    public long RoleId { get; set; }
     public long CountryId { get; set; }
     public string StatePlace { get; set; } = null!;
     public string City { get; set; } = null!;

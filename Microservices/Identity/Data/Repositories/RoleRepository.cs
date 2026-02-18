@@ -6,7 +6,7 @@ namespace CryptoJackpot.Identity.Data.Repositories;
 
 public class RoleRepository : IRoleRepository
 {
-    private const string DefaultRoleName = "User";
+    private const string DefaultRoleName = "client";
     
     private readonly IdentityDbContext _context;
     

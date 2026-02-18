@@ -21,6 +21,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
     private readonly IMapper _mapper;
     private readonly IPublisher _publisher;
     private readonly ILogger<CreateUserCommandHandler> _logger;
+    private readonly IRoleRepository  _roleRepository;
 
     public CreateUserCommandHandler(
         IUserRepository userRepository,
@@ -28,7 +29,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         IIdentityEventPublisher eventPublisher,
         IMapper mapper,
         IPublisher publisher,
-        ILogger<CreateUserCommandHandler> logger)
+        ILogger<CreateUserCommandHandler> logger,
+        IRoleRepository roleRepository)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
@@ -36,6 +38,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
         _mapper = mapper;
         _publisher = publisher;
         _logger = logger;
+        _roleRepository = roleRepository;
     }
 
     public async Task<Result<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -71,6 +74,8 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
             var verificationToken = Guid.NewGuid().ToString("N");
             user.EmailVerificationToken = verificationToken;
             user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24);
+            var defaultRole = await _roleRepository.GetDefaultRoleAsync();
+            user.RoleId = defaultRole?.Id ?? 2;
 
             var createdUser = await _userRepository.CreateAsync(user);
 

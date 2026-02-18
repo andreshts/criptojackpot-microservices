@@ -29,9 +29,6 @@ public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
             .Matches("[0-9]").WithMessage("Password must contain at least one digit")
             .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character");
 
-        RuleFor(x => x.RoleId)
-            .GreaterThan(0).WithMessage("Role is required");
-
         RuleFor(x => x.CountryId)
             .GreaterThan(0).WithMessage("Country is required");
 

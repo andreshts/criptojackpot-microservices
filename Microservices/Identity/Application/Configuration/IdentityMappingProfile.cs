@@ -21,6 +21,7 @@ public class IdentityMappingProfile : Profile
         CreateMap<CreateUserCommand, User>()
             .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // Set manually after hashing
             .ForMember(dest => dest.EmailVerified, opt => opt.Ignore())
+            .ForMember(dest => dest.RoleId, opt => opt.Ignore()) // Set manually with default role
             .ForMember(dest => dest.UserGuid, opt => opt.Ignore())
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
