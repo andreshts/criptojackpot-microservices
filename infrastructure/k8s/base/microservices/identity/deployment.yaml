@@ -78,6 +78,12 @@ spec:
                 secretKeyRef:
                   name: jwt-secrets
                   key: KEYCLOAK_CLIENT_SECRET
+            # Redis for Data Protection Keys persistence (required for 2FA)
+            - name: DataProtection__RedisConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_CONNECTION_STRING
           readinessProbe:
             httpGet:
               path: /health
