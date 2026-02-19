@@ -275,6 +275,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "secrets", "secrets", "{5555
 		infrastructure\k8s\overlays\local\secrets\mongodb-secrets.yaml = infrastructure\k8s\overlays\local\secrets\mongodb-secrets.yaml
 		infrastructure\k8s\overlays\local\secrets\spaces-secrets.yaml = infrastructure\k8s\overlays\local\secrets\spaces-secrets.yaml
 		infrastructure\k8s\overlays\local\secrets\brevo-secrets.yaml = infrastructure\k8s\overlays\local\secrets\brevo-secrets.yaml
+		infrastructure\k8s\overlays\local\secrets\redis-secrets.yaml = infrastructure\k8s\overlays\local\secrets\redis-secrets.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "configmaps", "configmaps", "{55555555-5555-5555-5555-555555555554}"
