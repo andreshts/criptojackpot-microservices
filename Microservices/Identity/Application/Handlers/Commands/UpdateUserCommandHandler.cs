@@ -30,7 +30,10 @@ public class UpdateUserCommandHandler : IRequestHandler<UpdateUserCommand, Resul
         user.Name = request.Name;
         user.LastName = request.LastName;
         user.Phone = request.Phone;
-
+        user.CountryId = request.CountryId;
+        user.StatePlace = request.StatePlace;
+        user.City = request.City;
+        user.Address = request.Address;
 
         var updatedUser = await _userRepository.UpdateAsync(user);
         return Result.Ok(_mapper.Map<UserDto>(updatedUser));

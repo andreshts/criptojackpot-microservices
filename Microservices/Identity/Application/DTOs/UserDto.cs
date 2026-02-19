@@ -9,6 +9,10 @@ public class UserDto
     public string Email { get; set; } = null!;
     public bool EmailVerified { get; set; }
     public string? Phone { get; set; }
+    public long CountryId { get; set; }
+    public string StatePlace { get; set; } = null!;
+    public string City { get; set; } = null!;
+    public string? Address { get; set; }
     public string? ImagePath { get; set; }
     public bool Status { get; set; }
     public string? Token { get; set; }
