@@ -11,14 +11,6 @@ public static class ConfigurationKeys
     public const string CoinPaymentsClientSecret = "CoinPayments:ClientSecret";
     public const string CoinPaymentsClientId = "CoinPayments:ClientId";
     public const string CoinPaymentsBaseUrl = "CoinPayments:BaseUrl";
-
-    public const string JwtSettingsSection = "JwtSettings";
-    public const string JwtSecretKey = "JwtSettings:SecretKey";
-    public const string JwtIssuer = "JwtSettings:Issuer";
-    public const string JwtAudience = "JwtSettings:Audience";
-
-    public const string CorsAllowedOrigins = "Cors:AllowedOrigins";
-    public const string DefaultConnection = "DefaultConnection";
 }
 
 /// <summary>

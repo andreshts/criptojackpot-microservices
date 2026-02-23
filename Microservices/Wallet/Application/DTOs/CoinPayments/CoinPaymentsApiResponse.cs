@@ -346,14 +346,3 @@ public class CreateWithdrawalRequest
     [JsonPropertyName("notificationsUrl")]
     public string? NotificationsUrl { get; set; }
 }
-
-// ─────────────────────────────────────────────
-// Kept for backward compat – no longer used
-// ─────────────────────────────────────────────
-
-/// <summary>Legacy callback-address result stub (not used by new API).</summary>
-public class GetCallbackAddressResult
-{
-    public string Address { get; set; } = string.Empty;
-    public string? DestTag { get; set; }
-}

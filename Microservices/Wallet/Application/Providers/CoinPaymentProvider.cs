@@ -31,13 +31,35 @@ public class CoinPaymentProvider : ICoinPaymentProvider
         string clientId,
         IHttpClientFactory httpClientFactory)
     {
-        _clientSecret = clientSecret ?? throw new ArgumentNullException(nameof(clientSecret));
-        _clientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
+        _clientSecret      = clientSecret      ?? throw new ArgumentNullException(nameof(clientSecret));
+        _clientId          = clientId          ?? throw new ArgumentNullException(nameof(clientId));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
-
-    // ── ICoinPaymentProvider ──────────────────────────────────────────────
-
+    
+    /// <summary>
+    /// Creates a new invoice using the CoinPayments API with the specified parameters.
+    /// </summary>
+    /// <param name="amount">The amount to be billed in the invoice.</param>
+    /// <param name="currencyFrom">The currency of the amount to be paid.</param>
+    /// <param name="currencyTo">The currency in which the amount will be converted for the recipient, if applicable.</param>
+    /// <param name="notes">Optional. Notes or description for the invoice.</param>
+    /// <param name="notificationsUrl">Optional. The URL for receiving payment status notifications via webhook.</param>
+    /// <param name="cancellationToken">A token to cancel the operation if necessary.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation, containing the API response
+    /// with the created invoice details.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when an HTTP error occurs while communicating with the CoinPayments API.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.
+    /// </exception>
+    /// <remarks>
+    /// This method constructs the invoice request payload, including details about the billed amount,
+    /// associated currency, and optional webhook notification data, before sending it via an HTTP POST request.
+    /// Ensure proper authentication headers are provided during the CoinPaymentsProvider initialization.
+    /// </remarks>
     public Task<RestResponse> CreateInvoiceAsync(
         decimal amount,
         string currencyFrom,
@@ -46,14 +68,10 @@ public class CoinPaymentProvider : ICoinPaymentProvider
         string? notificationsUrl = null,
         CancellationToken cancellationToken = default)
     {
-        // API v2 uses "items" array with amount as string, and currency as numeric ID.
-        // NOTE: currencyFrom/currencyTo should be numeric currency IDs (e.g., "5057", "1002")
-        // not ticker symbols. If your application still passes symbols like "USD"/"BTC",
-        // you'll need a mapping layer (CurrencyId resolver) or use the /currencies endpoint.
         var body = new CreateInvoiceRequest
         {
             ClientId = _clientId,
-            Currency = currencyFrom, // Invoice denomination currency (numeric ID)
+            Currency = currencyFrom,
             Items =
             [
                 new InvoiceItem
@@ -75,16 +93,32 @@ public class CoinPaymentProvider : ICoinPaymentProvider
             ],
             Notes = notes,
             WebhookData = !string.IsNullOrEmpty(notificationsUrl)
-                ? new InvoiceWebhookData
-                {
-                    NotificationsUrl = notificationsUrl
-                }
+                ? new InvoiceWebhookData { NotificationsUrl = notificationsUrl }
                 : null
         };
 
         return SendAsync(HttpMethod.Post, CoinPaymentsEndpoints.CreateInvoice, body, cancellationToken);
     }
 
+    /// <summary>
+    /// Retrieves an invoice by its unique identifier from the CoinPayments API.
+    /// </summary>
+    /// <param name="invoiceId">The unique identifier of the invoice to fetch.</param>
+    /// <param name="cancellationToken">A token to cancel the operation if necessary.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation, containing the API response
+    /// with the requested invoice details.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when an HTTP error occurs while communicating with the CoinPayments API.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.
+    /// </exception>
+    /// <remarks>
+    /// The method sends a GET request to the CoinPayments API using the specified invoice identifier.
+    /// Ensure valid API credentials are provided during the CoinPaymentProvider initialization.
+    /// </remarks>
     public Task<RestResponse> GetInvoiceAsync(string invoiceId, CancellationToken cancellationToken = default) =>
         SendAsync(
             HttpMethod.Get,
@@ -92,12 +126,66 @@ public class CoinPaymentProvider : ICoinPaymentProvider
             null,
             cancellationToken);
 
+    /// <summary>
+    /// Retrieves the account balances for supported cryptocurrencies from the CoinPayments API.
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// A token to cancel the operation if necessary.
+    /// </param>
+    /// <returns>
+    /// A task representing the asynchronous operation, containing the API response with the list of balances
+    /// for supported cryptocurrencies.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when an HTTP error occurs while communicating with the CoinPayments API.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.
+    /// </exception>
+    /// <remarks>
+    /// The method sends a GET request to the CoinPayments endpoint for retrieving account balances.
+    /// Ensure that proper authentication headers are set during the initialization of the CoinPaymentProvider.
+    /// </remarks>
     public Task<RestResponse> GetBalancesAsync(CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Get, CoinPaymentsEndpoints.GetBalances, null, cancellationToken);
 
+    /// <summary>
+    /// Retrieves the list of supported cryptocurrencies and their associated metadata
+    /// from the CoinPayments API.
+    /// </summary>
+    /// <param name="cancellationToken">A token to cancel the operation if necessary.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation, containing the API response with the
+    /// list of supported cryptocurrencies.
+    /// </returns>
+    /// <exception cref="HttpRequestException">
+    /// Thrown when an HTTP error occurs while communicating with the CoinPayments API.
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.
+    /// </exception>
+    /// <remarks>
+    /// The method sends a GET request to the defined endpoint for retrieving the currencies.
+    /// Ensure proper authentication headers are provided during the CoinPaymentsProvider initialization.
+    /// </remarks>
     public Task<RestResponse> GetCurrenciesAsync(CancellationToken cancellationToken = default) =>
         SendAsync(HttpMethod.Get, CoinPaymentsEndpoints.GetCurrencies, null, cancellationToken);
 
+    /// <summary>
+    /// Initiates a withdrawal request to transfer a specified amount of cryptocurrency to a designated address.
+    /// </summary>
+    /// <param name="amount">The amount of cryptocurrency to be withdrawn, formatted to 8 decimal places.</param>
+    /// <param name="currency">The ticker symbol of the cryptocurrency to withdraw (e.g., BTC, ETH).</param>
+    /// <param name="address">The target wallet address where the withdrawal will be sent.</param>
+    /// <param name="autoConfirm">Indicates whether the withdrawal should be automatically confirmed without manual intervention.</param>
+    /// <param name="notificationsUrl">An optional URL to receive transaction notifications via callbacks.</param>
+    /// <param name="cancellationToken">A token used to cancel the withdrawal request operation.</param>
+    /// <returns>A task representing the asynchronous operation, containing the response of the withdrawal request.</returns>
+    /// <exception cref="HttpRequestException">Thrown when an HTTP error occurs while sending the withdrawal request.</exception>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.</exception>
+    /// <remarks>
+    /// This method constructs the request body for the withdrawal operation and sends it to the configured CoinPayments endpoint.
+    /// </remarks>
     public Task<RestResponse> CreateWithdrawalAsync(
         decimal amount,
         string currency,
@@ -108,19 +196,32 @@ public class CoinPaymentProvider : ICoinPaymentProvider
     {
         var body = new CreateWithdrawalRequest
         {
-            ClientId = _clientId,
-            Amount = amount.ToString("F8", System.Globalization.CultureInfo.InvariantCulture),
-            Currency = currency,
-            Address = address,
-            AutoConfirm = autoConfirm,
+            ClientId         = _clientId,
+            Amount           = amount.ToString("F8", System.Globalization.CultureInfo.InvariantCulture),
+            Currency         = currency,
+            Address          = address,
+            AutoConfirm      = autoConfirm,
             NotificationsUrl = notificationsUrl
         };
 
         return SendAsync(HttpMethod.Post, CoinPaymentsEndpoints.CreateWithdrawal, body, cancellationToken);
     }
-
-    // ── Core HTTP logic ───────────────────────────────────────────────────
-
+    
+    /// <summary>
+    /// Sends an HTTP request to the specified endpoint with the provided method, body, and cancellation token.
+    /// </summary>
+    /// <param name="method">The HTTP method to be used for the request (e.g., GET, POST).</param>
+    /// <param name="relativeEndpoint">The API endpoint relative to the base URL.</param>
+    /// <param name="body">The payload to be sent with the request, serialized to JSON. Can be null if no body is required.</param>
+    /// <param name="cancellationToken">A token used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>A task that represents the asynchronous operation, containing the response of the HTTP request.</returns>
+    /// <exception cref="OperationCanceledException">Thrown when the operation is canceled via the <paramref name="cancellationToken"/>.</exception>
+    /// <exception cref="HttpRequestException">Thrown if an HTTP error occurs while sending the request.</exception>
+    /// <exception cref="Exception">Thrown for general exceptions that occur during the request execution.</exception>
+    /// <remarks>
+    /// This method is a core utility for sending HTTP requests within the CoinPaymentProvider class. It encapsulates
+    /// request creation, error handling, and response wrapping for uniform usage across different API operations.
+    /// </remarks>
     private async Task<RestResponse> SendAsync(
         HttpMethod method,
         string relativeEndpoint,
@@ -133,15 +234,20 @@ public class CoinPaymentProvider : ICoinPaymentProvider
         {
             using var httpClient = _httpClientFactory.CreateClient(ServiceDefaults.CoinPaymentsHttpClient);
 
-            var baseAddress = httpClient.BaseAddress ?? throw new InvalidOperationException("CoinPayments HttpClient BaseAddress is not configured");
+            var baseAddress = httpClient.BaseAddress
+                ?? throw new InvalidOperationException("CoinPayments HttpClient BaseAddress is not configured");
 
             var requestUri = new Uri(baseAddress, relativeEndpoint);
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss");
+            
             var bodyJson = body is not null ? JsonSerializer.Serialize(body, JsonOptions) : string.Empty;
-            var signature = BuildSignature(timestamp, bodyJson);
+            
+            var signature = BuildSignature(method.Method, requestUri.ToString(), timestamp, bodyJson);
 
             using var request = new HttpRequestMessage(method, requestUri);
-            request.Headers.Add("X-CoinPayments-Client-Id", _clientId);
+            
+            request.Headers.Add("X-CoinPayments-Client", _clientId);
             request.Headers.Add("X-CoinPayments-Timestamp", timestamp);
             request.Headers.Add("X-CoinPayments-Signature", signature);
 
@@ -150,43 +256,51 @@ public class CoinPaymentProvider : ICoinPaymentProvider
 
             using var response = await httpClient.SendAsync(request, cancellationToken);
 
-            restResponse.Content = await response.Content.ReadAsStringAsync(cancellationToken);
-            restResponse.StatusCode = response.StatusCode;
+            restResponse.Content           = await response.Content.ReadAsStringAsync(cancellationToken);
+            restResponse.StatusCode        = response.StatusCode;
             restResponse.StatusDescription = response.ReasonPhrase;
         }
         catch (OperationCanceledException)
         {
             restResponse.StatusCode = HttpStatusCode.RequestTimeout;
-            restResponse.Content = "Request was cancelled";
+            restResponse.Content    = "Request was cancelled";
             throw;
         }
         catch (HttpRequestException ex)
         {
             restResponse.StatusCode = HttpStatusCode.ServiceUnavailable;
-            restResponse.Content = $"Error contacting CoinPayments API: {ex.Message}";
+            restResponse.Content    = $"Error contacting CoinPayments API: {ex.Message}";
         }
         catch (Exception ex)
         {
             restResponse.StatusCode = HttpStatusCode.InternalServerError;
-            restResponse.Content = $"Unexpected error: {ex.Message}";
+            restResponse.Content    = $"Unexpected error: {ex.Message}";
             throw;
         }
 
         return restResponse;
     }
-
-    // ── Signature builder ─────────────────────────────────────────────────
-
+    
     /// <summary>
-    /// HMAC-SHA256( clientId + timestamp + requestBody , clientSecret ) → lowercase hex.
+    /// Builds a cryptographic signature based on the specified HTTP method, URL, timestamp, and message body.
     /// </summary>
-    private string BuildSignature(string timestamp, string body)
+    /// <param name="httpMethod">The HTTP method (e.g., GET, POST) used in the request.</param>
+    /// <param name="fullUrl">The full URL of the request, including query parameters if any.</param>
+    /// <param name="timestamp">The timestamp in ISO-8601 format used to ensure request validity.</param>
+    /// <param name="body">The JSON-serialized body of the request (can be empty if no body is present).</param>
+    /// <returns>A Base64-encoded string representing the HMAC-SHA256 signature of the input parameters.</returns>
+    private string BuildSignature(string httpMethod, string fullUrl, string timestamp, string body)
     {
-        var message = _clientId + timestamp + body;
+        var message = $"\ufeff{httpMethod}\n{fullUrl}\n{_clientId}\n{timestamp}\n{body}";
+        
         var keyBytes = Encoding.UTF8.GetBytes(_clientSecret);
         var msgBytes = Encoding.UTF8.GetBytes(message);
 
         using var hmac = new HMACSHA256(keyBytes);
-        return Convert.ToHexString(hmac.ComputeHash(msgBytes)).ToLowerInvariant();
+        var hash = hmac.ComputeHash(msgBytes);
+        
+        return Convert.ToBase64String(hash);
     }
 }
+
+
