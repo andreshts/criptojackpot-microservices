@@ -1,98 +1,105 @@
 ﻿using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using CryptoJackpot.Domain.Core.Responses;
+using CryptoJackpot.Wallet.Application.DTOs.CoinPayments;
 using CryptoJackpot.Wallet.Domain.Interfaces;
 
 namespace CryptoJackpot.Wallet.Application.Providers;
 
+/// <summary>
+/// CoinPayments provider for the new API v2 (a-api.coinpayments.net).
+/// Authentication: X-CoinPayments-Client-Id + X-CoinPayments-Timestamp + X-CoinPayments-Signature (HMAC-SHA256).
+/// Signature = HMAC-SHA256( clientId + timestamp + requestBody , clientSecret )
+/// </summary>
 public class CoinPaymentProvider : ICoinPaymentProvider
 {
-    private const string ApiVersion = "1";
-    
-    private static long _lastNonce;
-    private static readonly object _nonceLock = new();
-    
-    private readonly string _privateKey;
-    private readonly string _publicKey;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private readonly string _clientSecret;
+    private readonly string _clientId;
     private readonly IHttpClientFactory _httpClientFactory;
 
     public CoinPaymentProvider(
-        string privateKey, 
-        string publicKey,
+        string clientSecret,
+        string clientId,
         IHttpClientFactory httpClientFactory)
     {
-        _privateKey = privateKey ?? throw new ArgumentNullException(nameof(privateKey));
-        _publicKey = publicKey ?? throw new ArgumentNullException(nameof(publicKey));
+        _clientSecret      = clientSecret      ?? throw new ArgumentNullException(nameof(clientSecret));
+        _clientId          = clientId          ?? throw new ArgumentNullException(nameof(clientId));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
     }
 
-    public async Task<RestResponse> CallApiAsync(
-        string command, 
-        SortedList<string, string>? parms = null,
+    // ── ICoinPaymentProvider ──────────────────────────────────────────────
+
+    public Task<RestResponse> CreateInvoiceAsync(
+        decimal amount,
+        string currencyFrom,
+        string currencyTo,
+        string? notes = null,
+        string? notificationsUrl = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(command);
-        
-        var parameters = parms ?? new SortedList<string, string>();
-        
-        parameters["version"] = ApiVersion;
-        parameters["key"] = _publicKey;
-        parameters["command"] = command;
-        parameters["nonce"] = GenerateNonce().ToString();
-
-        var postData = BuildPostData(parameters);
-        var hmacSignature = GenerateHmacSignature(postData);
-
-        return await SendRequestAsync(postData, hmacSignature, cancellationToken);
-    }
-
-    private static string BuildPostData(SortedList<string, string> parameters)
-    {
-        var postDataBuilder = new StringBuilder();
-        
-        foreach (var pair in parameters)
+        var body = new CreateInvoiceRequest
         {
-            if (postDataBuilder.Length > 0)
-                postDataBuilder.Append('&');
-            
-            postDataBuilder.Append(pair.Key);
-            postDataBuilder.Append('=');
-            postDataBuilder.Append(Uri.EscapeDataString(pair.Value));
-        }
+            ClientId = _clientId,
+            Amount = new InvoiceAmount
+            {
+                CurrencyId   = currencyFrom,
+                DisplayValue = amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+                Value        = amount.ToString("F8", System.Globalization.CultureInfo.InvariantCulture)
+            },
+            Currency   = currencyTo,
+            Notes      = notes,
+            WebhookData = !string.IsNullOrEmpty(notificationsUrl)
+                ? new InvoiceWebhookData { NotificationsUrl = notificationsUrl }
+                : null
+        };
 
-        return postDataBuilder.ToString();
+        return SendAsync(HttpMethod.Post, "merchant/invoices", body, cancellationToken);
     }
 
-    private static long GenerateNonce()
+    public Task<RestResponse> GetInvoiceAsync(string invoiceId, CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Get, $"merchant/invoices/{invoiceId}", null, cancellationToken);
+
+    public Task<RestResponse> GetBalancesAsync(CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Get, "merchant/balance", null, cancellationToken);
+
+    public Task<RestResponse> GetCurrenciesAsync(CancellationToken cancellationToken = default) =>
+        SendAsync(HttpMethod.Get, "currencies", null, cancellationToken);
+
+    public Task<RestResponse> CreateWithdrawalAsync(
+        decimal amount,
+        string currency,
+        string address,
+        bool autoConfirm = false,
+        string? notificationsUrl = null,
+        CancellationToken cancellationToken = default)
     {
-        lock (_nonceLock)
+        var body = new CreateWithdrawalRequest
         {
-            // Usar segundos es más seguro ante reinicios y desajustes de reloj
-            var currentNonce = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        
-            if (currentNonce <= _lastNonce)
-                currentNonce = _lastNonce + 1;
-        
-            _lastNonce = currentNonce;
-            return currentNonce;
-        }
+            ClientId         = _clientId,
+            Amount           = amount.ToString("F8", System.Globalization.CultureInfo.InvariantCulture),
+            Currency         = currency,
+            Address          = address,
+            AutoConfirm      = autoConfirm,
+            NotificationsUrl = notificationsUrl
+        };
+
+        return SendAsync(HttpMethod.Post, "merchant/withdrawals", body, cancellationToken);
     }
 
-    private string GenerateHmacSignature(string postData)
-    {
-        var keyBytes = Encoding.UTF8.GetBytes(_privateKey);
-        var postBytes = Encoding.UTF8.GetBytes(postData);
-        
-        using var hmacSha512 = new HMACSHA512(keyBytes);
-        var hash = hmacSha512.ComputeHash(postBytes);
-        
-        return Convert.ToHexString(hash);
-    }
+    // ── Core HTTP logic ───────────────────────────────────────────────────
 
-    private async Task<RestResponse> SendRequestAsync(
-        string postData, 
-        string hmacSignature,
+    private async Task<RestResponse> SendAsync(
+        HttpMethod method,
+        string relativeEndpoint,
+        object? body,
         CancellationToken cancellationToken)
     {
         var restResponse = new RestResponse();
@@ -100,39 +107,62 @@ public class CoinPaymentProvider : ICoinPaymentProvider
         try
         {
             using var httpClient = _httpClientFactory.CreateClient("CoinPayments");
-            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, (string?)null);
-            
-            requestMessage.Content = new StringContent(
-                postData, 
-                Encoding.UTF8, 
-                "application/x-www-form-urlencoded");
-            
-            requestMessage.Headers.Add("HMAC", hmacSignature);
 
-            using var response = await httpClient.SendAsync(requestMessage, cancellationToken);
+            var baseAddress = httpClient.BaseAddress
+                ?? throw new InvalidOperationException("CoinPayments HttpClient BaseAddress is not configured");
 
-            restResponse.Content = await response.Content.ReadAsStringAsync(cancellationToken);
-            restResponse.StatusCode = response.StatusCode;
+            var requestUri = new Uri(baseAddress, relativeEndpoint);
+            var timestamp  = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+            var bodyJson   = body is not null ? JsonSerializer.Serialize(body, JsonOptions) : string.Empty;
+            var signature  = BuildSignature(timestamp, bodyJson);
+
+            using var request = new HttpRequestMessage(method, requestUri);
+            request.Headers.Add("X-CoinPayments-Client-Id", _clientId);
+            request.Headers.Add("X-CoinPayments-Timestamp", timestamp);
+            request.Headers.Add("X-CoinPayments-Signature", signature);
+
+            if (!string.IsNullOrEmpty(bodyJson))
+                request.Content = new StringContent(bodyJson, Encoding.UTF8, "application/json");
+
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+
+            restResponse.Content           = await response.Content.ReadAsStringAsync(cancellationToken);
+            restResponse.StatusCode        = response.StatusCode;
             restResponse.StatusDescription = response.ReasonPhrase;
         }
         catch (OperationCanceledException)
         {
             restResponse.StatusCode = HttpStatusCode.RequestTimeout;
-            restResponse.Content = "Request was cancelled";
+            restResponse.Content    = "Request was cancelled";
             throw;
         }
         catch (HttpRequestException ex)
         {
             restResponse.StatusCode = HttpStatusCode.ServiceUnavailable;
-            restResponse.Content = $"Error contacting CoinPayments API: {ex.Message}";
+            restResponse.Content    = $"Error contacting CoinPayments API: {ex.Message}";
         }
         catch (Exception ex)
         {
             restResponse.StatusCode = HttpStatusCode.InternalServerError;
-            restResponse.Content = $"Unexpected error: {ex.Message}";
+            restResponse.Content    = $"Unexpected error: {ex.Message}";
             throw;
         }
 
         return restResponse;
+    }
+
+    // ── Signature builder ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// HMAC-SHA256( clientId + timestamp + requestBody , clientSecret ) → lowercase hex.
+    /// </summary>
+    private string BuildSignature(string timestamp, string body)
+    {
+        var message  = _clientId + timestamp + body;
+        var keyBytes = Encoding.UTF8.GetBytes(_clientSecret);
+        var msgBytes = Encoding.UTF8.GetBytes(message);
+
+        using var hmac = new HMACSHA256(keyBytes);
+        return Convert.ToHexString(hmac.ComputeHash(msgBytes)).ToLowerInvariant();
     }
 }

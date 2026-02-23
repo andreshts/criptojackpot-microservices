@@ -196,7 +196,7 @@ public static class IoCExtension
 
     private static void AddRepositories(IServiceCollection services)
     {
-        // Add repositories here
+        _ = services; // reserved for future repository registrations
     }
 
     private static void AddApplicationServices(IServiceCollection services)
@@ -219,12 +219,16 @@ public static class IoCExtension
     private static void AddCoinPayments(IServiceCollection services, IConfiguration configuration)
     {
         var coinPaymentsSettings = configuration.GetSection(ConfigurationKeys.CoinPaymentsSection);
-        var privateKey = coinPaymentsSettings["PrivateKey"] 
-            ?? throw new InvalidOperationException("CoinPayments PrivateKey is not configured");
-        var publicKey = coinPaymentsSettings["PublicKey"] 
-            ?? throw new InvalidOperationException("CoinPayments PublicKey is not configured");
+        var clientSecret = coinPaymentsSettings["PrivateKey"] 
+            ?? throw new InvalidOperationException("CoinPayments PrivateKey (ClientSecret) is not configured");
+        var clientId = coinPaymentsSettings["PublicKey"] 
+            ?? throw new InvalidOperationException("CoinPayments PublicKey (ClientId) is not configured");
         var baseUrl = coinPaymentsSettings["BaseUrl"] ?? ServiceDefaults.CoinPaymentsBaseUrl;
         
+        // Ensure BaseUrl ends with '/' so relative paths resolve correctly
+        if (!baseUrl.EndsWith('/'))
+            baseUrl += '/';
+
         // Configure HttpClient with retry and circuit breaker policies
         services.AddHttpClient(ServiceDefaults.CoinPaymentsHttpClient, client =>
             {
@@ -239,7 +243,7 @@ public static class IoCExtension
         services.AddSingleton<ICoinPaymentProvider>(sp =>
         {
             var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
-            return new CoinPaymentProvider(privateKey, publicKey, httpClientFactory);
+            return new CoinPaymentProvider(clientSecret, clientId, httpClientFactory);
         });
     }
 

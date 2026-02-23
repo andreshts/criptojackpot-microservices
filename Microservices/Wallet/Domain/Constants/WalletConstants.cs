@@ -31,7 +31,7 @@ public static class ServiceDefaults
     /// <summary>
     /// Default CoinPayments API endpoint URL
     /// </summary>
-    public const string CoinPaymentsBaseUrl = "https://www.coinpayments.net/api.php";
+    public const string CoinPaymentsBaseUrl = "https://a-api.coinpayments.net/api/v1";
     
     /// <summary>
     /// Default HTTP client timeout in seconds

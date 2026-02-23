@@ -1,3 +1,4 @@
+using System.Text.Json;
 using CryptoJackpot.Domain.Core.Responses;
 using CryptoJackpot.Wallet.Application.DTOs.CoinPayments;
 using CryptoJackpot.Wallet.Domain.Interfaces;
@@ -5,33 +6,16 @@ using CryptoJackpot.Wallet.Domain.Interfaces;
 namespace CryptoJackpot.Wallet.Application.Extensions;
 
 /// <summary>
-/// Extension methods for ICoinPaymentProvider to provide strongly-typed API calls
+/// Typed wrappers over ICoinPaymentProvider for the new CoinPayments API v2.
 /// </summary>
 public static class CoinPaymentProviderExtensions
 {
-    /// <summary>
-    /// Gets a deposit address for a specific cryptocurrency
-    /// </summary>
-    public static async Task<CoinPaymentsApiResponse<GetCallbackAddressResult>?> GetCallbackAddressAsync(
-        this ICoinPaymentProvider provider,
-        string currency,
-        string? ipnUrl = null,
-        CancellationToken cancellationToken = default)
-    {
-        var parms = new SortedList<string, string>
-        {
-            ["currency"] = currency
-        };
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-        if (!string.IsNullOrEmpty(ipnUrl))
-            parms["ipn_url"] = ipnUrl;
-
-        var response = await provider.CallApiAsync("get_callback_address", parms, cancellationToken);
-        return response.Deserialize<CoinPaymentsApiResponse<GetCallbackAddressResult>>();
-    }
+    // ── Invoices ──────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Creates a new transaction for receiving cryptocurrency
+    /// Creates a new payment invoice. Maps from the legacy CreateTransactionRequest for backward compat.
     /// </summary>
     public static async Task<CoinPaymentsApiResponse<CreateTransactionResult>?> CreateTransactionAsync(
         this ICoinPaymentProvider provider,
@@ -39,104 +23,57 @@ public static class CoinPaymentProviderExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        
-        var parms = new SortedList<string, string>
-        {
-            ["amount"] = request.Amount.ToString("F8", System.Globalization.CultureInfo.InvariantCulture),
-            ["currency1"] = request.CurrencyFrom,
-            ["currency2"] = request.CurrencyTo
-        };
 
-        if (!string.IsNullOrEmpty(request.BuyerEmail))
-            parms["buyer_email"] = request.BuyerEmail;
+        var response = await provider.CreateInvoiceAsync(
+            amount:           request.Amount,
+            currencyFrom:     request.CurrencyFrom,
+            currencyTo:       request.CurrencyTo,
+            notes:            request.ItemName,
+            notificationsUrl: request.IpnUrl,
+            cancellationToken: cancellationToken);
 
-        if (!string.IsNullOrEmpty(request.BuyerName))
-            parms["buyer_name"] = request.BuyerName;
-
-        if (!string.IsNullOrEmpty(request.ItemName))
-            parms["item_name"] = request.ItemName;
-
-        if (!string.IsNullOrEmpty(request.IpnUrl))
-            parms["ipn_url"] = request.IpnUrl;
-
-        var response = await provider.CallApiAsync("create_transaction", parms, cancellationToken);
-        return response.Deserialize<CoinPaymentsApiResponse<CreateTransactionResult>>();
+        return Deserialize<CoinPaymentsApiResponse<CreateTransactionResult>>(response);
     }
 
-    /// <summary>
-    /// Gets information about a specific transaction
-    /// </summary>
+    /// <summary>Gets information about a specific invoice by ID.</summary>
     public static async Task<CoinPaymentsApiResponse<TransactionInfoResult>?> GetTransactionInfoAsync(
         this ICoinPaymentProvider provider,
         string transactionId,
         CancellationToken cancellationToken = default)
     {
-        var parms = new SortedList<string, string>
-        {
-            ["txid"] = transactionId
-        };
-
-        var response = await provider.CallApiAsync("get_tx_info", parms, cancellationToken);
-        return response.Deserialize<CoinPaymentsApiResponse<TransactionInfoResult>>();
+        var response = await provider.GetInvoiceAsync(transactionId, cancellationToken);
+        return Deserialize<CoinPaymentsApiResponse<TransactionInfoResult>>(response);
     }
 
-    /// <summary>
-    /// Gets account balances for all currencies or a specific one
-    /// </summary>
-    public static async Task<CoinPaymentsApiResponse<Dictionary<string, BalanceResult>>?> GetBalancesAsync(
+    // ── Balances ──────────────────────────────────────────────────────────
+
+    /// <summary>Gets merchant wallet balances.</summary>
+    public static async Task<CoinPaymentsApiResponse<List<BalanceResult>>?> GetBalancesTypedAsync(
         this ICoinPaymentProvider provider,
-        bool includeAll = false,
         CancellationToken cancellationToken = default)
     {
-        var parms = new SortedList<string, string>
-        {
-            ["all"] = includeAll ? "1" : "0"
-        };
-
-        var response = await provider.CallApiAsync("balances", parms, cancellationToken);
-        return response.Deserialize<CoinPaymentsApiResponse<Dictionary<string, BalanceResult>>>();
+        var response = await provider.GetBalancesAsync(cancellationToken);
+        return Deserialize<CoinPaymentsApiResponse<List<BalanceResult>>>(response);
     }
 
-    /// <summary>
-    /// Gets current exchange rates
-    /// </summary>
-    public static async Task<CoinPaymentsApiResponse<Dictionary<string, RateResult>>?> GetRatesAsync(
+    // ── Currencies / Rates ────────────────────────────────────────────────
+
+    /// <summary>Gets supported currencies and their rates.</summary>
+    public static async Task<CoinPaymentsApiResponse<List<RateResult>>?> GetRatesAsync(
         this ICoinPaymentProvider provider,
-        bool acceptedOnly = true,
         CancellationToken cancellationToken = default)
     {
-        var parms = new SortedList<string, string>
-        {
-            ["accepted"] = acceptedOnly ? "1" : "0"
-        };
-
-        var response = await provider.CallApiAsync("rates", parms, cancellationToken);
-        return response.Deserialize<CoinPaymentsApiResponse<Dictionary<string, RateResult>>>();
+        var response = await provider.GetCurrenciesAsync(cancellationToken);
+        return Deserialize<CoinPaymentsApiResponse<List<RateResult>>>(response);
     }
 
-    /// <summary>
-    /// Creates a withdrawal to a specific address
-    /// </summary>
-    public static async Task<RestResponse> CreateWithdrawalAsync(
-        this ICoinPaymentProvider provider,
-        decimal amount,
-        string currency,
-        string address,
-        bool autoConfirm = false,
-        string? ipnUrl = null,
-        CancellationToken cancellationToken = default)
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private static T? Deserialize<T>(RestResponse response) where T : class
     {
-        var parms = new SortedList<string, string>
-        {
-            ["amount"] = amount.ToString("F8"),
-            ["currency"] = currency,
-            ["address"] = address,
-            ["auto_confirm"] = autoConfirm ? "1" : "0"
-        };
-
-        if (!string.IsNullOrEmpty(ipnUrl))
-            parms["ipn_url"] = ipnUrl;
-
-        return await provider.CallApiAsync("create_withdrawal", parms, cancellationToken);
+        if (string.IsNullOrWhiteSpace(response.Content))
+            return null;
+        try { return JsonSerializer.Deserialize<T>(response.Content, JsonOptions); }
+        catch { return null; }
     }
 }

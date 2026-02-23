@@ -2,149 +2,242 @@ using System.Text.Json.Serialization;
 
 namespace CryptoJackpot.Wallet.Application.DTOs.CoinPayments;
 
+// ─────────────────────────────────────────────
+// Base wrapper for all new API v2 responses
+// ─────────────────────────────────────────────
+
 /// <summary>
-/// Base response from CoinPayments API
+/// Generic response envelope from the new CoinPayments API v2.
 /// </summary>
-/// <typeparam name="T">Type of the result payload</typeparam>
 public class CoinPaymentsApiResponse<T> where T : class
 {
-    [JsonPropertyName("error")]
-    public string Error { get; set; } = string.Empty;
+    [JsonPropertyName("invoice")]
+    public T? Result { get; init; }
 
-    [JsonPropertyName("result")]
-    public T? Result { get; set; }
+    // Used by list/single endpoints that return directly
+    [JsonPropertyName("items")]
+    public List<T>? Items { get; init; }
 
-    public bool IsSuccess => Error == "ok" && Result != null;
+    /// <summary>HTTP-level success; set by the provider after reading the HTTP status code.</summary>
+    public bool IsSuccess { get; init; }
+
+    /// <summary>Error message populated on failure.</summary>
+    public string Error { get; init; } = string.Empty;
 }
 
-/// <summary>
-/// Response for get_callback_address command
-/// </summary>
-public class GetCallbackAddressResult
+// ─────────────────────────────────────────────
+// Invoice / Transaction (POST /merchant/invoices)
+// ─────────────────────────────────────────────
+
+/// <summary>Request body to create a new merchant invoice.</summary>
+public class CreateInvoiceRequest
 {
-    [JsonPropertyName("address")]
-    public string Address { get; set; } = string.Empty;
+    [JsonPropertyName("clientId")]
+    public string ClientId { get; set; } = string.Empty;
 
-    [JsonPropertyName("dest_tag")]
-    public string? DestTag { get; set; }
+    [JsonPropertyName("amount")]
+    public InvoiceAmount Amount { get; set; } = new();
+
+    [JsonPropertyName("currency")]
+    public string Currency { get; set; } = string.Empty;
+
+    [JsonPropertyName("displayValue")]
+    public string? DisplayValue { get; set; }
+
+    [JsonPropertyName("notes")]
+    public string? Notes { get; set; }
+
+    [JsonPropertyName("notesLink")]
+    public string? NotesLink { get; set; }
+
+    [JsonPropertyName("requireBuyerNameAndEmail")]
+    public bool? RequireBuyerNameAndEmail { get; set; }
+
+    [JsonPropertyName("buyerDataCollectionMessage")]
+    public string? BuyerDataCollectionMessage { get; set; }
+
+    [JsonPropertyName("customData")]
+    public string? CustomData { get; set; }
+
+    [JsonPropertyName("webhookData")]
+    public InvoiceWebhookData? WebhookData { get; set; }
 }
 
-/// <summary>
-/// Response for create_transaction command
-/// </summary>
+public class InvoiceAmount
+{
+    [JsonPropertyName("currencyId")]
+    public string CurrencyId { get; set; } = string.Empty;
+
+    [JsonPropertyName("displayValue")]
+    public string DisplayValue { get; set; } = string.Empty;
+
+    [JsonPropertyName("value")]
+    public string Value { get; set; } = string.Empty;
+}
+
+public class InvoiceWebhookData
+{
+    [JsonPropertyName("notificationsUrl")]
+    public string NotificationsUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("params")]
+    public Dictionary<string, string>? Params { get; set; }
+}
+
+/// <summary>Invoice result from the new CoinPayments API v2.</summary>
 public class CreateTransactionResult
 {
-    [JsonPropertyName("amount")]
-    public string Amount { get; set; } = string.Empty;
-
-    [JsonPropertyName("txn_id")]
+    [JsonPropertyName("id")]
     public string TransactionId { get; set; } = string.Empty;
 
-    [JsonPropertyName("address")]
-    public string Address { get; set; } = string.Empty;
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
 
-    [JsonPropertyName("confirms_needed")]
-    public string ConfirmsNeeded { get; set; } = string.Empty;
-
-    [JsonPropertyName("timeout")]
-    public int Timeout { get; set; }
-
-    [JsonPropertyName("checkout_url")]
-    public string CheckoutUrl { get; set; } = string.Empty;
-
-    [JsonPropertyName("status_url")]
+    [JsonPropertyName("statusUrl")]
     public string StatusUrl { get; set; } = string.Empty;
 
-    [JsonPropertyName("qrcode_url")]
+    [JsonPropertyName("checkoutUrl")]
+    public string CheckoutUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("qrCodeUrl")]
     public string QrCodeUrl { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Response for get_tx_info command
-/// </summary>
-public class TransactionInfoResult
-{
-    [JsonPropertyName("time_created")]
-    public long TimeCreated { get; set; }
-
-    [JsonPropertyName("time_expires")]
-    public long TimeExpires { get; set; }
-
-    [JsonPropertyName("status")]
-    public int Status { get; set; }
-
-    [JsonPropertyName("status_text")]
-    public string StatusText { get; set; } = string.Empty;
-
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = string.Empty;
-
-    [JsonPropertyName("coin")]
-    public string Coin { get; set; } = string.Empty;
 
     [JsonPropertyName("amount")]
-    public string Amount { get; set; } = string.Empty;
+    public InvoiceAmount? Amount { get; set; }
 
-    [JsonPropertyName("amountf")]
-    public string AmountFormatted { get; set; } = string.Empty;
+    [JsonPropertyName("clientId")]
+    public string ClientId { get; set; } = string.Empty;
 
-    [JsonPropertyName("received")]
-    public string Received { get; set; } = string.Empty;
+    [JsonPropertyName("createdAt")]
+    public string CreatedAt { get; set; } = string.Empty;
 
-    [JsonPropertyName("receivedf")]
-    public string ReceivedFormatted { get; set; } = string.Empty;
+    [JsonPropertyName("expiresAt")]
+    public string ExpiresAt { get; set; } = string.Empty;
 
-    [JsonPropertyName("recv_confirms")]
-    public int ReceivedConfirms { get; set; }
+    // Convenience aliases kept for backward compat with existing mapping profile
+    [JsonIgnore]
+    public string Address => string.Empty;
 
-    [JsonPropertyName("payment_address")]
-    public string PaymentAddress { get; set; } = string.Empty;
+    [JsonIgnore]
+    public string ConfirmsNeeded => string.Empty;
+
+    [JsonIgnore]
+    public int Timeout => 0;
 }
 
-/// <summary>
-/// Response for balances command
-/// </summary>
+// ─────────────────────────────────────────────
+// Transaction / Invoice info (GET /merchant/invoices/{id})
+// ─────────────────────────────────────────────
+
+public class TransactionInfoResult
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("statusUrl")]
+    public string StatusUrl { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public InvoiceAmount? Amount { get; set; }
+
+    [JsonPropertyName("createdAt")]
+    public string CreatedAt { get; set; } = string.Empty;
+
+    [JsonPropertyName("expiresAt")]
+    public string ExpiresAt { get; set; } = string.Empty;
+
+    [JsonPropertyName("completedAt")]
+    public string? CompletedAt { get; set; }
+}
+
+// ─────────────────────────────────────────────
+// Balances (GET /merchant/balance)
+// ─────────────────────────────────────────────
+
 public class BalanceResult
 {
-    [JsonPropertyName("balance")]
-    public long Balance { get; set; }
+    [JsonPropertyName("currencyId")]
+    public string CurrencyId { get; set; } = string.Empty;
 
-    [JsonPropertyName("balancef")]
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; } = string.Empty;
+
+    [JsonPropertyName("balance")]
+    public string Balance { get; set; } = string.Empty;
+
+    [JsonPropertyName("balanceFormatted")]
     public string BalanceFormatted { get; set; } = string.Empty;
 
     [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
-
-    [JsonPropertyName("coin_status")]
-    public string CoinStatus { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// Response for rates command
-/// </summary>
+// ─────────────────────────────────────────────
+// Currencies / Rates (GET /currencies)
+// ─────────────────────────────────────────────
+
 public class RateResult
 {
-    [JsonPropertyName("is_fiat")]
-    public int IsFiat { get; set; }
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
 
-    [JsonPropertyName("rate_btc")]
-    public string RateBtc { get; set; } = string.Empty;
-
-    [JsonPropertyName("last_update")]
-    public string LastUpdate { get; set; } = string.Empty;
-
-    [JsonPropertyName("tx_fee")]
-    public string TransactionFee { get; set; } = string.Empty;
-
-    [JsonPropertyName("status")]
-    public string Status { get; set; } = string.Empty;
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; } = string.Empty;
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
-    [JsonPropertyName("confirms")]
-    public string Confirms { get; set; } = string.Empty;
+    [JsonPropertyName("decimalPlaces")]
+    public int DecimalPlaces { get; set; }
 
-    [JsonPropertyName("accepted")]
-    public int Accepted { get; set; }
+    [JsonPropertyName("status")]
+    public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("isSettlement")]
+    public bool IsSettlement { get; set; }
+
+    [JsonPropertyName("isFiat")]
+    public bool IsFiat { get; set; }
+
+    [JsonPropertyName("rateUsd")]
+    public string RateUsd { get; set; } = string.Empty;
+}
+
+// ─────────────────────────────────────────────
+// Withdrawal (POST /merchant/withdrawals)
+// ─────────────────────────────────────────────
+
+public class CreateWithdrawalRequest
+{
+    [JsonPropertyName("clientId")]
+    public string ClientId { get; set; } = string.Empty;
+
+    [JsonPropertyName("amount")]
+    public string Amount { get; set; } = string.Empty;
+
+    [JsonPropertyName("currency")]
+    public string Currency { get; set; } = string.Empty;
+
+    [JsonPropertyName("address")]
+    public string Address { get; set; } = string.Empty;
+
+    [JsonPropertyName("autoConfirm")]
+    public bool AutoConfirm { get; set; }
+
+    [JsonPropertyName("notificationsUrl")]
+    public string? NotificationsUrl { get; set; }
+}
+
+// ─────────────────────────────────────────────
+// Kept for backward compat – no longer used
+// ─────────────────────────────────────────────
+
+/// <summary>Legacy callback-address result stub (not used by new API).</summary>
+public class GetCallbackAddressResult
+{
+    public string Address { get; set; } = string.Empty;
+    public string? DestTag { get; set; }
 }

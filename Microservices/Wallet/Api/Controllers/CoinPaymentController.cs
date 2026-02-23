@@ -22,8 +22,7 @@ public class CoinPaymentController : ControllerBase
         _mediator = mediator;
         _mapper = mapper;
     }
-
-    [Authorize]
+    
     [HttpPost("transactions")]
     public async Task<IActionResult> CreateTransaction([FromBody] CreateCoinPaymentTransactionRequest request)
     {
