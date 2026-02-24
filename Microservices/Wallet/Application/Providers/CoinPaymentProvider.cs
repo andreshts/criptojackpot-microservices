@@ -169,7 +169,7 @@ public class CoinPaymentProvider : ICoinPaymentProvider
     /// Ensure proper authentication headers are provided during the CoinPaymentsProvider initialization.
     /// </remarks>
     public Task<RestResponse> GetCurrenciesAsync(CancellationToken cancellationToken = default) =>
-        SendAsync(HttpMethod.Get, CoinPaymentsEndpoints.GetCurrencies, null, cancellationToken);
+        SendPublicAsync(CoinPaymentsEndpoints.GetCurrencies, cancellationToken);
 
     /// <summary>
     /// Initiates a withdrawal request to transfer a specified amount of cryptocurrency to a designated address.
@@ -207,6 +207,54 @@ public class CoinPaymentProvider : ICoinPaymentProvider
         return SendAsync(HttpMethod.Post, CoinPaymentsEndpoints.CreateWithdrawal, body, cancellationToken);
     }
     
+    /// <summary>
+    /// Sends an unauthenticated GET request to a public CoinPayments endpoint (no HMAC headers).
+    /// Used for endpoints like GET /api/v2/currencies that do not require credentials.
+    /// </summary>
+    private async Task<RestResponse> SendPublicAsync(
+        string relativeEndpoint,
+        CancellationToken cancellationToken)
+    {
+        var restResponse = new RestResponse();
+
+        try
+        {
+            using var httpClient = _httpClientFactory.CreateClient(ServiceDefaults.CoinPaymentsHttpClient);
+
+            var baseAddress = httpClient.BaseAddress
+                ?? throw new InvalidOperationException("CoinPayments HttpClient BaseAddress is not configured");
+
+            var requestUri = new Uri(baseAddress, relativeEndpoint);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
+            using var response = await httpClient.SendAsync(request, cancellationToken);
+
+            restResponse.Content           = await response.Content.ReadAsStringAsync(cancellationToken);
+            restResponse.StatusCode        = response.StatusCode;
+            restResponse.StatusDescription = response.ReasonPhrase;
+        }
+        catch (OperationCanceledException)
+        {
+            restResponse.StatusCode = HttpStatusCode.RequestTimeout;
+            restResponse.Content    = "Request was cancelled";
+            throw;
+        }
+        catch (HttpRequestException ex)
+        {
+            restResponse.StatusCode = HttpStatusCode.ServiceUnavailable;
+            restResponse.Content    = $"Error contacting CoinPayments API: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            restResponse.StatusCode = HttpStatusCode.InternalServerError;
+            restResponse.Content    = $"Unexpected error: {ex.Message}";
+            throw;
+        }
+
+        return restResponse;
+    }
+
     /// <summary>
     /// Sends an HTTP request to the specified endpoint with the provided method, body, and cancellation token.
     /// </summary>

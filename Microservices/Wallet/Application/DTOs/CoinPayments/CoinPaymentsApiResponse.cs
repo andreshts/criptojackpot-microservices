@@ -298,13 +298,20 @@ public class BalanceResult
 }
 
 // ─────────────────────────────────────────────
-// Currencies / Rates (GET /api/v1/currencies)
+// Currencies (GET /api/v2/currencies) — PUBLIC endpoint, no auth required
 // ─────────────────────────────────────────────
 
+/// <summary>
+/// Represents a single currency item returned by GET /api/v2/currencies.
+/// </summary>
 public class RateResult
 {
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    /// <summary>crypto | token | fiat</summary>
+    [JsonPropertyName("type")]
+    public string Type { get; set; } = string.Empty;
 
     [JsonPropertyName("symbol")]
     public string Symbol { get; set; } = string.Empty;
@@ -312,20 +319,45 @@ public class RateResult
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
+    [JsonPropertyName("logo")]
+    public CurrencyLogo? Logo { get; set; }
+
     [JsonPropertyName("decimalPlaces")]
     public int DecimalPlaces { get; set; }
 
+    [JsonPropertyName("rank")]
+    public int Rank { get; set; }
+
+    /// <summary>active | underMaintenance | deleted</summary>
     [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
 
-    [JsonPropertyName("isSettlement")]
-    public bool IsSettlement { get; set; }
+    [JsonPropertyName("capabilities")]
+    public List<string>? Capabilities { get; set; }
 
-    [JsonPropertyName("isFiat")]
-    public bool IsFiat { get; set; }
+    [JsonPropertyName("urls")]
+    public CurrencyUrls? Urls { get; set; }
 
-    [JsonPropertyName("rateUsd")]
-    public string RateUsd { get; set; } = string.Empty;
+    [JsonPropertyName("requiredConfirmations")]
+    public int RequiredConfirmations { get; set; }
+
+    [JsonPropertyName("isEnabledForPayment")]
+    public bool IsEnabledForPayment { get; set; }
+}
+
+public class CurrencyLogo
+{
+    [JsonPropertyName("imageUrl")]
+    public string ImageUrl { get; set; } = string.Empty;
+}
+
+public class CurrencyUrls
+{
+    [JsonPropertyName("websites")]
+    public List<string>? Websites { get; set; }
+
+    [JsonPropertyName("explorers")]
+    public List<string>? Explorers { get; set; }
 }
 
 // ─────────────────────────────────────────────

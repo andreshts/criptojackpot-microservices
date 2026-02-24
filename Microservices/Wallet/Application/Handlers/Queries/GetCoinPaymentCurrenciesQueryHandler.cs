@@ -1,6 +1,5 @@
 using AutoMapper;
 using CryptoJackpot.Domain.Core.Responses.Errors;
-using CryptoJackpot.Wallet.Application.DTOs.CoinPayments;
 using CryptoJackpot.Wallet.Application.Extensions;
 using CryptoJackpot.Wallet.Application.Queries;
 using CryptoJackpot.Wallet.Application.Responses;
@@ -39,25 +38,15 @@ public class GetCoinPaymentCurrenciesQueryHandler
         {
             _logger.LogInformation("Fetching supported cryptocurrencies from CoinPayments API v2");
 
-            var response = await _coinPaymentProvider.GetCurrenciesTypedAsync(cancellationToken);
+            var (isSuccess, error, currencies) = await _coinPaymentProvider.GetCurrenciesTypedAsync(cancellationToken);
 
-            if (response is null)
+            if (!isSuccess)
             {
-                _logger.LogError("CoinPayments API returned null response for currencies");
-                return Result.Fail(new ExternalServiceError("CoinPayments", "API returned null response"));
+                _logger.LogError("CoinPayments API error while fetching currencies: {Error}", error);
+                return Result.Fail(new ExternalServiceError("CoinPayments", error));
             }
 
-            if (!response.IsSuccess)
-            {
-                _logger.LogError("CoinPayments API error while fetching currencies: {Error}", response.Error);
-                return Result.Fail(new ExternalServiceError("CoinPayments", response.Error));
-            }
-
-            var currencies = response.Currencies ?? response.Items ?? new List<RateResult>();
-
-            _logger.LogInformation(
-                "Successfully retrieved {Count} currencies from CoinPayments",
-                currencies.Count);
+            _logger.LogInformation("Successfully retrieved {Count} currencies from CoinPayments", currencies.Count);
 
             var result = _mapper.Map<List<CoinPaymentCurrencyResponse>>(currencies);
             return Result.Ok(result);
@@ -73,4 +62,3 @@ public class GetCoinPaymentCurrenciesQueryHandler
         }
     }
 }
-

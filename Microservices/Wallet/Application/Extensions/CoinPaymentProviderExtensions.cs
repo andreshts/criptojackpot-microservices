@@ -68,15 +68,32 @@ public static class CoinPaymentProviderExtensions
     }
 
     /// <summary>
-    /// Gets all supported cryptocurrencies from the CoinPayments API v2 (v1/currencies endpoint).
-    /// Returns the flat list of <see cref="RateResult"/> items from the "currencies" key.
+    /// Gets all supported cryptocurrencies from the CoinPayments API v2 (v2/currencies endpoint).
+    /// Endpoint público — no requiere autenticación.
+    /// El API devuelve un array raíz JSON: [ { "id": "1", ... }, ... ]
     /// </summary>
-    public static async Task<CoinPaymentsApiResponse<RateResult>?> GetCurrenciesTypedAsync(
+    public static async Task<(bool IsSuccess, string Error, List<RateResult> Currencies)> GetCurrenciesTypedAsync(
         this ICoinPaymentProvider provider,
         CancellationToken cancellationToken = default)
     {
         var response = await provider.GetCurrenciesAsync(cancellationToken);
-        return Deserialize<CoinPaymentsApiResponse<RateResult>>(response);
+
+        if (!response.IsSuccessStatusCode)
+            return (false, response.Content ?? "Unknown error from CoinPayments API", new List<RateResult>());
+
+        if (string.IsNullOrWhiteSpace(response.Content))
+            return (false, "Empty response from CoinPayments API", new List<RateResult>());
+
+        try
+        {
+            var currencies = JsonSerializer.Deserialize<List<RateResult>>(response.Content, JsonOptions)
+                             ?? new List<RateResult>();
+            return (true, string.Empty, currencies);
+        }
+        catch (JsonException ex)
+        {
+            return (false, $"Failed to deserialize currencies: {ex.Message}", new List<RateResult>());
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

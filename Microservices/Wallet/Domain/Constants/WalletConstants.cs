@@ -55,7 +55,8 @@ public static class CoinPaymentsEndpoints
     public const string GetBalances = "v1/merchant/wallets";
 
     // ── Currencies / Rates ────────────────────────────────────────────
-    public const string GetCurrencies = "v1/currencies";
+    // Public endpoint — no authentication required (API v2)
+    public const string GetCurrencies = "v2/currencies";
     public const string GetRates = "v1/rates";
 
     // ── Withdrawals ───────────────────────────────────────────────────

@@ -18,6 +18,8 @@ public class WalletMappingProfile : Profile
         
         // Result to Response mappings
         CreateMap<CreateTransactionResult, CreateCoinPaymentTransactionResponse>();
-        CreateMap<RateResult, CoinPaymentCurrencyResponse>();
+        CreateMap<RateResult, CoinPaymentCurrencyResponse>()
+            .ForMember(dest => dest.LogoUrl,      opt => opt.MapFrom(src => src.Logo != null ? src.Logo.ImageUrl : null))
+            .ForMember(dest => dest.Capabilities, opt => opt.MapFrom(src => src.Capabilities ?? new List<string>()));
     }
 }
