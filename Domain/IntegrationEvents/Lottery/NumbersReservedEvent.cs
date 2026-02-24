@@ -49,6 +49,16 @@ public class NumbersReservedEvent : Event
     public decimal TotalAmount { get; set; }
     
     /// <summary>
+    /// CoinPayments currency ID for payment (e.g. "2")
+    /// </summary>
+    public string CryptoCurrencyId { get; set; } = null!;
+    
+    /// <summary>
+    /// Crypto ticker symbol for payment (e.g. "LTCT", "BTC")
+    /// </summary>
+    public string CryptoCurrencySymbol { get; set; } = null!;
+    
+    /// <summary>
     /// When the reservation expires
     /// </summary>
     public DateTime ExpiresAt { get; set; }

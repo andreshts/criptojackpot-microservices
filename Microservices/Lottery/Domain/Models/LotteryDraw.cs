@@ -25,6 +25,16 @@ public class LotteryDraw : BaseEntity
     public bool HasAgeRestriction { get; set; }
     public int? MinimumAge { get; set; }
 
+    /// <summary>
+    /// CoinPayments currency ID used for ticket payments (e.g. "2")
+    /// </summary>
+    public string CryptoCurrencyId { get; set; } = null!;
+    
+    /// <summary>
+    /// Crypto ticker symbol (e.g. "LTCT", "BTC", "ETH")
+    /// </summary>
+    public string CryptoCurrencySymbol { get; set; } = null!;
+
     public List<string> RestrictedCountries { get; set; } = null!;
 
     public virtual ICollection<Prize> Prizes { get; set; } = null!;

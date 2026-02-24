@@ -30,5 +30,9 @@ public class LotteryCreatedEvent : Event
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
     public int MaxTickets { get; set; }
+    
+    // Cryptocurrency payment information
+    public string CryptoCurrencyId { get; set; } = null!;
+    public string CryptoCurrencySymbol { get; set; } = null!;
 }
 

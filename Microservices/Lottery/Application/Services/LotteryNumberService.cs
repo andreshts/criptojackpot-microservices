@@ -376,6 +376,8 @@ public class LotteryNumberService : ILotteryNumberService
             TicketPrice = ticketPrice,
             TotalAmount = reservationAmount,
             ExpiresAt = expiresAt,
+            CryptoCurrencyId = lottery.CryptoCurrencyId,
+            CryptoCurrencySymbol = lottery.CryptoCurrencySymbol,
             IsAddToExistingOrder = isAddToExisting,
             ExistingOrderId = existingOrderId
         });

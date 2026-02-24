@@ -48,6 +48,14 @@ public class CreateLotteryDrawCommandValidator : AbstractValidator<CreateLottery
         RuleFor(c => c.MinimumAge)
             .GreaterThanOrEqualTo(18).When(c => c.HasAgeRestriction)
             .WithMessage("MinimumAge must be at least 18 when age restriction is enabled");
+
+        RuleFor(c => c.CryptoCurrencyId)
+            .NotEmpty().WithMessage("CryptoCurrencyId is required")
+            .MaximumLength(20).WithMessage("CryptoCurrencyId must not exceed 20 characters");
+
+        RuleFor(c => c.CryptoCurrencySymbol)
+            .NotEmpty().WithMessage("CryptoCurrencySymbol is required")
+            .MaximumLength(20).WithMessage("CryptoCurrencySymbol must not exceed 20 characters");
     }
 }
 

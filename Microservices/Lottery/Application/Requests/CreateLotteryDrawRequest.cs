@@ -17,6 +17,8 @@ public class CreateLotteryDrawRequest
     public string Terms { get; set; } = null!;
     public bool HasAgeRestriction { get; set; }
     public int? MinimumAge { get; set; }
+    public string CryptoCurrencyId { get; set; } = null!;
+    public string CryptoCurrencySymbol { get; set; } = null!;
     public List<string> RestrictedCountries { get; set; } = [];
     public Guid? PrizeId { get; set; }
 }
