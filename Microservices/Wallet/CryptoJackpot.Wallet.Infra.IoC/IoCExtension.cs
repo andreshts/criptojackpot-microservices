@@ -34,7 +34,27 @@ public static class IoCExtension
         AddRepositories(services);
         AddApplicationServices(services);
         AddCoinPayments(services, configuration);
+        AddRedisCache(services, configuration);
         AddInfrastructure(services, configuration);
+    }
+
+    private static void AddRedisCache(IServiceCollection services, IConfiguration configuration)
+    {
+        var redisConnection = configuration.GetConnectionString("Redis");
+
+        if (!string.IsNullOrWhiteSpace(redisConnection))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnection;
+                options.InstanceName = "wallet:";
+            });
+        }
+        else
+        {
+            // Fallback to in-memory cache when Redis is not configured (local dev)
+            services.AddDistributedMemoryCache();
+        }
     }
 
 

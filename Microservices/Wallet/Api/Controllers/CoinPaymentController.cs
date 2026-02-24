@@ -31,11 +31,7 @@ public class CoinPaymentController : ControllerBase
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
-
-    /// <summary>
-    /// Obtiene todas las criptomonedas soportadas por CoinPayments API v2.
-    /// Endpoint público — no requiere autenticación.
-    /// </summary>
+    
     [HttpGet("currencies")]
     [AllowAnonymous]
     public async Task<IActionResult> GetAllCurrencies(CancellationToken cancellationToken)
