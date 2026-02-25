@@ -79,12 +79,14 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Resul
 
             var createdUser = await _userRepository.CreateAsync(user);
 
-            // Fire-and-forget: Publish domain event for referral processing
+            // Publish domain event for referral processing (must be awaited so
+            // ProcessReferralHandler can publish the ReferralCreatedEvent to Kafka
+            // before the DI scope is disposed)
             if (referrer is not null)
             {
-                _ = _publisher.Publish(
+                await _publisher.Publish(
                     new UserCreatedDomainEvent(createdUser, referrer, request.ReferralCode), 
-                    CancellationToken.None);
+                    cancellationToken);
                 
                 _logger.LogDebug(
                     "UserCreatedDomainEvent published for user {UserId} with referrer {ReferrerId}",

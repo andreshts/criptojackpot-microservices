@@ -10,7 +10,7 @@ namespace CryptoJackpot.Identity.Application.Handlers.Events;
 /// <summary>
 /// Handles referral creation when a user is created with a referral code.
 /// Decoupled from CreateUserCommandHandler via domain events.
-/// Executes as fire-and-forget.
+/// Publishes ReferralCreatedEvent to Kafka for Notification and Wallet services.
 /// </summary>
 public class ProcessReferralHandler : INotificationHandler<UserCreatedDomainEvent>
 {
@@ -47,8 +47,8 @@ public class ProcessReferralHandler : INotificationHandler<UserCreatedDomainEven
 
             await _userReferralRepository.CreateUserReferralAsync(userReferral);
 
-            // Publish event to Kafka for Notification service (fire-and-forget)
-            _ = _eventPublisher.PublishReferralCreatedAsync(
+            // Publish event to Kafka for Notification and Wallet services
+            await _eventPublisher.PublishReferralCreatedAsync(
                 notification.Referrer, 
                 notification.User, 
                 notification.ReferralCode);

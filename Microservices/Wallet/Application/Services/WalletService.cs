@@ -1,4 +1,4 @@
-﻿using CryptoJackpot.Domain.Core.Responses.Errors;
+﻿﻿using CryptoJackpot.Domain.Core.Responses.Errors;
 using CryptoJackpot.Wallet.Domain.Enums;
 using CryptoJackpot.Wallet.Domain.Extensions;
 using CryptoJackpot.Wallet.Domain.Interfaces;
@@ -42,8 +42,9 @@ public class WalletService : IWalletService
         try
         {
             // Get or create balance row
-            var balance = await _balanceRepository.GetByUserAsync(userGuid, cancellationToken)
-                          ?? await _balanceRepository.AddAsync(new WalletBalance { UserGuid = userGuid }, cancellationToken);
+            var balance = await _balanceRepository.GetByUserAsync(userGuid, cancellationToken);
+            var isNewBalance = balance is null;
+            balance ??= await _balanceRepository.AddAsync(new WalletBalance { UserGuid = userGuid }, cancellationToken);
 
             // Guard: insufficient funds for debits
             if (direction == WalletTransactionDirection.Debit && balance.Balance < amount)
@@ -59,7 +60,7 @@ public class WalletService : IWalletService
             {
                 balance.Balance -= amount;
 
-                if (type == WalletTransactionType.Withdrawal || type == WalletTransactionType.WithdrawalRefund)
+                if (type is WalletTransactionType.Withdrawal or WalletTransactionType.WithdrawalRefund)
                     balance.TotalWithdrawn += amount;
                 else
                     balance.TotalPurchased += amount;
@@ -68,7 +69,10 @@ public class WalletService : IWalletService
             // Rotate concurrency token
             balance.RowVersion = Guid.NewGuid();
             balance.UpdatedAt = DateTime.UtcNow;
-            _balanceRepository.Update(balance);
+
+            // Only call Update for existing entities — newly added entities are already tracked
+            if (!isNewBalance)
+                _balanceRepository.Update(balance);
 
             // Record transaction with balance snapshot
             var transaction = await _walletRepository.AddAsync(new WalletTransaction
