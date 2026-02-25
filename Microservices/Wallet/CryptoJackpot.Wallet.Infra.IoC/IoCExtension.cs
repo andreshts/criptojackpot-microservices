@@ -1,14 +1,19 @@
 ﻿using System.Text;
 using Asp.Versioning;
 using CryptoJackpot.Domain.Core.Behaviors;
+using CryptoJackpot.Domain.Core.Constants;
+using CryptoJackpot.Domain.Core.IntegrationEvents.Identity;
 using CryptoJackpot.Infra.IoC;
+using CryptoJackpot.Infra.IoC.Extensions;
 using CryptoJackpot.Wallet.Application;
+using CryptoJackpot.Wallet.Application.Consumers;
 using CryptoJackpot.Wallet.Application.Providers;
 using CryptoJackpot.Wallet.Application.Services;
 using CryptoJackpot.Wallet.Data.Context;
 using CryptoJackpot.Wallet.Domain.Constants;
 using CryptoJackpot.Wallet.Domain.Interfaces;
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -218,6 +223,8 @@ public static class IoCExtension
     private static void AddRepositories(IServiceCollection services)
     {
         services.AddScoped<IUserCryptoWalletRepository, Data.Repositories.UserCryptoWalletRepository>();
+        services.AddScoped<IWalletRepository, Data.Repositories.WalletTransactionRepository>();
+        services.AddScoped<IWalletBalanceRepository, Data.Repositories.WalletBalanceRepository>();
         services.AddScoped<IUnitOfWork, Data.UnitOfWork>();
     }
 
@@ -296,12 +303,24 @@ public static class IoCExtension
         DependencyContainer.RegisterServicesWithKafka<WalletDbContext>(
             services,
             configuration,
-            configureRider: _ =>
+            configureRider: rider =>
             {
-                // Register producers/consumers for events here
+                // Register consumers for Identity events
+                rider.AddConsumer<ReferralCreatedConsumer>();
             },
             configureBus: null,
-            configureKafkaEndpoints: null,
+            configureKafkaEndpoints: (context, kafka) =>
+            {
+                // Identity events - credit referral bonus when a referral is created
+                kafka.TopicEndpoint<ReferralCreatedEvent>(
+                    KafkaTopics.ReferralCreated,
+                    KafkaTopics.WalletGroup,
+                    e =>
+                    {
+                        e.ConfigureConsumer<ReferralCreatedConsumer>(context);
+                        e.ConfigureTopicDefaults(configuration);
+                    });
+            },
             useMessageScheduler: false);
     }
 }

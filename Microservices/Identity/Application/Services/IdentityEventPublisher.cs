@@ -27,9 +27,11 @@ public class IdentityEventPublisher : IIdentityEventPublisher
         {
             await _eventBus.Publish(new ReferralCreatedEvent
             {
+                ReferrerUserGuid = referrer.UserGuid,
                 ReferrerEmail = referrer.Email,
                 ReferrerName = referrer.Name,
                 ReferrerLastName = referrer.LastName,
+                ReferredUserGuid = referred.UserGuid,
                 ReferredName = referred.Name,
                 ReferredLastName = referred.LastName,
                 ReferralCode = referralCode

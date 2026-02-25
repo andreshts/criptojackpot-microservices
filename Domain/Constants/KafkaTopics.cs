@@ -45,5 +45,6 @@ public static class KafkaTopics
     public const string OrderGroup = "order-group";
     public const string IdentityGroup = "identity-group";
     public const string AuditGroup = "audit-group";
+    public const string WalletGroup = "wallet-group";
 }
 
