@@ -26,6 +26,10 @@ manifests:
 deploy:
   kubectl:
     defaultNamespace: cryptojackpot
+    hooks:
+      before:
+        - host:
+            command: ["kubectl", "delete", "job", "db-migrations", "-n", "cryptojackpot", "--ignore-not-found=true"]
     flags:
       apply:
         - --server-side

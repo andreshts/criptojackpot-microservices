@@ -67,6 +67,7 @@ public class UserController : ControllerBase
         return result.ToActionResult();
     }
 
+    [Authorize]
     [HttpPut("{userId:long}")]
     public async Task<IActionResult> Update(long userId, [FromBody] UpdateUserRequest request)
     {
@@ -76,6 +77,7 @@ public class UserController : ControllerBase
         return result.ToActionResult();
     }
 
+    [Authorize]
     [HttpPost("{userId:long}/image/upload-url")]
     public async Task<IActionResult> GenerateUploadUrl(long userId, [FromBody] GenerateUploadUrlRequest request)
     {
@@ -84,7 +86,8 @@ public class UserController : ControllerBase
         var result = await _mediator.Send(command);
         return result.ToActionResult();
     }
-
+    
+    [Authorize]
     [HttpPatch("update-image-profile")]
     public async Task<IActionResult> UpdateImage([FromBody] UpdateUserImageRequest request)
     {

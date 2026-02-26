@@ -44,8 +44,9 @@ public class JwtTokenService : IJwtTokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new(JwtRegisteredClaimNames.Email, user.Email),
-            
+
             // Custom claims
+            new("user_id", user.Id.ToString()),
             new("name", $"{user.Name} {user.LastName}"),
             new("role", user.Role.Name),
             new(ClaimTypes.Role, user.Role.Name),

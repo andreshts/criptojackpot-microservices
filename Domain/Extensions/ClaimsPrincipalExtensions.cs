@@ -35,14 +35,14 @@ public static class ClaimsPrincipalExtensions
     }
 
     /// <summary>
-    /// Gets the user ID as long from JWT claims (sub or NameIdentifier).
+    /// Gets the user ID as long from JWT claims.
+    /// Reads from the "user_id" custom claim (numeric ID).
     /// </summary>
     /// <param name="principal">The claims principal from User property</param>
     /// <returns>User ID if found and valid, null otherwise</returns>
     public static long? GetUserId(this ClaimsPrincipal principal)
     {
-        var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                         ?? principal.FindFirst("sub")?.Value;
+        var userIdClaim = principal.FindFirst("user_id")?.Value;
 
         return long.TryParse(userIdClaim, out var userId) ? userId : null;
     }
