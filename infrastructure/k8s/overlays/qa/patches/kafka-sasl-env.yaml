@@ -1,0 +1,32 @@
+﻿# Kafka SASL environment variables for QA (Upstash)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: not-important
+spec:
+  template:
+    spec:
+      containers:
+        - name: "*"
+          env:
+            - name: Kafka__SaslUsername
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SASL_USERNAME
+            - name: Kafka__SaslPassword
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SASL_PASSWORD
+            - name: Kafka__SaslMechanism
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SASL_MECHANISM
+            - name: Kafka__SecurityProtocol
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-secrets
+                  key: KAFKA_SECURITY_PROTOCOL
+

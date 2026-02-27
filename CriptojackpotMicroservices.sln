@@ -145,9 +145,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoJackpot.Wallet.Infra.IoC", "Microservices\Wallet\CryptoJackpot.Wallet.Infra.IoC\CryptoJackpot.Wallet.Infra.IoC.csproj", "{CAAB62B4-622B-4F30-8B86-C3C99627E066}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{A1B2C3D4-E5F6-4A5B-8C9D-1E2F3A4B5C6D}"
-	ProjectSection(SolutionItems) = preProject
-		infrastructure\k8s\README-KUSTOMIZE.md = infrastructure\k8s\README-KUSTOMIZE.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "base", "base", "{44444444-4444-4444-4444-444444444441}"
 	ProjectSection(SolutionItems) = preProject
@@ -304,12 +301,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "secrets", "secrets", "{5555
 		infrastructure\k8s\overlays\qa\secrets\mongodb-secrets.yaml = infrastructure\k8s\overlays\qa\secrets\mongodb-secrets.yaml
 		infrastructure\k8s\overlays\qa\secrets\spaces-secrets.yaml = infrastructure\k8s\overlays\qa\secrets\spaces-secrets.yaml
 		infrastructure\k8s\overlays\qa\secrets\brevo-secrets.yaml = infrastructure\k8s\overlays\qa\secrets\brevo-secrets.yaml
+		infrastructure\k8s\overlays\qa\secrets\redis-secrets.yaml = infrastructure\k8s\overlays\qa\secrets\redis-secrets.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "patches", "patches", "{55555555-5555-5555-5555-55555555555D}"
 	ProjectSection(SolutionItems) = preProject
 		infrastructure\k8s\overlays\qa\patches\deployments-replicas.yaml = infrastructure\k8s\overlays\qa\patches\deployments-replicas.yaml
 		infrastructure\k8s\overlays\qa\patches\security-context.yaml = infrastructure\k8s\overlays\qa\patches\security-context.yaml
+		infrastructure\k8s\overlays\qa\patches\kafka-sasl-env.yaml = infrastructure\k8s\overlays\qa\patches\kafka-sasl-env.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prod", "prod", "{55555555-5555-5555-5555-555555555559}"
@@ -326,6 +325,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "secrets", "secrets", "{5555
 		infrastructure\k8s\overlays\prod\secrets\mongodb-secrets.yaml = infrastructure\k8s\overlays\prod\secrets\mongodb-secrets.yaml
 		infrastructure\k8s\overlays\prod\secrets\spaces-secrets.yaml = infrastructure\k8s\overlays\prod\secrets\spaces-secrets.yaml
 		infrastructure\k8s\overlays\prod\secrets\brevo-secrets.yaml = infrastructure\k8s\overlays\prod\secrets\brevo-secrets.yaml
+		infrastructure\k8s\overlays\prod\secrets\redis-secrets.yaml = infrastructure\k8s\overlays\prod\secrets\redis-secrets.yaml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "patches", "patches", "{55555555-5555-5555-5555-55555555555E}"

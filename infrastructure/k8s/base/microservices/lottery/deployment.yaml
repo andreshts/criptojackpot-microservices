@@ -52,12 +52,10 @@ spec:
                   name: kafka-secrets
                   key: KAFKA_BOOTSTRAP_SERVERS
             - name: ConnectionStrings__RedisConnection
-              value: "redis.cryptojackpot.svc.cluster.local:6379"
-            - name: Keycloak__ClientSecret
               valueFrom:
                 secretKeyRef:
-                  name: jwt-secrets
-                  key: KEYCLOAK_CLIENT_SECRET
+                  name: redis-secrets
+                  key: REDIS_CONNECTION_STRING
           readinessProbe:
             httpGet:
               path: /health

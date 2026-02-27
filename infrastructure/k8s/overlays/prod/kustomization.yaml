@@ -96,6 +96,12 @@ patches:
           runAsGroup: 1000
           fsGroup: 1000
       - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - op: add
         path: /spec/template/spec/containers/0/resources
         value:
           requests:
@@ -152,6 +158,12 @@ patches:
           runAsUser: 1000
           runAsGroup: 1000
           fsGroup: 1000
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
       - op: add
         path: /spec/template/spec/containers/0/resources
         value:
@@ -210,6 +222,12 @@ patches:
           runAsGroup: 1000
           fsGroup: 1000
       - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - op: add
         path: /spec/template/spec/containers/0/resources
         value:
           requests:
@@ -266,6 +284,12 @@ patches:
           runAsUser: 1000
           runAsGroup: 1000
           fsGroup: 1000
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
       - op: add
         path: /spec/template/spec/containers/0/resources
         value:
@@ -324,6 +348,12 @@ patches:
           runAsGroup: 1000
           fsGroup: 1000
       - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      - op: add
         path: /spec/template/spec/containers/0/resources
         value:
           requests:
@@ -380,6 +410,12 @@ patches:
           runAsUser: 1000
           runAsGroup: 1000
           fsGroup: 1000
+      - op: add
+        path: /spec/template/spec/containers/0/securityContext
+        value:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
       - op: add
         path: /spec/template/spec/containers/0/resources
         value:
@@ -471,12 +507,12 @@ patches:
         path: /spec/tls
         value:
           - hosts:
-              - api.cryptojackpot.com
-            secretName: cryptojackpot-prod-tls
+              - api.criptojackpot.com
+            secretName: criptojackpot-prod-tls
       - op: replace
         path: /spec/rules
         value:
-          - host: api.cryptojackpot.com
+          - host: api.criptojackpot.com
             http:
               paths:
                 - path: /api
@@ -509,41 +545,36 @@ configMapGenerator:
       - ASPNETCORE_URLS=http://+:80
       - Logging__LogLevel__Default=Warning
       - Logging__LogLevel__Microsoft.AspNetCore=Warning
-      - Cors__AllowedOrigins__0=https://cryptojackpot.com
-      - Cors__AllowedOrigins__1=https://www.cryptojackpot.com
-      - Keycloak__Authority=https://auth.cryptojackpot.com
-      - Keycloak__Realm=cryptojackpot
-      - Keycloak__ClientId=cryptojackpot-backend
-      - Keycloak__RequireHttpsMetadata=true
-      - Keycloak__ValidateAudience=true
+      - Cors__AllowedOrigins__0=https://criptojackpot.com
+      - Cors__AllowedOrigins__1=https://www.criptojackpot.com
 
 generatorOptions:
   disableNameSuffixHash: true
 
 images:
   - name: cryptojackpot/bff-gateway
-    newName: registry.digitalocean.com/cryptojackpot/bff-gateway
+    newName: registry.digitalocean.com/criptojackpot/bff-gateway
     newTag: v1.0.0
   - name: cryptojackpot/identity-api
-    newName: registry.digitalocean.com/cryptojackpot/identity-api
+    newName: registry.digitalocean.com/criptojackpot/identity-api
     newTag: v1.0.0
   - name: cryptojackpot/lottery-api
-    newName: registry.digitalocean.com/cryptojackpot/lottery-api
+    newName: registry.digitalocean.com/criptojackpot/lottery-api
     newTag: v1.0.0
   - name: cryptojackpot/order-api
-    newName: registry.digitalocean.com/cryptojackpot/order-api
+    newName: registry.digitalocean.com/criptojackpot/order-api
     newTag: v1.0.0
   - name: cryptojackpot/wallet-api
-    newName: registry.digitalocean.com/cryptojackpot/wallet-api
+    newName: registry.digitalocean.com/criptojackpot/wallet-api
     newTag: v1.0.0
   - name: cryptojackpot/winner-api
-    newName: registry.digitalocean.com/cryptojackpot/winner-api
+    newName: registry.digitalocean.com/criptojackpot/winner-api
     newTag: v1.0.0
   - name: cryptojackpot/notification-api
-    newName: registry.digitalocean.com/cryptojackpot/notification-api
+    newName: registry.digitalocean.com/criptojackpot/notification-api
     newTag: v1.0.0
   - name: cryptojackpot/audit-api
-    newName: registry.digitalocean.com/cryptojackpot/audit-api
+    newName: registry.digitalocean.com/criptojackpot/audit-api
     newTag: v1.0.0
 
 labels:
