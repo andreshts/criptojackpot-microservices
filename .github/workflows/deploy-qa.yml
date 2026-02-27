@@ -284,7 +284,6 @@ jobs:
           TAG="${{ needs.build-and-push.outputs.image_tag }}"
           REGISTRY="${{ env.REGISTRY }}"
 
-          # Actualiza los tags de imagen en el overlay de QA usando kustomize edit
           cd infrastructure/k8s/overlays/qa
           kustomize edit set image \
             bff-gateway=${REGISTRY}/bff-gateway:${TAG} \
@@ -295,6 +294,15 @@ jobs:
             winner-api=${REGISTRY}/winner-api:${TAG} \
             notification-api=${REGISTRY}/notification-api:${TAG} \
             audit-api=${REGISTRY}/audit-api:${TAG}
+
+      - name: Commit updated image tags to qa branch
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add infrastructure/k8s/overlays/qa/kustomization.yaml
+          # Solo commitea si hay cambios reales
+          git diff --cached --quiet || git commit -m "chore(qa): update image tags to ${{ needs.build-and-push.outputs.image_tag }} [skip ci]"
+          git push origin qa
 
       - name: Apply Kustomize overlays/qa
         run: |
