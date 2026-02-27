@@ -39,12 +39,12 @@ variable "databases" {
   description = "Lista de bases de datos a crear"
   type        = list(string)
   default = [
-    "cryptojackpot_identity_db",
-    "cryptojackpot_lottery_db",
-    "cryptojackpot_order_db",
-    "cryptojackpot_wallet_db",
-    "cryptojackpot_winner_db",
-    "cryptojackpot_notification_db"
+    "criptojackpot_identity_db",
+    "criptojackpot_lottery_db",
+    "criptojackpot_order_db",
+    "criptojackpot_wallet_db",
+    "criptojackpot_winner_db",
+    "criptojackpot_notification_db"
   ]
 }
 
@@ -57,7 +57,7 @@ variable "create_app_user" {
 variable "app_user_name" {
   description = "Nombre del usuario de aplicación"
   type        = string
-  default     = "cryptojackpot_app"
+  default     = "criptojackpot_app"
 }
 
 variable "trusted_sources_ids" {

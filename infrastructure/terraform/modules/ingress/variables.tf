@@ -2,34 +2,29 @@
 # Ingress Module Variables
 # =============================================================================
 
+# Mantenido por compatibilidad — siempre false en QA/prod (TLS via Cloudflare)
 variable "enable_ssl" {
-  description = "Habilitar SSL con Let's Encrypt"
+  description = "Deprecado — TLS gestionado por Cloudflare. Mantener false."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "letsencrypt_email" {
-  description = "Email para Let's Encrypt"
+  description = "Deprecado — TLS gestionado por Cloudflare. Dejar vacío."
   type        = string
-  default     = "admin@cryptojackpot.com"
+  default     = ""
 }
 
 variable "nginx_ingress_version" {
   description = "Versión del chart de NGINX Ingress"
   type        = string
-  default     = "4.9.0"
-}
-
-variable "cert_manager_version" {
-  description = "Versión del chart de Cert-Manager"
-  type        = string
-  default     = "1.14.2"
+  default     = "4.11.0"
 }
 
 variable "ingress_replicas" {
-  description = "Número de réplicas del ingress controller"
+  description = "Número de réplicas del ingress controller (1 en QA, 2 en prod)"
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "enable_metrics" {
@@ -37,4 +32,3 @@ variable "enable_metrics" {
   type        = bool
   default     = true
 }
-

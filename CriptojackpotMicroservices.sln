@@ -365,7 +365,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "terraform", "terraform", "{
 		Infrastructure\terraform\outputs.tf = Infrastructure\terraform\outputs.tf
 		Infrastructure\terraform\providers.tf = Infrastructure\terraform\providers.tf
 		Infrastructure\terraform\versions.tf = Infrastructure\terraform\versions.tf
-		Infrastructure\terraform\terraform.tfvars.example = Infrastructure\terraform\terraform.tfvars.example
 		Infrastructure\terraform\CLOUDFLARE_SETUP.md = Infrastructure\terraform\CLOUDFLARE_SETUP.md
 	EndProjectSection
 EndProject
@@ -373,6 +372,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "environments", "environment
 	ProjectSection(SolutionItems) = preProject
 		Infrastructure\terraform\environments\dev.tfvars = Infrastructure\terraform\environments\dev.tfvars
 		Infrastructure\terraform\environments\prod.tfvars = Infrastructure\terraform\environments\prod.tfvars
+		infrastructure\terraform\environments\qa.tfvars = infrastructure\terraform\environments\qa.tfvars
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{33333333-3333-3333-3333-333333333332}"

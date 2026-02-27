@@ -1,416 +1,190 @@
-﻿# 🏗️ Terraform Infrastructure - CryptoJackpot
+﻿# Terraform - CriptoJackpot Infrastructure (DigitalOcean)
 
-Este directorio contiene la configuración de **Infraestructura como Código (IaC)** usando Terraform para desplegar la plataforma CryptoJackpot en **DigitalOcean**.
+Gestiona toda la infraestructura de QA y Producción en DigitalOcean via Terraform.
 
-## 📋 Tabla de Contenidos
-
-- [Arquitectura](#-arquitectura)
-- [Prerrequisitos](#-prerrequisitos)
-- [Estructura de Archivos](#-estructura-de-archivos)
-- [Configuración Inicial](#-configuración-inicial)
-- [Uso](#-uso)
-- [Módulos](#-módulos)
-- [Variables](#-variables)
-- [Outputs](#-outputs)
-- [Integración con CI/CD](#-integración-con-cicd)
-- [Solución de Problemas](#-solución-de-problemas)
-
-## 🏛️ Arquitectura
+## Arquitectura desplegada
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         DigitalOcean Cloud                              │
-│  ┌───────────────────────────────────────────────────────────────────┐  │
-│  │                          VPC (10.10.0.0/16)                       │  │
-│  │                                                                   │  │
-│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
-│  │  │                  DOKS (Kubernetes Cluster)                  │  │  │
-│  │  │                                                             │  │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │  │  │
-│  │  │  │  Identity   │  │   Lottery   │  │    Order    │         │  │  │
-│  │  │  │    API      │  │    API      │  │    API      │         │  │  │
-│  │  │  └─────────────┘  └─────────────┘  └─────────────┘         │  │  │
-│  │  │                                                             │  │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │  │  │
-│  │  │  │   Wallet    │  │   Winner    │  │ Notification│         │  │  │
-│  │  │  │    API      │  │    API      │  │    API      │         │  │  │
-│  │  │  └─────────────┘  └─────────────┘  └─────────────┘         │  │  │
-│  │  │                                                             │  │  │
-│  │  │  ┌─────────────────────────────────────────────────────┐   │  │  │
-│  │  │  │                    Redpanda (Kafka)                 │   │  │  │
-│  │  │  └─────────────────────────────────────────────────────┘   │  │  │
-│  │  │                                                             │  │  │
-│  │  │  ┌───────────────────┐   ┌───────────────────┐             │  │  │
-│  │  │  │   NGINX Ingress   │   │   Cert-Manager    │             │  │  │
-│  │  │  └───────────────────┘   └───────────────────┘             │  │  │
-│  │  └─────────────────────────────────────────────────────────────┘  │  │
-│  │                                                                   │  │
-│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
-│  │  │              Managed PostgreSQL (6 Databases)               │  │  │
-│  │  │  identity_db | lottery_db | order_db | wallet_db | ...      │  │  │
-│  │  └─────────────────────────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────────────────┘  │
-│                                                                         │
-│  ┌─────────────────────┐  ┌─────────────────────┐                       │
-│  │   Container Registry│  │   Spaces (S3)       │                       │
-│  │   (DOCR)            │  │   Object Storage    │                       │
-│  └─────────────────────┘  └─────────────────────┘                       │
-└─────────────────────────────────────────────────────────────────────────┘
+Cloudflare (DNS + TLS)
+        │
+        ▼
+DigitalOcean Load Balancer  ◄── creado automáticamente por DOKS
+        │
+        ▼
+NGINX Ingress Controller (DOKS)
+        │
+        ▼
+BFF Gateway (ClusterIP)  ◄── único punto de entrada al cluster
+        │
+   ┌────┴─────────────────────┐
+   ▼                          ▼
+Microservicios          Servicios externos
+(ClusterIP)             ┌─ Upstash Kafka  (SASL_SSL)
+                        ├─ Upstash Redis  (TLS)
+                        ├─ MongoDB Atlas  (audit)
+                        └─ Brevo          (emails)
+        │
+        ▼
+PgBouncer (ClusterIP)
+        │
+        ▼
+DO Managed PostgreSQL (VPC privada)
 ```
 
-## 📦 Prerrequisitos
+## Recursos gestionados por Terraform
 
-1. **Terraform** >= 1.5.0
-   ```powershell
-   # Windows (Chocolatey)
-   choco install terraform
-   
-   # macOS (Homebrew)
-   brew install terraform
-   ```
+| Recurso | QA | Prod |
+|---------|----|----|
+| VPC (privada) | `criptojackpot-qa-vpc` | `criptojackpot-prod-vpc` |
+| DOKS Cluster | `criptojackpot-qa-cluster` | `criptojackpot-prod-cluster` |
+| DO Managed PostgreSQL | Standalone (1 nodo) | HA (2 nodos) |
+| DO Container Registry | Compartido (`criptojackpot`) | Compartido |
+| DO Spaces (Object Storage) | `criptojackpot-qa-assets` | `criptojackpot-prod-assets` |
+| NGINX Ingress (Helm) | 1 réplica | 2 réplicas |
+| K8s Secrets | 7 secrets | 7 secrets |
+| Cloudflare DNS | `api-qa.criptojackpot.com` → LB IP | `api.criptojackpot.com` → LB IP |
+| Kustomize apply | `overlays/qa` | `overlays/prod` |
 
-2. **doctl** (DigitalOcean CLI)
-   ```powershell
-   # Windows (Chocolatey)
-   choco install doctl
-   
-   # macOS (Homebrew)
-   brew install doctl
-   ```
+**No gestionado por Terraform** (externos, solo credenciales via variables):
+- Upstash Kafka, Upstash Redis, MongoDB Atlas, Brevo
 
-3. **kubectl**
-   ```powershell
-   # Windows (Chocolatey)
-   choco install kubernetes-cli
-   ```
-
-4. **Cuenta de DigitalOcean** con:
-   - API Token ([Crear aquí](https://cloud.digitalocean.com/account/api/tokens))
-   - Spaces Access Keys ([Crear aquí](https://cloud.digitalocean.com/account/api/spaces))
-
-## 📁 Estructura de Archivos
+## Estructura
 
 ```
 terraform/
-├── main.tf                    # Configuración principal - orquesta módulos
-├── variables.tf               # Variables globales
-├── outputs.tf                 # Outputs de la infraestructura
-├── providers.tf               # Configuración de providers
-├── versions.tf                # Versiones requeridas
-├── terraform.tfvars.example   # Template de variables
-├── .gitignore                 # Archivos a ignorar
-│
+├── main.tf                    # Orquestación principal
+├── variables.tf               # Todas las variables
+├── outputs.tf                 # Outputs útiles (IPs, comandos)
+├── providers.tf               # DO, Kubernetes, Helm, Cloudflare
+├── versions.tf                # Versiones + backend remoto (DO Spaces)
+├── terraform.tfvars.example   # Plantilla de variables sensibles
 ├── environments/
-│   ├── dev.tfvars             # Variables para desarrollo
-│   └── prod.tfvars            # Variables para producción
-│
-├── modules/
-│   ├── vpc/                   # Red privada virtual
-│   ├── doks/                  # Kubernetes cluster
-│   ├── docr/                  # Container Registry
-│   ├── database/              # PostgreSQL managed
-│   ├── spaces/                # Object storage
-│   ├── secrets/               # Kubernetes secrets
-│   └── ingress/               # NGINX Ingress + Cert-Manager
-│
-├── templates/
-│   └── deploy-config.tpl      # Template para config de deploy
-│
-└── scripts/
-    ├── post-apply.sh          # Script post-terraform (Linux/macOS)
-    └── post-apply.ps1         # Script post-terraform (Windows)
+│   ├── qa.tfvars              # Variables de QA
+│   └── prod.tfvars            # Variables de Producción
+└── modules/
+    ├── vpc/                   # VPC privada
+    ├── doks/                  # Cluster Kubernetes (DOKS)
+    ├── docr/                  # Container Registry
+    ├── database/              # DO Managed PostgreSQL
+    ├── spaces/                # DO Spaces (Object Storage)
+    ├── ingress/               # NGINX Ingress via Helm
+    └── secrets/               # K8s Secrets con valores reales
 ```
 
-## ⚙️ Configuración Inicial
-
-### 1. Autenticar con DigitalOcean
+## Prerequisitos
 
 ```powershell
+# Instalar herramientas
+# - Terraform >= 1.7.0
+# - doctl (DigitalOcean CLI)
+# - kubectl
+# - Autenticarse con doctl
 doctl auth init
-# Ingresa tu API token cuando se solicite
 ```
 
-### 2. Crear archivo de variables
+## Setup inicial (una sola vez)
 
 ```powershell
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
+# 1. Crear el Space para el estado remoto de Terraform
+doctl spaces create criptojackpot-tf-state --region nyc3
+
+# 2. Copiar la plantilla de variables
+Copy-Item terraform.tfvars.example terraform.tfvars
+# Editar terraform.tfvars con los valores reales (nunca commitear este archivo)
 ```
 
-### 3. Editar `terraform.tfvars`
-
-```hcl
-# Tokens de DigitalOcean (REQUERIDO)
-do_token          = "dop_v1_tu_token_aqui"
-spaces_access_key = "tu_access_key_aqui"
-spaces_secret_key = "tu_secret_key_aqui"
-
-# Configuración del proyecto
-project_name = "cryptojackpot"
-environment  = "prod"
-region       = "nyc3"
-
-# ... resto de configuración
-```
-
-### 4. Inicializar Terraform
+## Despliegue QA
 
 ```powershell
-terraform init
+# Variables de entorno con secrets (en CI/CD estas van como secrets del repo)
+$env:TF_VAR_do_token              = "dop_v1_..."
+$env:TF_VAR_spaces_access_key     = "..."
+$env:TF_VAR_spaces_secret_key     = "..."
+$env:TF_VAR_cloudflare_api_token  = "..."
+$env:TF_VAR_cloudflare_zone_id    = "..."
+$env:TF_VAR_kafka_bootstrap_servers = "your-cluster.upstash.io:9092"
+$env:TF_VAR_kafka_sasl_username   = "..."
+$env:TF_VAR_kafka_sasl_password   = "..."
+$env:TF_VAR_redis_connection_string = "your-redis.upstash.io:6379,password=...,ssl=True"
+$env:TF_VAR_mongodb_connection_string = "mongodb+srv://..."
+$env:TF_VAR_brevo_api_key         = "xkeysib-..."
+
+# Backend con state separado para QA
+$env:AWS_ACCESS_KEY_ID     = $env:TF_VAR_spaces_access_key
+$env:AWS_SECRET_ACCESS_KEY = $env:TF_VAR_spaces_secret_key
+
+terraform init -backend-config="key=qa/terraform.tfstate"
+terraform plan  -var-file="environments/qa.tfvars"
+terraform apply -var-file="environments/qa.tfvars"
 ```
 
-## 🚀 Uso
-
-### Despliegue Completo
+## Despliegue Producción
 
 ```powershell
-# Ver plan de cambios
-terraform plan -var-file="environments/prod.tfvars"
+# (mismas variables de entorno que QA)
 
-# Aplicar cambios
-terraform apply -var-file="environments/prod.tfvars"
-
-# Ejecutar script post-apply
-.\scripts\post-apply.ps1
-```
-
-### Despliegue por Ambiente
-
-```powershell
-# Desarrollo
-terraform apply -var-file="environments/dev.tfvars"
-
-# Producción
+terraform init -backend-config="key=prod/terraform.tfstate" -reconfigure
+terraform plan  -var-file="environments/prod.tfvars"
 terraform apply -var-file="environments/prod.tfvars"
 ```
 
-### Destruir Infraestructura
+## Qué hace `terraform apply`
+
+1. **VPC** → Crea red privada aislada
+2. **DOKS** → Cluster Kubernetes en la VPC
+3. **DOCR** → Container Registry (compartido QA/prod, tags diferentes)
+4. **PostgreSQL** → DO Managed DB, crea las 6 bases de datos, firewall solo-cluster
+5. **Spaces** → Bucket privado para assets con CORS configurado
+6. **NGINX Ingress** → Helm release, crea el Load Balancer de DO automáticamente
+7. **K8s Secrets** → Crea los 7 secrets en el namespace `criptojackpot` con valores reales
+8. **Kustomize apply** → Despliega todos los microservicios del overlay correcto (`qa`/`prod`)
+9. **Cloudflare DNS** → Crea el registro `A` apuntando al LB IP con proxy ON
+
+## Secrets creados en Kubernetes
+
+| Secret K8s | Contenido |
+|-----------|-----------|
+| `postgres-secrets` | Host DO, port, user, password, 6 connection strings via PgBouncer |
+| `jwt-secrets` | JWT key, issuer, audience |
+| `kafka-secrets` | Upstash bootstrap servers, SASL user/pass, SCRAM-SHA-256, SASL_SSL |
+| `redis-secrets` | Upstash Redis connection string |
+| `mongodb-secrets` | MongoDB Atlas connection string + database name |
+| `digitalocean-spaces-secrets` | Endpoint, bucket, access/secret key |
+| `brevo-secrets` | API key, sender email/name, frontend base URL |
+
+## Outputs útiles
 
 ```powershell
-# ⚠️ CUIDADO: Esto eliminará TODOS los recursos
-terraform destroy -var-file="environments/prod.tfvars"
-```
-
-### Comandos Útiles
-
-```powershell
-# Ver estado actual
-terraform show
-
-# Ver outputs
+# Ver todos los outputs
 terraform output
 
-# Ver output específico (ej: kubeconfig)
-terraform output -raw cluster_kubeconfig > kubeconfig.yaml
+# Conectar kubectl al cluster
+terraform output -raw cmd_kubectl_connect | Invoke-Expression
 
-# Refrescar estado
-terraform refresh
+# IP del Load Balancer (para verificar DNS en Cloudflare)
+terraform output ingress_load_balancer_ip
 
-# Validar configuración
-terraform validate
-
-# Formatear archivos
-terraform fmt -recursive
+# Comando para desplegar imágenes
+terraform output cmd_build_push_images
 ```
 
-## 📦 Módulos
-
-### VPC (`modules/vpc`)
-Crea una red privada virtual para aislar los recursos.
-
-```hcl
-module "vpc" {
-  source   = "./modules/vpc"
-  name     = "cryptojackpot-vpc"
-  region   = "nyc3"
-  ip_range = "10.10.0.0/16"
-}
-```
-
-### DOKS (`modules/doks`)
-Despliega un cluster de Kubernetes managed.
-
-| Variable | Descripción | Default |
-|----------|-------------|---------|
-| `node_size` | Tamaño de los nodos | `s-2vcpu-4gb` |
-| `node_count` | Número de nodos | `3` |
-| `auto_scale` | Habilitar auto-scaling | `true` |
-| `min_nodes` | Mínimo de nodos | `2` |
-| `max_nodes` | Máximo de nodos | `5` |
-
-### Database (`modules/database`)
-Crea PostgreSQL managed con las 6 bases de datos.
-
-Bases de datos creadas:
-- `cryptojackpot_identity_db`
-- `cryptojackpot_lottery_db`
-- `cryptojackpot_order_db`
-- `cryptojackpot_wallet_db`
-- `cryptojackpot_winner_db`
-- `cryptojackpot_notification_db`
-
-### DOCR (`modules/docr`)
-Container Registry para imágenes Docker.
-
-| Tier | Almacenamiento | Precio |
-|------|----------------|--------|
-| `starter` | 500MB | Gratis |
-| `basic` | 5GB | $5/mes |
-| `professional` | Ilimitado | $20/mes |
-
-### Spaces (`modules/spaces`)
-Object storage compatible con S3.
-
-Directorios creados automáticamente:
-- `profile-images/`
-- `lottery-images/`
-- `prize-images/`
-- `documents/`
-
-### Secrets (`modules/secrets`)
-Genera automáticamente los Kubernetes secrets con valores reales.
-
-### Ingress (`modules/ingress`)
-Instala NGINX Ingress Controller y Cert-Manager.
-
-## 📤 Variables Principales
-
-| Variable | Descripción | Requerida |
-|----------|-------------|-----------|
-| `do_token` | Token API de DigitalOcean | ✅ |
-| `spaces_access_key` | Access key de Spaces | ✅ |
-| `spaces_secret_key` | Secret key de Spaces | ✅ |
-| `project_name` | Nombre del proyecto | No |
-| `environment` | Ambiente (dev/staging/prod) | No |
-| `region` | Región de DO | No |
-
-## 📥 Outputs Importantes
-
-| Output | Descripción |
-|--------|-------------|
-| `cluster_endpoint` | URL del API server de K8s |
-| `cluster_kubeconfig` | Kubeconfig completo |
-| `registry_url` | URL del container registry |
-| `database_host` | Host de PostgreSQL |
-| `spaces_endpoint` | Endpoint de Spaces |
-| `ingress_load_balancer_ip` | IP del Load Balancer |
+## Destroy (con cuidado)
 
 ```powershell
-# Obtener kubeconfig
-terraform output -raw cluster_kubeconfig > ~/.kube/config
+# QA - seguro destruir
+terraform destroy -var-file="environments/qa.tfvars"
 
-# Obtener URL del registry
-terraform output registry_url
-# Output: registry.digitalocean.com/cryptojackpot
+# Prod - NUNCA sin aprobación explícita
+# spaces_force_destroy = false protege el bucket de datos de usuarios
 ```
 
-## 🔄 Integración con CI/CD
+## CI/CD (GitHub Actions)
 
-### GitHub Actions
+El flujo recomendado es:
 
-```yaml
-# .github/workflows/terraform.yml
-name: 'Terraform'
-
-on:
-  push:
-    branches: [ main ]
-    paths: [ 'terraform/**' ]
-
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - uses: hashicorp/setup-terraform@v3
-      with:
-        terraform_version: 1.5.0
-    
-    - name: Terraform Init
-      working-directory: terraform
-      run: terraform init
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.DO_SPACES_ACCESS_KEY }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.DO_SPACES_SECRET_KEY }}
-    
-    - name: Terraform Plan
-      working-directory: terraform
-      run: terraform plan -var-file="environments/prod.tfvars"
-      env:
-        TF_VAR_do_token: ${{ secrets.DO_TOKEN }}
-        TF_VAR_spaces_access_key: ${{ secrets.DO_SPACES_ACCESS_KEY }}
-        TF_VAR_spaces_secret_key: ${{ secrets.DO_SPACES_SECRET_KEY }}
+```
+push → main  →  build images → push to DOCR → terraform apply prod
+push → develop → build images → push to DOCR → terraform apply qa
 ```
 
-### Backend Remoto (Recomendado para equipos)
-
-Descomentar en `versions.tf`:
-
-```hcl
-backend "s3" {
-  endpoint                    = "nyc3.digitaloceanspaces.com"
-  bucket                      = "cryptojackpot-terraform-state"
-  key                         = "terraform.tfstate"
-  region                      = "us-east-1"
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-}
-```
-
-## 🔧 Solución de Problemas
-
-### Error: "unauthorized"
-```
-Verificar que do_token es válido y tiene permisos de escritura
-```
-
-### Error: "database cluster not ready"
-```powershell
-# La base de datos tarda ~5 minutos en estar lista
-# Esperar y reintentar
-terraform apply
-```
-
-### Error: "ingress load balancer pending"
-```powershell
-# El Load Balancer tarda ~2-3 minutos
-kubectl get svc -n ingress-nginx -w
-```
-
-### Resetear estado corrupto
-```powershell
-# Mover estado y reiniciar
-mv terraform.tfstate terraform.tfstate.backup
-terraform import module.vpc.digitalocean_vpc.main <vpc-id>
-# ... importar otros recursos
-```
-
-## 📊 Costos Estimados (DigitalOcean)
-
-| Recurso | Configuración Dev | Configuración Prod |
-|---------|-------------------|-------------------|
-| DOKS (2-3 nodos) | ~$24-48/mes | ~$96-192/mes |
-| PostgreSQL | ~$15/mes | ~$60/mes (HA) |
-| Spaces | ~$5/mes | ~$10/mes |
-| Load Balancer | ~$12/mes | ~$12/mes |
-| Registry | Gratis-$5/mes | $20/mes |
-| **Total** | **~$56-70/mes** | **~$198-294/mes** |
-
-## 🔒 Seguridad
-
-- ✅ VPC aislada para todos los recursos
-- ✅ PostgreSQL solo accesible desde el cluster K8s
-- ✅ Secrets generados automáticamente
-- ✅ SSL/TLS con Let's Encrypt
-- ✅ Network Policies en Kubernetes
-- ✅ SASL/SCRAM para Kafka
-
-## 📚 Referencias
-
-- [Terraform DigitalOcean Provider](https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs)
-- [DigitalOcean Kubernetes](https://docs.digitalocean.com/products/kubernetes/)
-- [DigitalOcean Managed Databases](https://docs.digitalocean.com/products/databases/)
-- [DigitalOcean Spaces](https://docs.digitalocean.com/products/spaces/)
-
+Los secrets `TF_VAR_*` se configuran como **Repository Secrets** en GitHub Actions.

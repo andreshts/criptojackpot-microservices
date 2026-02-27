@@ -76,16 +76,18 @@ output "connection_strings" {
   sensitive = true
 }
 
-# Mapping de microservicio a connection string
+# Mapping de microservicio a connection string (dinámico, basado en var.databases)
 output "microservice_connection_strings" {
-  description = "Connection strings mapeados por nombre de microservicio"
+  description = "Connection strings mapeados por nombre de base de datos"
   value = {
-    "IDENTITY_DB_CONNECTION"     = "Host=${digitalocean_database_cluster.main.private_host};Port=${digitalocean_database_cluster.main.port};Database=cryptojackpot_identity_db;Username=${digitalocean_database_cluster.main.user};Password=${digitalocean_database_cluster.main.password};SSL Mode=Require;Trust Server Certificate=true"
-    "LOTTERY_DB_CONNECTION"      = "Host=${digitalocean_database_cluster.main.private_host};Port=${digitalocean_database_cluster.main.port};Database=cryptojackpot_lottery_db;Username=${digitalocean_database_cluster.main.user};Password=${digitalocean_database_cluster.main.password};SSL Mode=Require;Trust Server Certificate=true"
-    "ORDER_DB_CONNECTION"        = "Host=${digitalocean_database_cluster.main.private_host};Port=${digitalocean_database_cluster.main.port};Database=cryptojackpot_order_db;Username=${digitalocean_database_cluster.main.user};Password=${digitalocean_database_cluster.main.password};SSL Mode=Require;Trust Server Certificate=true"
-    "WALLET_DB_CONNECTION"       = "Host=${digitalocean_database_cluster.main.private_host};Port=${digitalocean_database_cluster.main.port};Database=cryptojackpot_wallet_db;Username=${digitalocean_database_cluster.main.user};Password=${digitalocean_database_cluster.main.password};SSL Mode=Require;Trust Server Certificate=true"
-    "WINNER_DB_CONNECTION"       = "Host=${digitalocean_database_cluster.main.private_host};Port=${digitalocean_database_cluster.main.port};Database=cryptojackpot_winner_db;Username=${digitalocean_database_cluster.main.user};Password=${digitalocean_database_cluster.main.password};SSL Mode=Require;Trust Server Certificate=true"
-    "NOTIFICATION_DB_CONNECTION" = "Host=${digitalocean_database_cluster.main.private_host};Port=${digitalocean_database_cluster.main.port};Database=cryptojackpot_notification_db;Username=${digitalocean_database_cluster.main.user};Password=${digitalocean_database_cluster.main.password};SSL Mode=Require;Trust Server Certificate=true"
+    for db_name in var.databases : upper(replace(db_name, "${var.app_user_name}_", "")) => join("", [
+      "Host=", digitalocean_database_cluster.main.private_host, ";",
+      "Port=", digitalocean_database_cluster.main.port, ";",
+      "Database=", db_name, ";",
+      "Username=", digitalocean_database_cluster.main.user, ";",
+      "Password=", digitalocean_database_cluster.main.password, ";",
+      "SSL Mode=Require;Trust Server Certificate=true"
+    ])
   }
   sensitive = true
 }

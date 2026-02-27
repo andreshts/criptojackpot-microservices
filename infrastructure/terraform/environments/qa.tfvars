@@ -1,9 +1,9 @@
 ﻿# =============================================================================
-# Production Environment Variables - CriptoJackpot
+# QA Environment Variables - CriptoJackpot
 # =============================================================================
 # Uso:
-#   terraform init -backend-config="key=prod/terraform.tfstate"
-#   terraform apply -var-file="environments/prod.tfvars"
+#   terraform init -backend-config="key=qa/terraform.tfstate"
+#   terraform apply -var-file="environments/qa.tfvars"
 #
 # Secrets sensibles via variables de entorno:
 #   $env:TF_VAR_do_token              = "dop_v1_..."
@@ -20,39 +20,39 @@
 
 # Project
 project_name = "criptojackpot"
-environment  = "prod"
+environment  = "qa"
 region       = "nyc3"
 
-# VPC
-vpc_ip_range = "10.10.0.0/16"
+# VPC (rango separado de prod para evitar overlaps)
+vpc_ip_range = "10.30.0.0/16"
 
-# Kubernetes - Configuración robusta para producción
+# Kubernetes - 2 nodos fijos, tamaño medio
 k8s_version    = "1.32.2-do.0"
-k8s_node_size  = "s-4vcpu-8gb"
-k8s_node_count = 3
-k8s_auto_scale = true
-k8s_min_nodes  = 3
-k8s_max_nodes  = 10
+k8s_node_size  = "s-2vcpu-4gb"
+k8s_node_count = 2
+k8s_auto_scale = false
+k8s_min_nodes  = 2
+k8s_max_nodes  = 4
 
-# Database - HA para producción (replicación + failover automático)
-db_size       = "db-s-2vcpu-4gb"
-db_node_count = 2
+# Database - Standalone para QA (sin HA)
+db_size       = "db-s-1vcpu-2gb"
+db_node_count = 1
 db_version    = "16"
 
-# Registry
-registry_subscription_tier = "professional"
+# Registry - compartido con prod (básico alcanza)
+registry_subscription_tier = "basic"
 
-# Spaces
-spaces_bucket_name   = "criptojackpot-prod-assets"
+# Spaces - bucket separado para QA
+spaces_bucket_name   = "criptojackpot-qa-assets"
 spaces_acl           = "private"
-spaces_force_destroy = false  # CRÍTICO: nunca true en prod
+spaces_force_destroy = true  # OK en QA: permite limpiar el ambiente
 
-# Domain
-domain = "api.criptojackpot.com"
+# Domain - subdominio qa
+domain = "api-qa.criptojackpot.com"
 
 # Cloudflare (TLS terminado en CF, no se usa cert-manager)
 enable_cloudflare_dns = true
-cloudflare_proxied    = true  # Nube naranja: CDN + WAF activo
+cloudflare_proxied    = true   # Nube naranja: CDN + WAF activo en QA también
 
 # JWT
 jwt_issuer   = "CriptoJackpotIdentity"
@@ -64,5 +64,5 @@ kafka_sasl_mechanism    = "SCRAM-SHA-256"
 kafka_security_protocol = "SASL_SSL"
 
 # Tags
-tags = ["criptojackpot", "prod", "terraform-managed", "critical"]
+tags = ["criptojackpot", "qa", "terraform-managed"]
 

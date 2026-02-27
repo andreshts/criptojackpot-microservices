@@ -3,12 +3,17 @@
 # =============================================================================
 
 variable "namespace" {
-  description = "Namespace de Kubernetes para los secrets"
+  description = "Namespace de Kubernetes (= project_name)"
   type        = string
-  default     = "cryptojackpot"
+  default     = "criptojackpot"
 }
 
-# PostgreSQL Configuration
+variable "environment" {
+  description = "Ambiente (qa, prod)"
+  type        = string
+}
+
+# PostgreSQL
 variable "postgres_host" {
   description = "Host de PostgreSQL"
   type        = string
@@ -36,7 +41,7 @@ variable "databases" {
   type        = list(string)
 }
 
-# JWT Configuration
+# JWT
 variable "jwt_secret_key" {
   description = "Clave secreta para JWT"
   type        = string
@@ -46,39 +51,67 @@ variable "jwt_secret_key" {
 variable "jwt_issuer" {
   description = "Issuer del JWT"
   type        = string
-  default     = "CryptoJackpotIdentity"
+  default     = "CriptoJackpotIdentity"
 }
 
 variable "jwt_audience" {
   description = "Audience del JWT"
   type        = string
-  default     = "CryptoJackpotApp"
+  default     = "CriptoJackpotApp"
 }
 
-# Kafka/Redpanda Configuration
+# Kafka - Upstash
 variable "kafka_bootstrap_servers" {
   description = "Servidores bootstrap de Kafka"
   type        = string
+  sensitive   = true
 }
 
-variable "kafka_app_username" {
-  description = "Username para aplicación en Kafka"
-  type        = string
-}
-
-variable "kafka_app_password" {
-  description = "Password para aplicación en Kafka"
+variable "kafka_sasl_username" {
+  description = "Username para SASL en Kafka"
   type        = string
   sensitive   = true
 }
 
-variable "redpanda_admin_password" {
-  description = "Password para admin de Redpanda"
+variable "kafka_sasl_password" {
+  description = "Password para SASL en Kafka"
   type        = string
   sensitive   = true
 }
 
-# DigitalOcean Spaces Configuration
+variable "kafka_sasl_mechanism" {
+  description = "Mecanismo SASL para Kafka"
+  type        = string
+  default     = "SCRAM-SHA-256"
+}
+
+variable "kafka_security_protocol" {
+  description = "Protocolo de seguridad para Kafka"
+  type        = string
+  default     = "SASL_SSL"
+}
+
+# Redis - Upstash
+variable "redis_connection_string" {
+  description = "Connection string para Redis (SignalR Backplane)"
+  type        = string
+  sensitive   = true
+}
+
+# MongoDB Atlas
+variable "mongodb_connection_string" {
+  description = "Connection string para MongoDB Atlas"
+  type        = string
+  sensitive   = true
+}
+
+variable "mongodb_audit_database" {
+  description = "Base de datos para auditoría en MongoDB"
+  type        = string
+  default     = "criptojackpot_audit"
+}
+
+# DigitalOcean Spaces
 variable "spaces_endpoint" {
   description = "Endpoint de DigitalOcean Spaces"
   type        = string
@@ -106,9 +139,26 @@ variable "spaces_secret_key" {
   sensitive   = true
 }
 
-# Redis Configuration (SignalR Backplane)
-variable "redis_connection_string" {
-  description = "Connection string para Redis (SignalR Backplane)"
+# Brevo
+variable "brevo_api_key" {
+  description = "API Key de Brevo"
   type        = string
   sensitive   = true
+}
+
+variable "brevo_sender_email" {
+  description = "Email del remitente en Brevo"
+  type        = string
+  default     = "noreply@criptojackpot.com"
+}
+
+variable "brevo_sender_name" {
+  description = "Nombre del remitente en Brevo"
+  type        = string
+  default     = "CriptoJackpot"
+}
+
+variable "brevo_base_url" {
+  description = "URL base de Brevo"
+  type        = string
 }

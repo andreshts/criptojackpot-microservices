@@ -30,7 +30,7 @@ resource "digitalocean_kubernetes_cluster" "main" {
     max_nodes  = var.auto_scale ? var.max_nodes : null
     
     labels = {
-      service  = "cryptojackpot"
+      service  = "criptojackpot"
       pool     = "workers"
     }
 

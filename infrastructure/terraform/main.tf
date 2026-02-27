@@ -1,12 +1,22 @@
 ﻿# =============================================================================
-# Main Configuration - CryptoJackpot DigitalOcean Infrastructure
+# Main Configuration - CriptoJackpot DigitalOcean Infrastructure
 # =============================================================================
 
 locals {
   common_tags = concat(var.tags, ["env:${var.environment}"])
-  
+
   # Nombres de recursos con prefijo de ambiente
   resource_prefix = "${var.project_name}-${var.environment}"
+
+  # Subdominio para el DNS record (api-qa o api)
+  domain_parts     = split(".", var.domain)
+  subdomain        = local.domain_parts[0]                          # "api-qa" / "api"
+  zone_domain      = join(".", slice(local.domain_parts, 1, length(local.domain_parts))) # "criptojackpot.com"
+
+  is_cloudflare_ready = var.enable_cloudflare_dns && var.cloudflare_api_token != "" && var.cloudflare_zone_id != ""
+
+  # Frontend URL para emails (qa vs prod)
+  frontend_url = var.environment == "prod" ? "https://criptojackpot.com" : "https://qa.criptojackpot.com"
 }
 
 # -----------------------------------------------------------------------------
@@ -15,24 +25,11 @@ locals {
 resource "random_password" "jwt_secret" {
   count   = var.jwt_secret_key == "" ? 1 : 0
   length  = 64
-  special = true
-}
-
-resource "random_password" "kafka_password" {
-  count   = var.kafka_password == "" ? 1 : 0
-  length  = 32
-  special = false
-}
-
-resource "random_password" "redpanda_admin_password" {
-  length  = 32
-  special = false
+  special = false # Sin especiales para evitar problemas con connection strings
 }
 
 locals {
-  jwt_secret_key         = var.jwt_secret_key != "" ? var.jwt_secret_key : random_password.jwt_secret[0].result
-  kafka_app_password     = var.kafka_password != "" ? var.kafka_password : random_password.kafka_password[0].result
-  redpanda_admin_password = random_password.redpanda_admin_password.result
+  jwt_secret_key = var.jwt_secret_key != "" ? var.jwt_secret_key : random_password.jwt_secret[0].result
 }
 
 # -----------------------------------------------------------------------------
@@ -58,19 +55,20 @@ module "doks" {
   version_k8s = var.k8s_version
   vpc_uuid    = module.vpc.vpc_id
 
-  # Node Pool Configuration
-  node_pool_name  = "${local.resource_prefix}-workers"
-  node_size       = var.k8s_node_size
-  node_count      = var.k8s_node_count
-  auto_scale      = var.k8s_auto_scale
-  min_nodes       = var.k8s_min_nodes
-  max_nodes       = var.k8s_max_nodes
+  node_pool_name = "${local.resource_prefix}-workers"
+  node_size      = var.k8s_node_size
+  node_count     = var.k8s_node_count
+  auto_scale     = var.k8s_auto_scale
+  min_nodes      = var.k8s_min_nodes
+  max_nodes      = var.k8s_max_nodes
 
   tags = local.common_tags
 }
 
 # -----------------------------------------------------------------------------
 # DOCR (Container Registry) Module
+# Compartido entre QA y Prod — se crea una sola vez con environment="prod"
+# En QA usa el mismo registry pero con tags diferentes (:qa vs :v1.x.x)
 # -----------------------------------------------------------------------------
 module "docr" {
   source = "./modules/docr"
@@ -82,7 +80,7 @@ module "docr" {
 }
 
 # -----------------------------------------------------------------------------
-# Database (PostgreSQL) Module
+# Database (DO Managed PostgreSQL) Module
 # -----------------------------------------------------------------------------
 module "database" {
   source = "./modules/database"
@@ -94,32 +92,9 @@ module "database" {
   version_pg = var.db_version
   vpc_uuid   = module.vpc.vpc_id
 
-  # Lista de bases de datos a crear
   databases = var.databases
 
-  # Trusted sources - solo el cluster puede acceder
-  trusted_sources_ids = [module.doks.cluster_id]
-
-  tags = local.common_tags
-}
-
-# -----------------------------------------------------------------------------
-# Redis (SignalR Backplane) Module
-# -----------------------------------------------------------------------------
-module "redis" {
-  source = "./modules/redis"
-
-  name          = "${local.resource_prefix}-redis"
-  region        = var.region
-  size          = var.redis_size
-  node_count    = var.redis_node_count
-  version_redis = var.redis_version
-  vpc_uuid      = module.vpc.vpc_id
-
-  # Eviction policy para SignalR (LRU es ideal)
-  eviction_policy = "allkeys_lru"
-
-  # Trusted sources - solo el cluster puede acceder
+  # Solo el cluster DOKS puede acceder a la DB
   trusted_sources_ids = [module.doks.cluster_id]
 
   tags = local.common_tags
@@ -135,75 +110,128 @@ module "spaces" {
   region = var.region
   acl    = var.spaces_acl
 
-  # CORS para frontend
-  cors_allowed_origins = ["https://${var.domain}", "https://www.${var.domain}"]
-
-  # ⚠️ CUIDADO: Solo habilitar en desarrollo
-  # En producción SIEMPRE debe ser false para proteger datos de usuarios
-  force_destroy = var.spaces_force_destroy
+  cors_allowed_origins = [local.frontend_url]
+  force_destroy        = var.spaces_force_destroy
 }
 
 # -----------------------------------------------------------------------------
-# Kubernetes Secrets Module
-# -----------------------------------------------------------------------------
-module "k8s_secrets" {
-  source = "./modules/secrets"
-
-  depends_on = [module.doks, module.database, module.spaces, module.redis]
-
-  namespace = var.project_name
-
-  # PostgreSQL Configuration
-  postgres_host     = module.database.host
-  postgres_port     = module.database.port
-  postgres_user     = module.database.user
-  postgres_password = module.database.password
-  databases         = var.databases
-
-  # JWT Configuration
-  jwt_secret_key = local.jwt_secret_key
-  jwt_issuer     = var.jwt_issuer
-  jwt_audience   = var.jwt_audience
-
-  # Kafka/Redpanda Configuration
-  kafka_bootstrap_servers = "redpanda.${var.project_name}.svc.cluster.local:9092"
-  kafka_app_username      = "${var.project_name}-app"
-  kafka_app_password      = local.kafka_app_password
-  redpanda_admin_password = local.redpanda_admin_password
-
-  # Redis Configuration (SignalR Backplane)
-  redis_connection_string = module.redis.connection_string
-
-  # DigitalOcean Spaces Configuration
-  spaces_endpoint   = module.spaces.endpoint
-  spaces_region     = var.region
-  spaces_bucket     = module.spaces.bucket_name
-  spaces_access_key = var.spaces_access_key
-  spaces_secret_key = var.spaces_secret_key
-}
-
-# -----------------------------------------------------------------------------
-# Helm Releases (Nginx Ingress + Cert-Manager)
+# NGINX Ingress Controller (sin cert-manager — TLS gestionado por Cloudflare)
 # -----------------------------------------------------------------------------
 module "ingress" {
   source = "./modules/ingress"
 
   depends_on = [module.doks]
 
-  enable_ssl        = var.enable_ssl
-  letsencrypt_email = var.letsencrypt_email
+  # Cloudflare termina TLS externamente — cert-manager no se usa
+  enable_ssl = false
+
+  ingress_replicas = var.environment == "prod" ? 2 : 1
 }
 
 # -----------------------------------------------------------------------------
-# Output de secrets.yaml generado
+# Kubernetes Secrets Module
+# Crea los secrets reales en el cluster con valores de los servicios gestionados
 # -----------------------------------------------------------------------------
-resource "local_file" "secrets_yaml" {
-  content  = module.k8s_secrets.secrets_yaml_content
-  filename = "${path.root}/../k8s/base/secrets.generated.yaml"
+module "k8s_secrets" {
+  source = "./modules/secrets"
 
-  file_permission = "0600"
+  depends_on = [module.doks, module.database, module.spaces]
+
+  namespace   = var.project_name
+  environment = var.environment
+
+  # PostgreSQL - DO Managed (microservicios conectan via PgBouncer interno)
+  postgres_host     = module.database.host
+  postgres_port     = module.database.port
+  postgres_user     = module.database.user
+  postgres_password = module.database.password
+  databases         = var.databases
+
+  # JWT
+  jwt_secret_key = local.jwt_secret_key
+  jwt_issuer     = var.jwt_issuer
+  jwt_audience   = var.jwt_audience
+
+  # Kafka - Upstash (SASL_SSL externo)
+  kafka_bootstrap_servers = var.kafka_bootstrap_servers
+  kafka_sasl_username     = var.kafka_sasl_username
+  kafka_sasl_password     = var.kafka_sasl_password
+  kafka_sasl_mechanism    = var.kafka_sasl_mechanism
+  kafka_security_protocol = var.kafka_security_protocol
+
+  # Redis - Upstash (externo, TLS)
+  redis_connection_string = var.redis_connection_string
+
+  # MongoDB Atlas - Audit service
+  mongodb_connection_string = var.mongodb_connection_string
+  mongodb_audit_database    = var.mongodb_audit_database
+
+  # DigitalOcean Spaces
+  spaces_endpoint   = module.spaces.endpoint
+  spaces_region     = var.region
+  spaces_bucket     = module.spaces.bucket_name
+  spaces_access_key = var.spaces_access_key
+  spaces_secret_key = var.spaces_secret_key
+
+  # Brevo - Notification service
+  brevo_api_key      = var.brevo_api_key
+  brevo_sender_email = var.brevo_sender_email
+  brevo_sender_name  = var.brevo_sender_name
+  brevo_base_url     = local.frontend_url
 }
 
+# -----------------------------------------------------------------------------
+# Kustomize apply — despliega los manifiestos K8s del overlay correcto
+# Se ejecuta DESPUÉS de que el cluster y los secrets estén listos
+# -----------------------------------------------------------------------------
+resource "null_resource" "kustomize_apply" {
+  depends_on = [module.doks, module.k8s_secrets, module.ingress]
+
+  triggers = {
+    # Re-aplica si el cluster cambia o si hay cambios en los overlays
+    cluster_id  = module.doks.cluster_id
+    environment = var.environment
+    # Checksum de los archivos del overlay para detectar cambios
+    overlay_hash = sha256(join("", [
+      filesha256("${path.root}/../k8s/overlays/${var.environment}/kustomization.yaml"),
+    ]))
+  }
+
+  provisioner "local-exec" {
+    command     = <<-EOT
+      echo "Conectando kubectl al cluster ${module.doks.cluster_name}..."
+      doctl kubernetes cluster kubeconfig save ${module.doks.cluster_id} --context ${local.resource_prefix}
+
+      echo "Aplicando manifiestos Kustomize para ambiente: ${var.environment}..."
+      kubectl apply -k ../k8s/overlays/${var.environment} --context ${local.resource_prefix} --timeout=300s
+
+      echo "Verificando rollout de deployments..."
+      kubectl rollout status deployment/bff-gateway -n ${var.project_name} --context ${local.resource_prefix} --timeout=300s
+    EOT
+    interpreter = ["bash", "-c"]
+    working_dir = path.module
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Cloudflare DNS — apunta al Load Balancer IP del NGINX Ingress
+# -----------------------------------------------------------------------------
+resource "cloudflare_record" "api_endpoint" {
+  count = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? 1 : 0
+
+  zone_id = var.cloudflare_zone_id
+  name    = local.subdomain  # "api-qa" o "api"
+  content = module.ingress.load_balancer_ip
+  type    = "A"
+  proxied = var.cloudflare_proxied
+  ttl     = 1  # Automático cuando proxied=true
+
+  comment = "Managed by Terraform - ${var.project_name} ${var.environment}"
+}
+
+# -----------------------------------------------------------------------------
+# Archivos de salida útiles para CI/CD
+# -----------------------------------------------------------------------------
 resource "local_file" "deploy_config" {
   content = templatefile("${path.module}/templates/deploy-config.tpl", {
     registry_url   = module.docr.registry_url
@@ -213,34 +241,5 @@ resource "local_file" "deploy_config" {
     region         = var.region
     environment    = var.environment
   })
-  filename = "${path.root}/../deploy-config.json"
+  filename = "${path.root}/../deploy-config.${var.environment}.json"
 }
-
-# -----------------------------------------------------------------------------
-# Cloudflare DNS Automation
-# -----------------------------------------------------------------------------
-
-# Extraemos el subdominio de tu variable "domain" (api.cryptojackpot.com -> api)
-# Asumiendo que tu zona es cryptojackpot.com
-locals {
-  # Si var.domain es "api.cryptojackpot.com", esto extrae "api"
-  # Si var.domain es "dev-api.cryptojackpot.com", esto extrae "dev-api"
-  domain_parts       = split(".", var.domain)
-  domain_name_part   = local.domain_parts[0]
-  is_cloudflare_ready = var.enable_cloudflare_dns && var.cloudflare_api_token != "" && var.cloudflare_zone_id != ""
-}
-
-# Registro DNS tipo A apuntando al Load Balancer de NGINX Ingress
-resource "cloudflare_record" "api_endpoint" {
-  count = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? 1 : 0
-
-  zone_id = var.cloudflare_zone_id
-  name    = local.domain_name_part # Ej: "api" o "dev-api"
-  content = module.ingress.load_balancer_ip
-  type    = "A"
-  proxied = var.cloudflare_proxied # True activa el WAF y CDN (Nube Naranja)
-  ttl     = var.cloudflare_proxied ? 1 : 300 # TTL automático si está proxied
-  
-  comment = "Managed by Terraform - ${var.project_name} ${var.environment}"
-}
-

@@ -1,23 +1,13 @@
 ﻿# =============================================================================
-# Outputs - CryptoJackpot DigitalOcean Infrastructure
+# Outputs - CriptoJackpot DigitalOcean Infrastructure
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# VPC Outputs
-# -----------------------------------------------------------------------------
 output "vpc_id" {
   description = "ID de la VPC"
   value       = module.vpc.vpc_id
 }
 
-output "vpc_urn" {
-  description = "URN de la VPC"
-  value       = module.vpc.vpc_urn
-}
-
-# -----------------------------------------------------------------------------
-# Kubernetes Outputs
-# -----------------------------------------------------------------------------
+# Kubernetes
 output "cluster_id" {
   description = "ID del cluster DOKS"
   value       = module.doks.cluster_id
@@ -40,9 +30,7 @@ output "cluster_kubeconfig" {
   sensitive   = true
 }
 
-# -----------------------------------------------------------------------------
-# Container Registry Outputs
-# -----------------------------------------------------------------------------
+# Container Registry
 output "registry_url" {
   description = "URL del Container Registry"
   value       = module.docr.registry_url
@@ -53,16 +41,14 @@ output "registry_name" {
   value       = module.docr.registry_name
 }
 
-# -----------------------------------------------------------------------------
-# Database Outputs
-# -----------------------------------------------------------------------------
+# Database
 output "database_host" {
-  description = "Host de la base de datos PostgreSQL"
+  description = "Host de la base de datos PostgreSQL (DO Managed)"
   value       = module.database.host
 }
 
 output "database_port" {
-  description = "Puerto de la base de datos PostgreSQL"
+  description = "Puerto de la base de datos"
   value       = module.database.port
 }
 
@@ -77,28 +63,7 @@ output "database_names" {
   value       = module.database.database_names
 }
 
-# -----------------------------------------------------------------------------
-# Redis Outputs
-# -----------------------------------------------------------------------------
-output "redis_host" {
-  description = "Host de Redis (SignalR Backplane)"
-  value       = module.redis.private_host
-}
-
-output "redis_port" {
-  description = "Puerto de Redis"
-  value       = module.redis.port
-}
-
-output "redis_connection_string" {
-  description = "Connection string de Redis para .NET"
-  value       = module.redis.connection_string
-  sensitive   = true
-}
-
-# -----------------------------------------------------------------------------
-# Spaces Outputs
-# -----------------------------------------------------------------------------
+# Spaces
 output "spaces_endpoint" {
   description = "Endpoint de DigitalOcean Spaces"
   value       = module.spaces.endpoint
@@ -109,54 +74,44 @@ output "spaces_bucket_name" {
   value       = module.spaces.bucket_name
 }
 
-output "spaces_bucket_domain" {
-  description = "Dominio del bucket de Spaces"
-  value       = module.spaces.bucket_domain_name
-}
-
-# -----------------------------------------------------------------------------
-# Ingress Outputs
-# -----------------------------------------------------------------------------
+# Ingress
 output "ingress_load_balancer_ip" {
-  description = "IP del Load Balancer del Ingress"
+  description = "IP del Load Balancer del NGINX Ingress (apuntar Cloudflare DNS a esta IP)"
   value       = module.ingress.load_balancer_ip
 }
 
-# -----------------------------------------------------------------------------
-# Helper Outputs
-# -----------------------------------------------------------------------------
-output "kubectl_connect_command" {
-  description = "Comando para conectar kubectl al cluster"
-  value       = "doctl kubernetes cluster kubeconfig save ${module.doks.cluster_id}"
-}
-
-output "docker_login_command" {
-  description = "Comando para login de Docker al registry"
-  value       = "doctl registry login"
-}
-
-output "deploy_images_command" {
-  description = "Comando para construir y subir imágenes"
-  value       = "docker build -t ${module.docr.registry_url}/identity-api:v1.0.0 -f Microservices/Identity/Api/Dockerfile . && docker push ${module.docr.registry_url}/identity-api:v1.0.0"
-}
-
-# -----------------------------------------------------------------------------
-# Cloudflare Outputs
-# -----------------------------------------------------------------------------
+# Cloudflare
 output "cloudflare_dns_record" {
   description = "Registro DNS creado en Cloudflare"
-  sensitive   = true
-  value       = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? {
+  value = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? {
     name    = cloudflare_record.api_endpoint[0].name
     type    = cloudflare_record.api_endpoint[0].type
     content = cloudflare_record.api_endpoint[0].content
     proxied = cloudflare_record.api_endpoint[0].proxied
+    fqdn    = cloudflare_record.api_endpoint[0].hostname
   } : null
+  sensitive = true
 }
 
-output "cloudflare_dns_hostname" {
-  description = "Hostname completo del registro DNS"
-  value       = local.is_cloudflare_ready && module.ingress.load_balancer_ip != "pending" ? cloudflare_record.api_endpoint[0].hostname : "Not configured or pending"
-  sensitive   = true
+# =============================================================================
+# Helper Commands
+# =============================================================================
+output "cmd_kubectl_connect" {
+  description = "Comando para conectar kubectl al cluster"
+  value       = "doctl kubernetes cluster kubeconfig save ${module.doks.cluster_id} --context ${local.resource_prefix}"
 }
 
+output "cmd_docker_login" {
+  description = "Comando para login de Docker al registry"
+  value       = "doctl registry login --expiry-seconds 3600"
+}
+
+output "cmd_kustomize_apply" {
+  description = "Comando para desplegar los manifiestos Kubernetes"
+  value       = "kubectl apply -k infrastructure/k8s/overlays/${var.environment} --context ${local.resource_prefix}"
+}
+
+output "cmd_build_push_images" {
+  description = "Patrón de comando para construir y subir imágenes al registry"
+  value       = "docker build -t ${module.docr.registry_url}/<service>:${var.environment} -f Microservices/<Service>/Api/Dockerfile . && docker push ${module.docr.registry_url}/<service>:${var.environment}"
+}

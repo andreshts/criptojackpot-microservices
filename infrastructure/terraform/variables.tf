@@ -1,5 +1,5 @@
 ﻿# =============================================================================
-# Variables - CryptoJackpot DigitalOcean Infrastructure
+# Variables - CriptoJackpot DigitalOcean Infrastructure
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -29,17 +29,17 @@ variable "spaces_secret_key" {
 variable "project_name" {
   description = "Nombre del proyecto"
   type        = string
-  default     = "cryptojackpot"
+  default     = "criptojackpot"
 }
 
 variable "environment" {
-  description = "Ambiente de despliegue (dev, staging, prod)"
+  description = "Ambiente de despliegue (qa, prod)"
   type        = string
   default     = "prod"
 
   validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "El ambiente debe ser: dev, staging o prod."
+    condition     = contains(["qa", "prod"], var.environment)
+    error_message = "El ambiente debe ser: qa o prod."
   }
 }
 
@@ -64,7 +64,7 @@ variable "vpc_ip_range" {
 variable "k8s_version" {
   description = "Versión de Kubernetes para DOKS"
   type        = string
-  default     = "1.29.1-do.0"
+  default     = "1.32.2-do.0"
 }
 
 variable "k8s_node_size" {
@@ -103,7 +103,7 @@ variable "k8s_max_nodes" {
 variable "db_size" {
   description = "Plan de la base de datos PostgreSQL"
   type        = string
-  default     = "db-s-1vcpu-1gb"
+  default     = "db-s-1vcpu-2gb"
 }
 
 variable "db_node_count" {
@@ -120,37 +120,26 @@ variable "db_version" {
 
 # Lista de bases de datos a crear
 variable "databases" {
-  description = "Lista de bases de datos a crear"
+  description = "Lista de bases de datos a crear en DO Managed PostgreSQL"
   type        = list(string)
   default = [
-    "cryptojackpot_identity_db",
-    "cryptojackpot_lottery_db",
-    "cryptojackpot_order_db",
-    "cryptojackpot_wallet_db",
-    "cryptojackpot_winner_db",
-    "cryptojackpot_notification_db"
+    "criptojackpot_identity_db",
+    "criptojackpot_lottery_db",
+    "criptojackpot_order_db",
+    "criptojackpot_wallet_db",
+    "criptojackpot_winner_db",
+    "criptojackpot_notification_db"
   ]
 }
 
 # -----------------------------------------------------------------------------
-# Redis (SignalR Backplane) Configuration
+# Redis (Upstash - externo) Configuration
 # -----------------------------------------------------------------------------
-variable "redis_size" {
-  description = "Plan de Redis (db-s-1vcpu-1gb, db-s-1vcpu-2gb, etc.)"
+variable "redis_connection_string" {
+  description = "Connection string de Upstash Redis (con TLS)"
   type        = string
-  default     = "db-s-1vcpu-1gb"
-}
-
-variable "redis_node_count" {
-  description = "Número de nodos de Redis (1 = standalone, 2+ = HA)"
-  type        = number
-  default     = 1
-}
-
-variable "redis_version" {
-  description = "Versión de Redis"
-  type        = string
-  default     = "7"
+  sensitive   = true
+  default     = ""
 }
 
 # -----------------------------------------------------------------------------
@@ -168,7 +157,7 @@ variable "registry_subscription_tier" {
 variable "spaces_bucket_name" {
   description = "Nombre del bucket de Spaces"
   type        = string
-  default     = "cryptojackpot-assets"
+  default     = "criptojackpot-assets"
 }
 
 variable "spaces_acl" {
@@ -178,63 +167,114 @@ variable "spaces_acl" {
 }
 
 variable "spaces_force_destroy" {
-  description = <<-EOT
-    ⚠️ PELIGROSO: Permitir destrucción del bucket aunque tenga objetos.
-    NUNCA habilitar en producción - podría borrar todas las imágenes de usuarios.
-    Solo usar en ambientes de desarrollo para limpieza rápida.
-  EOT
+  description = "⚠️ Permitir destrucción del bucket aunque tenga objetos. NUNCA true en prod."
   type        = bool
   default     = false
 }
 
 # -----------------------------------------------------------------------------
-# Security Configuration
+# Security - JWT
 # -----------------------------------------------------------------------------
 variable "jwt_secret_key" {
-  description = "Clave secreta para JWT"
+  description = "Clave secreta para JWT (se autogenera si está vacío)"
   type        = string
   sensitive   = true
-  default     = "" # Se generará automáticamente si está vacío
+  default     = ""
 }
 
 variable "jwt_issuer" {
   description = "Issuer del JWT"
   type        = string
-  default     = "CryptoJackpotIdentity"
+  default     = "CriptoJackpotIdentity"
 }
 
 variable "jwt_audience" {
   description = "Audience del JWT"
   type        = string
-  default     = "CryptoJackpotApp"
+  default     = "CriptoJackpotApp"
 }
 
-variable "kafka_password" {
-  description = "Contraseña para Kafka/Redpanda SASL"
+# -----------------------------------------------------------------------------
+# Kafka - Upstash (externo, SASL_SSL)
+# -----------------------------------------------------------------------------
+variable "kafka_bootstrap_servers" {
+  description = "Bootstrap servers de Upstash Kafka (ej: host:9092)"
   type        = string
   sensitive   = true
-  default     = "" # Se generará automáticamente si está vacío
+  default     = ""
+}
+
+variable "kafka_sasl_username" {
+  description = "Username SASL para Upstash Kafka"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "kafka_sasl_password" {
+  description = "Password SASL para Upstash Kafka"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "kafka_sasl_mechanism" {
+  description = "Mecanismo SASL para Kafka (SCRAM-SHA-256)"
+  type        = string
+  default     = "SCRAM-SHA-256"
+}
+
+variable "kafka_security_protocol" {
+  description = "Protocolo de seguridad Kafka (SASL_SSL para Upstash)"
+  type        = string
+  default     = "SASL_SSL"
+}
+
+# -----------------------------------------------------------------------------
+# MongoDB Atlas (externo) - Audit Service
+# -----------------------------------------------------------------------------
+variable "mongodb_connection_string" {
+  description = "Connection string de MongoDB Atlas (mongodb+srv://...)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "mongodb_audit_database" {
+  description = "Nombre de la base de datos de auditoría en MongoDB Atlas"
+  type        = string
+  default     = "criptojackpot_audit"
+}
+
+# -----------------------------------------------------------------------------
+# Brevo (Email) - Notification Service
+# -----------------------------------------------------------------------------
+variable "brevo_api_key" {
+  description = "API Key de Brevo para envío de emails"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "brevo_sender_email" {
+  description = "Email remitente en Brevo"
+  type        = string
+  default     = "noreply@criptojackpot.com"
+}
+
+variable "brevo_sender_name" {
+  description = "Nombre del remitente en Brevo"
+  type        = string
+  default     = "CriptoJackpot"
 }
 
 # -----------------------------------------------------------------------------
 # Domain Configuration
 # -----------------------------------------------------------------------------
 variable "domain" {
-  description = "Dominio principal para el ingress"
+  description = "Dominio del BFF (punto de entrada externo via Cloudflare)"
   type        = string
-  default     = "api.cryptojackpot.com"
-}
-
-variable "enable_ssl" {
-  description = "Habilitar SSL con Let's Encrypt"
-  type        = bool
-  default     = true
-}
-
-variable "letsencrypt_email" {
-  description = "Email para Let's Encrypt"
-  type        = string
-  default     = "admin@cryptojackpot.com"
+  default     = "api.criptojackpot.com"
 }
 
 # -----------------------------------------------------------------------------
@@ -243,7 +283,7 @@ variable "letsencrypt_email" {
 variable "tags" {
   description = "Tags para todos los recursos"
   type        = list(string)
-  default     = ["cryptojackpot", "microservices", "terraform-managed"]
+  default     = ["criptojackpot", "microservices", "terraform-managed"]
 }
 
 # -----------------------------------------------------------------------------
@@ -253,25 +293,25 @@ variable "cloudflare_api_token" {
   description = "Token de API de Cloudflare con permisos de editar DNS"
   type        = string
   sensitive   = true
-  default     = "" # Dejar vacío si no se usa Cloudflare
+  default     = ""
 }
 
 variable "cloudflare_zone_id" {
-  description = "Zone ID del dominio en Cloudflare (ej. cryptojackpot.com)"
+  description = "Zone ID del dominio criptojackpot.com en Cloudflare"
   type        = string
   sensitive   = true
-  default     = "" # Dejar vacío si no se usa Cloudflare
+  default     = ""
 }
 
 variable "cloudflare_proxied" {
-  description = "Si es true, activa el proxy de Cloudflare (nube naranja - CDN/WAF)"
+  description = "Activar proxy de Cloudflare (nube naranja - CDN/WAF)"
   type        = bool
   default     = true
 }
 
 variable "enable_cloudflare_dns" {
-  description = "Habilitar la creación automática de registros DNS en Cloudflare"
+  description = "Crear registro DNS en Cloudflare automáticamente"
   type        = bool
-  default     = false
+  default     = true
 }
 
